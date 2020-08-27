@@ -459,6 +459,13 @@ class all_options extends table_sql {
             $button = get_string('norighttobook', 'booking') . "<br />";
         }
 
+        // Check, if can book based on login method.
+        if (!empty($this->booking->settings->auth)) {
+            if ($this->booking->settings->auth != $USER->auth && !empty($button)) {
+                $button = get_string('wrongauth', 'booking') . "<br />";
+            }
+        }
+
         if (has_capability('mod/booking:readresponses', $this->context) || $values->isteacher) {
             if (groups_get_activity_groupmode($this->cm) == SEPARATEGROUPS
                 AND !has_capability('moodle/site:accessallgroups', \context_course::instance($this->booking->course->id))) {

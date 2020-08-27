@@ -1165,3 +1165,10 @@ $string['enable'] = 'Enable';
 $string['customprofilefield'] = 'Custom profile field to check';
 $string['customprofilefieldvalue'] = 'Custom profile field value to check';
 $string['optiontemplate'] = 'Option template';
+
+// Restricting access
+$string['restrictheader'] = 'Restrict booking to login auth';
+$string['restrictwhatitis'] = 'If not empty, only users with certain auth type can book.';
+$string['authnorestriction'] = 'No restrictions';
+$string['authrestrict'] = 'Restrict access';
+$string['wrongauth'] = 'You don\'t have permission to book as you registered with wrong service.';
