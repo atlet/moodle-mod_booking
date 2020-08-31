@@ -53,8 +53,10 @@ $PAGE->set_title(get_string('sendcustommessage', 'booking'));
 
 if ($mform->is_cancelled()) {
     redirect($redirecturl, '', 0);
-} else if ($data = $mform->get_data(true)) {
-    booking_sendcustommessage($optionid, $data->subject, $data->message, unserialize($uids));
+} else if ($data = $mform->get_data()) {
+    // Clean form data.
+    $cleanuids = clean_param_array(json_decode($uids), PARAM_INT);
+    booking_sendcustommessage($optionid, $data->subject, $data->message, $cleanuids);
 
     redirect($redirecturl, get_string('messagesend', 'booking'), 5);
 }

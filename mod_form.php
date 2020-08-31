@@ -658,7 +658,7 @@ class mod_booking_mod_form extends moodleform_mod {
             $customreporttemplates[$value->id] = $value->name;
         }
 
-        $mform->addElement('select', 'customteplateid', get_string('customreporttemplate', 'booking'), $customreporttemplates);
+        $mform->addElement('select', 'customtemplateid', get_string('customreporttemplate', 'booking'), $customreporttemplates);
 
         // Automatic option creation.
         $mform->addElement('header', 'autcrheader',
@@ -676,6 +676,7 @@ class mod_booking_mod_form extends moodleform_mod {
         $mform->addElement('select', 'autcrprofile', get_string('customprofilefield', 'booking'), $cfields);
         $mform->disabledIf('autcrprofile', 'autcractive');
         $mform->addElement('text', 'autcrvalue', get_string('customprofilefieldvalue', 'booking'));
+        $mform->setType('autcrvalue', PARAM_TEXT);
         $mform->disabledIf('autcrvalue', 'autcractive');
         $mform->addElement('select', 'autcrtemplate', get_string('optiontemplate', 'booking'), $cftemplates);
         $mform->disabledIf('autcrtemplate', 'autcractive');

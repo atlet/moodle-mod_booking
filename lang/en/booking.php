@@ -124,6 +124,7 @@ $string['advancedoptions'] = 'Advanced options';
 $string['btnbooknowname'] = 'Name of button: Book now';
 $string['btncacname'] = 'Name of button: Confirm activity completion';
 $string['btncancelname'] = 'Name of button: Cancel booking';
+$string['courseurl'] = 'Course URL';
 $string['disablebookingusers'] = 'Disable booking of users - hide Book now button.';
 $string['howmanyusers'] = 'Max. number of users a teacher assigned to the option can book';
 $string['howmanyusers_help'] = '';
@@ -1160,7 +1161,7 @@ $string['bookingoptionsfromtemplatemenu'] = 'New booking option from template';
 
 // Automatic option creation.
 $string['autcrheader'] = 'Automatic booking option creation';
-$string['autcrwhatitis'] = 'If this option is enabled it automaticly create a ne booking option and assing a person as teacher to it. It check a user profile field for certain value.';
+$string['autcrwhatitis'] = 'If this option is enabled it automatically creates a new booking option and assigns a user as booking manager / teacher to it. Users are selected based on a custom user profile field value.';
 $string['enable'] = 'Enable';
 $string['customprofilefield'] = 'Custom profile field to check';
 $string['customprofilefieldvalue'] = 'Custom profile field value to check';
