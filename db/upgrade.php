@@ -2028,15 +2028,6 @@ function xmldb_booking_upgrade($oldversion) {
     }
 
     if ($oldversion < 2020083100) {
-        // Define field to be renamed.
-        $table = new xmldb_table('booking');
-        $field = new xmldb_field('customteplateid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'showviews');
-
-        // Conditionally launch renaming the field.
-        if ($dbman->field_exists($table, $field)) {
-            $dbman->rename_field($table, $field, 'customtemplateid');
-        }
-
         // Define table booking_instancetemplate to be created.
         $table = new xmldb_table('booking_instancetemplate');
 
