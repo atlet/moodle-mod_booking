@@ -1982,7 +1982,7 @@ function xmldb_booking_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2019092601, 'booking');
     }
 
-    if ($oldversion < 2020071300) {
+    if ($oldversion < 2020092500) {
 
         // Define field autcractive to be added to booking.
         $table = new xmldb_table('booking');
@@ -2023,11 +2023,6 @@ function xmldb_booking_upgrade($oldversion) {
             $dbman->add_field($table, $field);
         }
 
-        // Booking savepoint reached.
-        upgrade_mod_savepoint(true, 2020071300, 'booking');
-    }
-
-    if ($oldversion < 2020083100) {
         // Define table booking_instancetemplate to be created.
         $table = new xmldb_table('booking_instancetemplate');
 
@@ -2070,7 +2065,7 @@ function xmldb_booking_upgrade($oldversion) {
         }
 
         // Booking savepoint reached.
-        upgrade_mod_savepoint(true, 2020083100, 'booking');
+        upgrade_mod_savepoint(true, 2020092500, 'booking');
     }
 
     return true;
