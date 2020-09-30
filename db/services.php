@@ -63,6 +63,13 @@ $functions = array(
         'description' => 'Read option template.',
         'type' => 'read',
         'ajax' => true
+    ),
+    'mod_booking_unenrol_user' => array(
+        'classname' => 'mod_booking\external',
+        'methodname' => 'confirm_user',
+        'description' => 'Confimr user from QR code.',
+        'type' => 'write',
+        'services' => array(MOODLE_OFFICIAL_MOBILE_SERVICE, 'local_mobile')
     )
 );
 
