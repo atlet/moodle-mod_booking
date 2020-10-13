@@ -21,6 +21,7 @@ use context_module;
 use context;
 use mod_booking\booking;
 use mod_booking\booking_option;
+use mod_booking\places;
 use stdClass;
 
 require_once($CFG->dirroot . '/mod/booking/locallib.php');
