@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 use mod_booking\booking_option;
+use mod_booking\booking;
 
 defined('MOODLE_INTERNAL') || die();
 require_once($CFG->libdir . '/filelib.php');
@@ -908,6 +909,7 @@ function booking_extend_settings_navigation(settings_navigation $settings, navig
     $course = $PAGE->course;
     $contextcourse = context_course::instance($course->id);
     $optionid = $PAGE->url->get_param('optionid');
+    $booking = new booking($cm->id);
 
     if (!is_null($optionid) && $optionid > 0) {
         $option = new \mod_booking\booking_option($cm->id, $optionid);
@@ -940,6 +942,13 @@ function booking_extend_settings_navigation(settings_navigation $settings, navig
             $settingnode->add(get_string("managecustomreporttemplates", "mod_booking"),
                 new moodle_url('customreporttemplates.php', array('id' => $cm->id)));
         }
+    }
+
+    $rurl = get_config('booking', 'remoteapikey');
+    if (!empty($rurl)) {
+        $rurl = str_replace('{ID}', $booking->settings->id, $rurl);
+        $settingnode->add(get_string('callremotesync', 'booking'),
+            $rurl . '" target="_blank"');
     }
 
     if (has_capability('mod/booking:updatebooking', $context) ||

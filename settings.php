@@ -147,7 +147,18 @@ if ($ADMIN->fulltree) {
                         get_string('defaulttemplate', 'mod_booking'),
                         get_string('defaulttemplatedesc', 'mod_booking'),
                         1, $alltemplates));
+
+        $settings->add(
+                new admin_setting_heading('remoteapicall_heading',
+                get_string('remoteapicall', 'mod_booking'), ''));
+
+        $name = 'booking/remoteapikey';
+        $visiblename = get_string('remoteapikey', 'mod_booking');
+        $description = get_string('remoteapikey_desc', 'mod_booking');
+        $setting = new admin_setting_configtext($name, $visiblename, $description, '');
+        $settings->add($setting);
 }
+
 $ADMIN->add('modbookingfolder',
         new admin_externalpage('modbookingcustomfield',
                 get_string('customfieldconfigure', 'mod_booking'),

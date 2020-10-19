@@ -1085,6 +1085,10 @@ $string['numberrows'] = 'Number rows';
 $string['numberrowsdesc'] = 'Number each row of the sign-in sheet. Number will be displayed left of the name in the same column';
 $string['multiicalfiles'] = 'Attach one ical file per date for MS Outlook 2010 compatibility';
 $string['multiicalfilesdesc'] = 'Only MS Outlook 2010 does not support multiple dates within one ical file. Previous and later version do support it (Ex. Outlook365). If you want to send MS Outlook compatible dates, then activate this option in order to attach multiple ical files (one per date/event)';
+$string['remoteapicall'] = 'Remote API call';
+$string['remoteapikey'] = 'URL';
+$string['remoteapikey_desc'] = '{ID} - use this placeholder to replace it with booking id.';
+
 
 // Mobile
 $string['next'] = 'Next';
@@ -1182,3 +1186,5 @@ $string['userconfirmed'] = '{$a->lastname} {$a->firstname} confirmed.';
 $string['userconnotenroled'] = '{$a->lastname} {$a->firstname} not enrolled!';
 $string['wrongqrcode'] = 'Wrong QR code!';
 $string['confirmpresence'] = 'Confirm presence';
+
+$string['callremotesync'] = 'Call remote sync';
