@@ -2023,38 +2023,6 @@ function xmldb_booking_upgrade($oldversion) {
             $dbman->add_field($table, $field);
         }
 
-        // Define table booking_instancetemplate to be created.
-        $table = new xmldb_table('booking_instancetemplate');
-
-        // Adding fields to table booking_instancetemplate.
-        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
-        $table->add_field('name', XMLDB_TYPE_CHAR, '128', null, XMLDB_NOTNULL, null, null);
-        $table->add_field('template', XMLDB_TYPE_BINARY, null, null, XMLDB_NOTNULL, null, null);
-
-        // Adding keys to table booking_instancetemplate.
-        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
-
-        // Conditionally launch create table for booking_instancetemplate.
-        if (!$dbman->table_exists($table)) {
-            $dbman->create_table($table);
-        }
-        // Define table booking_instancetemplate to be created.
-        $table = new xmldb_table('booking_customreport');
-
-        // Adding fields to table booking_instancetemplate.
-        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
-        $table->add_field('course', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
-        $table->add_field('name', XMLDB_TYPE_CHAR, '128', null, XMLDB_NOTNULL, null, null);
-
-        // Adding keys to table booking_instancetemplate.
-        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
-        $table->add_index('course', XMLDB_INDEX_NOTUNIQUE, ['course']);
-
-        // Conditionally launch create table for booking_instancetemplate.
-        if (!$dbman->table_exists($table)) {
-            $dbman->create_table($table);
-        }
-
         // Define field auth to be added to booking.
         $table = new xmldb_table('booking');
         $field = new xmldb_field('auth', XMLDB_TYPE_CHAR, '264', null, null, null, null, 'autcrtemplate');
@@ -2071,7 +2039,7 @@ function xmldb_booking_upgrade($oldversion) {
     if ($oldversion < 2020082601) {
         // Define field to be renamed.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('customteplateid', XMLDB_TYPE_INTEGER, '10', null, null, null, null,'showviews');
+        $field = new xmldb_field('customteplateid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'showviews');
 
         // Conditionally launch renaming the field.
         if ($dbman->field_exists($table, $field)) {

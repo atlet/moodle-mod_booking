@@ -1188,3 +1188,10 @@ $string['wrongqrcode'] = 'Wrong QR code!';
 $string['confirmpresence'] = 'Confirm presence';
 
 $string['callremotesync'] = 'Call remote sync';
+$string['reports'] = 'Reports';
+$string['reporttype'] = 'Report type';
+$string['teachersreport'] = 'Teachers report';
+$string['presencereport'] = 'Presence report';
+$string['showreport'] = "Download report";
+$string['statistics'] = 'Statistics';
+$string['numberofcourses'] = 'Number of options';
