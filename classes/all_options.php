@@ -206,7 +206,7 @@ class all_options extends table_sql {
             return get_string('datenotset', 'booking');
         } else {
             if (is_null($values->times)) {
-                if (date("Ymd",$values->coursestarttime) == date("Ymd",$values->courseendtime)) {
+                if (date("Ymd", $values->coursestarttime) == date("Ymd", $values->courseendtime)) {
                     // Same day.
                     $tmpdate = new stdClass();
                     $tmpdate->leftdate = userdate($values->coursestarttime, get_string('strftimedatetime', 'langconfig'));

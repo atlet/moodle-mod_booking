@@ -1201,3 +1201,4 @@ $string['confirmed'] = 'Confirmed';
 $string['confirmedp'] = 'Confirmed %';
 $string['confirmedall'] = 'All confirmed';
 $string['confirmedallp'] = 'All confirmed %';
+$string['example'] = 'Example';
