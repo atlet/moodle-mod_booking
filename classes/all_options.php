@@ -206,8 +206,18 @@ class all_options extends table_sql {
             return get_string('datenotset', 'booking');
         } else {
             if (is_null($values->times)) {
-                return userdate($values->coursestarttime) . " -<br>" .
-                    userdate($values->courseendtime);
+                if (date("Ymd",$values->coursestarttime) == date("Ymd",$values->courseendtime)) {
+                    // Same day.
+                    $tmpdate = new stdClass();
+                    $tmpdate->leftdate = userdate($values->coursestarttime, get_string('strftimedatetime', 'langconfig'));
+                    $tmpdate->righttdate = userdate($values->courseendtime, get_string('strftimetime', 'langconfig'));
+
+                    return get_string('leftandrightdate', 'booking', $tmpdate);
+                } else {
+                    // Full date.
+                    return userdate($values->coursestarttime, get_string('strftimedatetime', 'langconfig')) . " -<br>" .
+                        userdate($values->courseendtime, get_string('strftimedatetime', 'langconfig'));
+                }
             } else {
                 $val = '';
                 $times = explode(',', $values->times);
