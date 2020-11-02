@@ -1648,4 +1648,13 @@ class booking_option {
 
         exit();
     }
+
+    // Book users from group.
+    public function book_from_group($groupid) {
+        $users = groups_get_members($groupid);
+
+        foreach ($users as $key => $value) {
+            $this->user_submit_response($value);
+        }
+    }
 }

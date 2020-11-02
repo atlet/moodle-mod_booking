@@ -101,6 +101,7 @@ class csv_import {
         unset($this->columns['timemodified']);
         unset($this->columns['calendarid']);
         unset($this->columns['pollsend']);
+
         $this->booking = $booking;
         // If email is not unique, then allow adding email addresses for booked users and teachers.
         if (empty($CFG->allowaccountssameemail)) {
@@ -112,6 +113,7 @@ class csv_import {
         $this->additionalfields[] = 'name';
         $this->additionalfields[] = 'startdate';
         $this->additionalfields[] = 'enddate';
+        $this->additionalfields[] = 'bookfromgroup';
         $this->customfields = booking_option::get_customfield_settings();
         // TODO: now only possible add fields of type text, select multiselect still to implement.
         // Add customfields.
@@ -240,6 +242,15 @@ class csv_import {
                         $option = new booking_option($this->booking->cm->id, $optionid,
                             array(), 0, 0, false);
                         $option->user_submit_response($user);
+                    }
+                }
+
+                if (isset($csvrecord['bookfromgroup'])) {
+                    $option = new booking_option($this->booking->cm->id, $optionid, array(), 0, 0, false);
+                    list($course, $cm) = get_course_and_cm_from_cmid($this->booking->cm->id);
+                    $groupid = groups_get_group_by_name($course->id, trim($csvrecord['bookfromgroup']));
+                    if (!empty($groupid)) {
+                        $option->book_from_group($groupid);
                     }
                 }
             }
