@@ -1203,3 +1203,4 @@ $string['confirmedallp'] = 'All confirmed %';
 $string['example'] = 'Example';
 $string['editdescription'] = 'Edit description';
 $string['subscribegroup'] = 'Book users from group';
+$string['distance'] = 'Distance';

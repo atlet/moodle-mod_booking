@@ -23,9 +23,11 @@ require_once($CFG->dirroot . '/group/lib.php');
 require_once($CFG->dirroot . '/user/selector/lib.php');
 
 function booking_cron() {
-    global $DB;
+    global $DB, $CFG;
 
     mtrace('Starting cron for Booking ...');
+
+    mtrace('[Booking] Sending emails...');
 
     $toprocess = $DB->get_records_sql(
             'SELECT bo.id, bo.coursestarttime, b.daystonotify, b.daystonotify2, bo.sent, bo.sent2
@@ -69,6 +71,57 @@ function booking_cron() {
                 booking_send_notification($save->id, get_string('notificationsubject', 'booking'));
 
                 $DB->update_record("booking_options", $save);
+            }
+        }
+    }
+
+    if (!empty($CFG->googlemapkey3)) {
+        mtrace('[Booking] Calculating distances ...');
+
+        $toprocess = $DB->get_records_sql(
+            "SELECT
+            mbt.id,
+            mbt.userid,
+            mbt.distance,
+            mbo.address optionaddress,
+            mu.address,
+            mu.city,
+            mu.country
+        FROM {booking_teachers} mbt
+        LEFT JOIN {booking_options} mbo
+            ON mbo.id = mbt.optionid
+        LEFT JOIN {user} mu
+            ON mu.id = mbt.userid
+        WHERE
+            COALESCE(mbt.distance, 0) = 0
+            AND mbo.address != ''
+            AND mu.address != ''
+            AND mu.city != ''
+            AND mu.country != ''");
+
+        foreach ($toprocess as $value) {
+            $url = 'https://maps.googleapis.com/maps/api/directions/json?origin=' . urlencode("{$value->optionaddress}") . '&destination=' .
+            urlencode("{$value->address}, {$value->city}. {$value->country}") . '&key=' .$CFG->googlemapkey3;
+
+            try {
+                $res = json_decode(file_get_contents($url), true);
+
+                $km = 0;
+
+                foreach ($res['routes'] as $key => $rvalue) {
+                    foreach ($rvalue['legs'] as $v) {
+                        $km += $v['distance']['value'];
+                    }
+                }
+
+                $save = new stdClass();
+                $save->id = $value->id;
+                $save->distance = $km / 1000;
+
+                $DB->update_record("booking_teachers", $save);
+            } catch (\Exception $e) {
+                // So the cron don't crash.
+                mtrace($e->getMessage());
             }
         }
     }

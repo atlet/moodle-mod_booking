@@ -2081,5 +2081,20 @@ function xmldb_booking_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2020082601, 'booking');
     }
 
+    if ($oldversion < 2020110500) {
+
+        // Define field distance to be added to booking_teachers.
+        $table = new xmldb_table('booking_teachers');
+        $field = new xmldb_field('distance', XMLDB_TYPE_NUMBER, '8, 2', null, null, null, null, 'calendarid');
+
+        // Conditionally launch add field distance.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2020110500, 'booking');
+    }
+
     return true;
 }
