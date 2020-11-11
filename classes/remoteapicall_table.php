@@ -13,20 +13,32 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
 /**
+ * Display all options.
  *
  * @package mod_booking
- * @copyright 2012-2020 David Bogner <info@wunderbyte.at>, Andraž Prinčič <atletek@gmail.com>
+ * @copyright 2016 Andraž Prinčič <atletek@gmail.com>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+namespace mod_booking;
+
+use table_sql;
+
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2020111100;
-$plugin->requires = 2019052000; // Requires this Moodle version. Current: Moodle 3.7.
-// Famous female characters: Diane Selwyn, Eva Thörnblad, Alex Kirkman, Piper Chapman.
-// Lois Wilkerson, Audrey Horne, Lorelai Gilmore, Nairobi (Casa de Papel), Saga Norén.
-$plugin->release = 'v6.0-Norén';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->cron = 60;
-$plugin->component = 'mod_booking';
+class remoteapicall_table extends table_sql {
+
+    function __construct($uniqueid) {
+        parent::__construct($uniqueid);
+    }
+
+    function col_id($values) {
+        // If the data is being downloaded than we don't want to show HTML.
+        if ($this->is_downloading()) {
+            return '';
+        } else {
+            return '<a href="/mod/booking/remoteapicalladdedit.php?id=' . $values->id . '">' . get_string('edit') . '</a>';
+        }
+    }
+}

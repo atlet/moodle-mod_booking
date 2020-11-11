@@ -1085,8 +1085,13 @@ $string['numberrowsdesc'] = 'Number each row of the sign-in sheet. Number will b
 $string['multiicalfiles'] = 'Attach one ical file per date for MS Outlook 2010 compatibility';
 $string['multiicalfilesdesc'] = 'Only MS Outlook 2010 does not support multiple dates within one ical file. Previous and later version do support it (Ex. Outlook365). If you want to send MS Outlook compatible dates, then activate this option in order to attach multiple ical files (one per date/event)';
 $string['remoteapicall'] = 'Remote API call';
+$string['addnewremoteapicall'] = 'Add new remote API call';
 $string['remoteapikey'] = 'URL';
-$string['remoteapikey_desc'] = '{ID} - use this placeholder to replace it with booking id.';
+$string['remoteapiurl'] = '';
+$string['remoteapiurl_help'] = '{ID} - use this placeholder to replace it with booking id.';
+$string['addeditremoteapicall'] = 'Add/edit remote API call';
+$string['fieldmandatory'] = 'This field is mandatory!';
+$string['onlyoneurl'] = 'Course can have only one remote API call url!';
 
 
 // Mobile

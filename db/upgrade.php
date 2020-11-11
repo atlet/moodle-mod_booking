@@ -2096,5 +2096,33 @@ function xmldb_booking_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2020110500, 'booking');
     }
 
+    if ($oldversion < 2020111100) {
+
+        // Define table booking_remoteapi to be created.
+        $table = new xmldb_table('booking_remoteapi');
+
+        // Adding fields to table booking_remoteapi.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('course', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('url', XMLDB_TYPE_TEXT, null, null, XMLDB_NOTNULL, null, null);
+        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table booking_remoteapi.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('usermodified', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
+        $table->add_key('course', XMLDB_KEY_UNIQUE, ['course']);
+
+        // Conditionally launch create table for booking_remoteapi.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2020111100, 'booking');
+    }
+
+
     return true;
 }
