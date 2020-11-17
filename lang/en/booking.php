@@ -1209,3 +1209,4 @@ $string['example'] = 'Example';
 $string['editdescription'] = 'Edit description';
 $string['subscribegroup'] = 'Book users from group';
 $string['distance'] = 'Distance';
+$string['offlinesyncedlater'] = 'You are offline. Your data will be submitet, when internet will be available.';
