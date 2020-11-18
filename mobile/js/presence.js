@@ -20,31 +20,28 @@ var allowOffline = this.CoreConfigConstants.versioncode > 3800; // In 3.8.0 and 
  * Send responses to the site.
  */
 this.callDone = function () {
-    var promise;
-
     that.CoreUtilsProvider.scanQR().then(function (text) {
         if (typeof text !== 'undefined' && Number.isInteger(parseInt(text))) {
-            promise = Promise.resolve();
-
-            promise.then(function () {
+            try {
                 // Submit the responses now.
                 var modal = that.CoreDomUtilsProvider.showModalLoading('core.sending', true);
                 that.addonModBookingProvider.submitResponses(that.CONTENT_OTHERDATA.cmid, that.CONTENT_OTHERDATA.optionid, text,
                     allowOffline).then(function (online) {
                         if (online === false) {
-                            that.CoreDomUtilsProvider.showToast(that.TranslateService.instant('plugin.mod_booking.offlinesyncedlater'));
+                            that.CoreDomUtilsProvider.showToast(
+                                that.TranslateService.instant('plugin.mod_booking.offlinesyncedlater'));
                         } else {
                             that.CoreDomUtilsProvider.showToast(online);
                         }
-                    }).catch(function(message) {
+                    }).catch(function (message) {
                         that.CoreDomUtilsProvider.showErrorModalDefault(message, 'Error submitting responses.', true);
-                    }).finally(function() {
+                    }).finally(function () {
                         modal.dismiss();
                     });
-            }).catch(function(message) {
+            } catch (message) {
                 // User cancelled, ignore.
                 that.CoreDomUtilsProvider.showErrorModalDefault(message, 'Error submitting responses.', true);
-            });
+            }
         } else {
             that.CoreDomUtilsProvider.showToast(that.TranslateService.instant('plugin.mod_booking.wrongqrcode'));
         }
@@ -62,8 +59,6 @@ var onlineObserver = this.Network.onchange().subscribe(function () {
         that.addonModBookingProvider.submitOfflineResponses(allowOffline);
     }
 });
-
-var syncObserver;
 
 /**
  * Component being destroyed.
