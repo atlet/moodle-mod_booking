@@ -158,4 +158,8 @@ $ADMIN->add('modbookingfolder',
         new admin_externalpage('modbookingremotapicall',
                 get_string('remoteapicall', 'mod_booking'),
                 new moodle_url('/mod/booking/remoteapicall.php')));
+$ADMIN->add('modbookingfolder',
+        new admin_externalpage('modbookingtemplates',
+                get_string('templates', 'mod_booking'),
+                new moodle_url('/mod/booking/templates.php')));
 $settings = null;
