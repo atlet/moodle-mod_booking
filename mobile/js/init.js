@@ -27,23 +27,23 @@ var siteSchema = {
     {
         name: BOOKING_TABLE,
         columns: [
-            {
-                name: 'id',
-                type: 'INTEGER',
-                primaryKey: true
-            },
-            {
-                name: 'optionid',
-                type: 'INTEGER'
-            },
-            {
-                name: 'cmid',
-                type: 'INTEGER'
-            },
-            {
-                name: 'userid',
-                type: 'INTEGER'
-            }
+        {
+            name: 'id',
+            type: 'INTEGER',
+            primaryKey: true
+        },
+        {
+            name: 'optionid',
+            type: 'INTEGER'
+        },
+        {
+            name: 'cmid',
+            type: 'INTEGER'
+        },
+        {
+            name: 'userid',
+            type: 'INTEGER'
+        }
         ]
     }
     ]
