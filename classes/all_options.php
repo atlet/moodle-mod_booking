@@ -514,8 +514,12 @@ class all_options extends table_sql {
         } else {
             $places = new places($values->maxanswers, $values->availableplaces, $values->maxoverbooking,
                 $values->maxoverbooking - $values->waiting);
+            $overbooking = '';
+            if ($values->maxoverbooking != 0) {
+                $overbooking = "<div>" . get_string("waitingplacesavailable", "booking", $places) . "</div>";
+            }
             return $button . $delete . $booked . "<div>" . get_string("availableplaces", "booking", $places) .
-                "</div><div>" . get_string("waitingplacesavailable", "booking", $places) . "</div>" . $manage;
+                "</div>" . $overbooking . $manage;
         }
     }
 
