@@ -977,7 +977,7 @@ function booking_extend_settings_navigation(settings_navigation $settings, navig
         has_capability('mod/booking:addeditownoption', $context) ||
         has_capability ( 'mod/booking:subscribeusers', $context ) ||
         has_capability ( 'mod/booking:readresponses', $context ) ||
-        booking_check_if_teacher ($option->option)) {
+        (isset($option->option) && booking_check_if_teacher ($option->option))) {
         $settingnode = $navref->add(get_string("thisinstance", "booking"), null,
         navigation_node::TYPE_CONTAINER);
     }
