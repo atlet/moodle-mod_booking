@@ -761,6 +761,7 @@ $string['enrolmentstatus'] = 'Do not enrol users immediately but only at course 
 $string['duplicatename'] = 'This booking option name already exists. Please choose another one.';
 $string['newtemplatesaved'] = 'New template for booking option was saved.';
 $string['manageoptiontemplates'] = 'Manage booking option templates';
+$string['booking:manageoptiontemplates'] = 'Manage booking option templates'; 
 $string['usedinbookinginstances'] = 'Template is used in following booking instances';
 $string['optiontemplatename'] = 'Option template name';
 
