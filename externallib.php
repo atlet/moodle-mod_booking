@@ -202,6 +202,7 @@ class mod_booking_external extends external_api {
                         $option['institution'] = $record->institution;
                         $option['institutionid'] = $institutionid->id;
                         $option['address'] = $record->address;
+                        $option['disablebookingusers'] = $record->disablebookingusers;
                         $option['users'] = array();
                         $option['teachers'] = array();
 
@@ -299,6 +300,7 @@ class mod_booking_external extends external_api {
                             'institution' => new external_value(PARAM_TEXT, 'Institution'),
                             'institutionid' => new external_value(PARAM_INT, 'Institution ID'),
                             'address' => new external_value(PARAM_TEXT, 'Address'),
+                            'disablebookingusers' =>new external_value(PARAM_INT, 'Disable booking of users - hide Book now button.'),
                             'users' => new external_multiple_structure(new external_single_structure(
                                 array(
                                     'id' => new external_value(PARAM_INT, 'User ID'),
