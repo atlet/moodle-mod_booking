@@ -307,9 +307,11 @@ if (!$tableallbookings->is_downloading()) {
                                 $bookingdata->option->howmanyusers), 5);
             }
         } else {
-            redirect($url,
+            if (!isset($_POST['sendcustommessage'])) {
+                redirect($url,
                     get_string('selectatleastoneuser', 'booking',
                             $bookingdata->option->howmanyusers), 5);
+            }
         }
 
         if (isset($_POST['deleteusers']) && has_capability('mod/booking:deleteresponses', $context)) {

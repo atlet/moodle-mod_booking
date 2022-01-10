@@ -2106,6 +2106,14 @@ function booking_sendcustommessage(int $optionid, string $subject, string $messa
 
     $option = $DB->get_record('booking_options', array('id' => $optionid));
     $booking = $DB->get_record('booking', array('id' => $option->bookingid));
+    
+    if (empty($uids)) {
+        $all = $DB->get_records('booking_answers', ['optionid' => $optionid], '', 'userid');
+
+        foreach ($all as $key => $value) {
+            $uids[] = $value->userid;
+        }
+    }
 
     $cm = get_coursemodule_from_instance('booking', $booking->id);
     foreach ($uids as $id) {

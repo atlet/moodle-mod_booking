@@ -24,9 +24,15 @@ class mod_booking_sendmessage_form extends moodleform {
 
     public function definition() {
 
-        $mform = $this->_form;
+        $mform = &$this->_form;
 
         $mform->addElement('header', 'general', get_string('general', 'form'));
+
+        if (isset($_GET['uids']) && $_GET['uids'] == '[]') {
+            $mform->addElement('static', 'description', get_string('recipients', 'booking'), get_string('allusers', 'booking'));
+        } else {
+            $mform->addElement('static', 'description', get_string('recipients', 'booking'), get_string('onlyselected', 'booking'));
+        }
 
         $mform->addElement('text', 'subject', get_string('messagesubject', 'booking'),
                 array('size' => '64'));
@@ -45,7 +51,7 @@ class mod_booking_sendmessage_form extends moodleform {
         $mform->setType('id', PARAM_INT);
 
         $mform->addElement('hidden', 'uids');
-        $mform->setType('uids', PARAM_RAW);
+        $mform->setType('uids', PARAM_RAW);        
 
         $this->add_action_buttons();
     }
