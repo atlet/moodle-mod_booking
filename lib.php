@@ -1633,15 +1633,27 @@ function booking_activitycompletion($selectedusers, $booking, $cmid, $optionid) 
                 $completion->update_state($cm, COMPLETION_INCOMPLETE, $ui);
             }
         } else {
-            $userdata->completed = '1';
-            $userdata->timemodified = time();
-
-            $DB->update_record('booking_answers', $userdata);
-            $countcomplete = $DB->count_records('booking_answers',
+            $countcompletebefore = $DB->count_records('booking_answers',
                     array('bookingid' => $booking->id, 'userid' => $ui, 'completed' => '1'));
+            $isavailable = false;
 
-            if ($completion->is_enabled($cm) && $booking->enablecompletion <= $countcomplete) {
-                $completion->update_state($cm, COMPLETION_COMPLETE, $ui);
+            if ($booking->maxconfirmations == 0) {
+                $isavailable = true;
+            } else if ($countcompletebefore < $booking->maxconfirmations) {
+                $isavailable = true;
+            }
+
+            if ($isavailable) {
+                $userdata->completed = '1';
+                $userdata->timemodified = time();
+
+                $DB->update_record('booking_answers', $userdata);
+                $countcomplete = $DB->count_records('booking_answers',
+                        array('bookingid' => $booking->id, 'userid' => $ui, 'completed' => '1'));
+
+                if ($completion->is_enabled($cm) && $booking->enablecompletion <= $countcomplete) {
+                    $completion->update_state($cm, COMPLETION_COMPLETE, $ui);
+                }
             }
         }
     }
