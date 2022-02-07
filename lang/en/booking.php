@@ -766,7 +766,7 @@ $string['enrolmentstatus'] = 'Do not enrol users immediately but only at course 
 $string['duplicatename'] = 'This booking option name already exists. Please choose another one.';
 $string['newtemplatesaved'] = 'New template for booking option was saved.';
 $string['manageoptiontemplates'] = 'Manage booking option templates';
-$string['booking:manageoptiontemplates'] = 'Manage booking option templates'; 
+$string['booking:manageoptiontemplates'] = 'Manage booking option templates';
 $string['usedinbookinginstances'] = 'Template is used in following booking instances';
 $string['optiontemplatename'] = 'Option template name';
 
@@ -908,6 +908,7 @@ $string['editotherbooking'] = 'Other booking rules';
 $string['editteachers'] = 'Edit';
 $string['generaterecnum'] = "Generate numbers";
 $string['generaterecnumareyousure'] = "This will generate new numbers and permanently delete the old one!";
+$string['areyousure'] = 'Are you sure?';
 $string['generaterecnumnotification'] = "New numbers have been generated.";
 $string['gotobooking'] = '<< Bookings';
 $string['lblbooktootherbooking'] = 'Name of button: Book users to other booking';
@@ -954,7 +955,6 @@ $string['editotherbooking'] = 'Other booking rules';
 $string['bookingfulldidntregister'] = 'Option is full, so I didn\'t transfer all users!';
 $string['numrec'] = "Rec. num.";
 $string['generaterecnum'] = "Generate numbers";
-$string['generaterecnumareyousure'] = "This will generate new numbers and permanently delete the old one!";
 $string['generaterecnumnotification'] = "New numbers have been generated.";
 $string['waitinglist'] = 'Waiting list';
 $string['searchwaitinglist'] = 'On waiting list';
@@ -1225,3 +1225,22 @@ $string['templatesinsertederror'] = 'Error! Templates not inserted!';
 $string['recipients'] = 'Recipients';
 $string['allusers'] = 'All users';
 $string['onlyselected'] = 'Only selected';
+
+// Course certificate
+$string['coursecertificate'] = 'Booking certificate';
+$string['chooseatemplate'] = 'Choose a template...';
+$string['template'] = 'Template';
+$string['managetemplates'] = 'Manage certificate templates';
+$string['notemplateswarningwithlink'] = 'There are no available templates. Please go to <a href="{$a}">certificate template management page</a> and create a new one.';
+$string['notemplateswarning'] = 'There are no available templates. Please contact the site administrator.';
+$string['selecttemplatewarning'] = 'Once this activity issues at least one certificate, this field will be locked and will no longer be editable.';
+$string['selectdate'] = 'Select date';
+$string['expirydate'] = 'Expiry date';
+$string['issuecertificate'] = 'Issue certificates';
+$string['issuecertificateall'] = 'to all students';
+$string['issuecertificateselected'] = 'to selcted students';
+$string['issuecertificateconfirmed'] = 'to confirmed students';
+$string['allcertificatesgenerated'] = 'Certificates were issued to all students with completed status.';
+$string['allcertificatesgeneratedall'] = 'Certificates were issued to all students.';
+$string['allcertificatesgeneratedselected'] = 'Certificates were issued to all selected students.';
+$string['selectaction'] = "Select action";
