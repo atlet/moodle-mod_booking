@@ -1587,6 +1587,8 @@ $string['signincustfields'] = 'Custom profile fields';
 $string['signincustfields_desc'] = 'Select the custom profiles fields to be shown on the sign-in sheet';
 $string['showcustomfields'] = 'Custom booking option fields';
 $string['showcustomfields_desc'] = 'Select the custom booking option fields to be shown on the sign-in sheet';
+$string['headmasterheader'] = 'Headmaster report';
+$string['headmasterheader_desc'] = 'Show headmaster report to users that have value in custom field.';
 
 $string['showlistoncoursepagelbl'] = 'Show extra information on course page';
 $string['showlistoncoursepagelbl_help'] = 'If you activate this setting, the course name, a short info and a button

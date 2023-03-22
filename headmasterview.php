@@ -13,21 +13,20 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+require_once(__DIR__ . '/../../config.php');
+require_once($CFG->dirroot . '/mod/booking/locallib.php');
 
-/**
- *
- * @package mod_booking
- * @copyright 2023 Wunderbyte GmbH <info@wunderbyte.at>,
- * @author David Bogner, Georg Maißer, Bernhard Fischer, Andraž Prinčič
- * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-defined('MOODLE_INTERNAL') || die();
+// No guest autologin.
+require_login(0, false);
 
-$plugin->version = 2023032201;
-$plugin->requires = 2022041900; // Requires this Moodle version. Current: Moodle 4.0.0.
-$plugin->release = '8.0.5';
-$plugin->maturity = MATURITY_STABLE;
-$plugin->component = 'mod_booking';
-$plugin->dependencies = [
-    'local_wunderbyte_table' => 2023032100
-];
+use mod_booking\mybookings_table;
+
+$url = new moodle_url('/mod/booking/headmasterview.php');
+$PAGE->set_url($url);
+
+$course = $DB->get_record('course', array('id' => SITEID), '*', MUST_EXIST);
+
+$PAGE->set_context(context_user::instance($USER->id));
+$PAGE->navigation->extend_for_user($USER);
+$mybookingsurl = new moodle_url('/mod/booking/headmasterview.php');
+$PAGE->navbar->add(get_string('mybookingoptions', 'mod_booking'), $mybookingsurl);

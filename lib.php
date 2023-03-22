@@ -1450,6 +1450,17 @@ function booking_myprofile_navigation(core_user\output\myprofile\tree $tree, $us
         $string = get_string('mybookingoptions', 'mod_booking');
         $node = new core_user\output\myprofile\node('miscellaneous', 'booking', $string, null, $url);
 
+        $cfgbkg = \get_config('booking');
+
+        if (isset($cfgbkg->hmrfield) && isset($cfgbkg->hmrvalue) && !empty($cfgbkg->hmrfield) && !empty($cfgbkg->hmrvalue)) {
+            profile_load_custom_fields($user);
+            if (isset($user->profile[$cfgbkg->hmrfield]) && $user->profile[$cfgbkg->hmrfield] == $cfgbkg->hmrvalue) {
+            $url = new moodle_url('/mod/booking/headmasterview.php');
+            $string = get_string('headmasterview', 'mod_booking');
+            $node = new core_user\output\myprofile\node('miscellaneous', 'booking', $string, null, $url);
+            }
+        }
+
         $tree->add_node($node);
     }
 }
