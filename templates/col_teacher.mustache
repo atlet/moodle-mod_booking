@@ -15,17 +15,30 @@
     along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 }}
 {{!
-    @template mod_booking/col_teachers
+    @template mod_booking/col_teacher
 
     Classes required for JS:
     * none
 
     Data attributes required for JS:
     * data-region
+
+    Example context (json):
+    {
+        "teachers": [
+            {
+                "userid": "1006",
+                "firstname": "Maxima",
+                "lastname": "Yoga",
+                "email": "maxima.yoga@mailnotexisting.net",
+                "institution": "Institution",
+                "teacherurl": "url"
+            }
+        ]    
+    }
 }}
 
 {{#teachers}}
-    <div>
-        <i class="fa fa-user"></i> {{firstname}} {{lastname}}
-    </div>
+    <i class="fa fa-fw fa-graduation-cap text-gray font-size-sm" aria-hidden="true"></i>
+    {{#teacherurl}}<a href="{{teacherurl}}">{{/teacherurl}}{{firstname}} {{lastname}}{{#teacherurl}}</a>{{/teacherurl}}&nbsp;
 {{/teachers}}

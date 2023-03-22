@@ -15,10 +15,9 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 use mod_booking\booking;
 use mod_booking\form\option_form;
-use moodleform;
 
 require_once(__DIR__ . '/../../config.php');
-require_once("locallib.php");
+require_once($CFG->dirroot . '/mod/booking/locallib.php');
 
 $id = required_param('id', PARAM_INT);
 $optionid = required_param('optionid', PARAM_INT);
@@ -30,7 +29,10 @@ $PAGE->set_url($url);
 $PAGE->requires->jquery_plugin('ui-css');
 list($course, $cm) = get_course_and_cm_from_cmid($id);
 
-require_course_login($course, false);
+require_course_login($course, false, $cm);
+
+// In Moodle 4.0+ we want to turn the instance description off on every page except view.php.
+$PAGE->activityheader->disable();
 
 if (!$booking = new booking($cm->id)) {
     throw new invalid_parameter_exception("Course module id is incorrect");

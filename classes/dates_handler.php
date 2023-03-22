@@ -596,6 +596,37 @@ class dates_handler {
     }
 
     /**
+     * Static helper function to return an array of simple date strings.
+     * It will return only one item containing course start and endtime if no optiondates exist.
+     *
+     * @param int $optionid
+     * @return array array of optiondates strings
+     * @throws \dml_exception
+     */
+    public static function return_array_of_sessions_datestrings(int $optionid) {
+
+        $settings = singleton_service::get_instance_of_booking_option_settings($optionid);
+        $sessions = self::return_dates_with_strings($settings);
+
+        $returnarray = [];
+
+        foreach ($sessions as $session) {
+            $returnarray[] = $session->datestring;
+        }
+
+        // If we don't have any sessions, we render the date of the option itself.
+        if (empty($sessions) && !empty($settings->coursestarttime) && !empty($settings->courseendtime)
+            && $settings->coursestarttime != "0" && $settings->courseendtime != "0") {
+            $returnarray[] = self::prettify_optiondates_start_end(
+                            $settings->coursestarttime,
+                            $settings->courseendtime,
+                            current_language());
+        }
+
+        return $returnarray;
+    }
+
+    /**
      * Helper function to calculate and render educational units.
      *
      * @param string $dayofweektime e.g. "Mon, 16:00 - 17:30"
@@ -782,6 +813,7 @@ class dates_handler {
             $date->datestring = $date->startdatetime;
 
             if (!empty($endtime)) {
+                $date->enddatetime = userdate($endtime, $strftimedatetime);
                 $date->enddate = userdate($endtime, $strftimedate); // 3. February 2023.
                 $date->enddatetime = userdate($endtime, $strftimedatetime); // Friday, 3. February 2023, 12:45.
                 $date->datestring .= " - ";
@@ -794,4 +826,30 @@ class dates_handler {
         return $date;
     }
 
+
+    /**
+     * This function creates timessots between two timestamps depending on the duration.
+     * All the time is filled with entire slots. If the remaining time is not enough for a slot, it's skipped.
+     * The slots will be created with the prettify_datetime function and contain the localized strings.
+     *
+     * @param int $starttime unix timestamp
+     * @param int $endtime unix timestamp
+     * @param int $duration in seconds
+     * @return array
+     */
+    public static function create_slots($starttime, $endtime, $duration) {
+
+        $slots = [];
+        $slotendtime = $starttime; // This is just to jump into the while loop.
+
+        while ($slotendtime < $endtime) {
+
+            $slotstarttime = $starttime;
+            $slotendtime = strtotime("+ $duration minutes ", $starttime);
+            $starttime = $slotendtime; // New starttime previous slotendtime.
+            $slots[] = self::prettify_datetime($slotstarttime, $slotendtime);
+        }
+
+        return $slots;
+    }
 }

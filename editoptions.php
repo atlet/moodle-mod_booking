@@ -23,7 +23,7 @@
  */
 
 require_once(__DIR__ . '/../../config.php');
-require_once("locallib.php");
+require_once($CFG->dirroot . '/mod/booking/locallib.php');
 require_once($CFG->libdir . '/formslib.php');
 
 use mod_booking\form\option_form;
@@ -45,16 +45,25 @@ $mode = optional_param('mode', '', PARAM_RAW);
 
 $returnurl = optional_param('returnurl', '', PARAM_LOCALURL);
 
-$url = new moodle_url('/mod/booking/editoptions.php', array('id' => $cmid, 'optionid' => $optionid));
-$PAGE->set_url($url);
-$PAGE->requires->jquery_plugin('ui-css');
+// phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+/* $PAGE->requires->jquery_plugin('ui-css'); */
 
 list($course, $cm) = get_course_and_cm_from_cmid($cmid);
+
+require_course_login($course, false, $cm);
+
+$url = new moodle_url('/mod/booking/editoptions.php', array('id' => $cmid, 'optionid' => $optionid));
+$PAGE->set_url($url);
+
+// In Moodle 4.0+ we want to turn the instance description off on every page except view.php.
+$PAGE->activityheader->disable();
+
+$PAGE->set_pagelayout('admin');
+$PAGE->add_body_class('limitedwidth');
 
 // Initialize bookingid.
 $bookingid = (int) $cm->instance;
 
-require_course_login($course, false, $cm);
 $groupmode = groups_get_activity_groupmode($cm);
 
 if (!$booking = new \mod_booking\booking($cmid)) {
@@ -83,9 +92,6 @@ if (has_capability('mod/booking:cantoggleformmode', $context)) {
     // Without the capability, we always use simple mode.
     set_user_preference('optionform_mode', 'simple');
 }
-
-$mform = new option_form(null, array('bookingid' => $bookingid, 'optionid' => $optionid, 'cmid' => $cmid,
-    'context' => $context));
 
 // Duplicate this booking option.
 if ($optionid == -1 && $copyoptionid != 0) {
@@ -123,6 +129,17 @@ if ($optionid == -1 && $copyoptionid != 0) {
         subscribe_teacher_to_booking_option($teachertocopy->userid, $optionid, $cm->id);
     }
 
+    // If there are prices defined, let's duplicate them too.
+    if (get_config('booking', 'duplicationrestoreprices')) {
+        /* IMPORTANT: Once we support subbookings, we might have different areas than 'option'
+            and this means 'itemid' might be something else than an optionid.
+            So we have to find out, if we still can set the params like this. */
+        $prices = $DB->get_records('booking_prices', ['itemid' => $copyoptionid, 'area' => 'option']);
+        foreach ($prices as $price) {
+            $price->itemid = $optionid;
+        }
+        $DB->insert_records('booking_prices', $prices);
+    }
     // Also duplicate associated Moodle custom fields (e.g. "sports").
     $sql = "SELECT cfd.*
         FROM {customfield_data} cfd
@@ -153,6 +170,10 @@ if ($optionid == -1 && $copyoptionid != 0) {
     $defaultvalues->id = $cmid;
 }
 
+// Create form after duplication data were prepared.
+$mform = new option_form(null, array('bookingid' => $bookingid, 'optionid' => $optionid, 'cmid' => $cmid,
+    'context' => $context));
+
 if ($mform->is_cancelled()) {
 
     if (!empty($returnurl)) {
@@ -161,6 +182,48 @@ if ($mform->is_cancelled()) {
         $redirecturl = new moodle_url('/mod/booking/view.php', array('id' => $cmid));
         redirect($redirecturl, '', 0);
     }
+} else if ($mform->no_submit_button_pressed()) {
+
+    // If you have a no-submit button on your form, then you can handle that action here.
+    $data = $mform->get_submitted_data();
+
+    // Depending on the button we have pressed, we need to reinstantiate the form...
+    // ... because the definition was already executed at this point.
+    // Then we call Set data again, which should do the trick to have the previous state.
+
+    // If the Subbutton "add" is clicked, we need to make sure this data is present in the formdata.
+    if (!empty($data->btn_bookingsubbookingadd)) {
+
+        $formdata = [
+            'bookingid' => $bookingid,
+            'optionid' => $optionid,
+            'cmid' => $cmid,
+            'context' => $context,
+            'btn_bookingsubbookingadd' => $data->btn_bookingsubbookingadd
+        ];
+
+        $mform = new option_form(null, $formdata);
+        $mform->set_data($data);
+    } else if (!empty($data->btn_bookingsubbookingsaddsubmit)) {
+
+        // Here we actually save the new subbooking.
+
+        // We need to first get the submitted type.
+        $type = $data->btn_bookingsubbookingtype;
+
+        // Now we add the new subbooking to DB.
+
+        // And go back to the form.
+
+    }
+
+    $PAGE->set_title(format_string($booking->settings->name));
+    $PAGE->set_heading($course->fullname);
+
+    echo $OUTPUT->header();
+
+    $mform->display();
+
 } else if ($fromform = $mform->get_data()) {
     // Validated data.
     if (confirm_sesskey() &&

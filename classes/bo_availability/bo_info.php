@@ -29,10 +29,29 @@ use html_writer;
 use mod_booking\booking_option_settings;
 use mod_booking\output\button_notifyme;
 use mod_booking\output\col_price;
+use mod_booking\output\prepagemodal;
+use mod_booking\output\simple_modal;
+use mod_booking\price;
 use mod_booking\singleton_service;
 use moodle_exception;
+use moodle_url;
 use MoodleQuickForm;
 use stdClass;
+
+// The blocking condition can return a value to define which button to use.
+define('BO_BUTTON_INDIFFERENT', 0);
+define('BO_BUTTON_MYBUTTON', 1); // Used for price or book it.
+define('BO_BUTTON_NOBUTTON', 2); // Forces no button (Eg special subbookings).
+define('BO_BUTTON_MYALERT', 3); // Alert is a weaker form of MYBUTTON. With special rights, Button is still shown.
+define('BO_BUTTON_JUSTMYALERT', 4); // A strong Alert which also prevents buttons to be displayed.
+define('BO_BUTTON_CANCEL', 5); // The Cancel button is shown next to MYALERT.
+
+// Define if there are sites and if so, if they are prepend, postpend or booking relevant.
+define('BO_PREPAGE_NONE', 0); // This condition provides no page.
+define('BO_PREPAGE_BOOK', 1); // This condition does only provide a booking page (button or price).
+    // Only used when there are other pages as well.
+define('BO_PREPAGE_PREBOOK', 2); // This should be before the bookit button.
+define('BO_PREPAGE_POSTBOOK', 3); // This should be after the bookit button.
 
 /**
  * class for conditional availability information of a booking option
@@ -89,17 +108,50 @@ class bo_info {
      * @param int $userid If set, specifies a different user ID to check availability for
      * @return array [isavailable, description]
      */
-    public function is_available(int $optionid = null, int $userid = 0):array {
-
-        global $USER, $CFG;
-
-        // We only get full description when we book for another user.
-        // It's a clear sign of higher rights.
-        $full = $USER->id == $userid ? false : true;
+    public function is_available(int $optionid = null, int $userid = 0, bool $hardblock = false):array {
 
         if (!$optionid) {
             $optionid = $this->optionid;
         }
+
+        $results = $this->get_condition_results($optionid, $userid, $hardblock);
+
+        if (count($results) === 0) {
+            $id = 0;
+            $isavailable = true;
+            $description = '';
+        } else {
+            $id = 0;
+            $isavailable = false;
+            foreach ($results as $result) {
+                // If no Id has been defined or if id is higher, we take the descpription to return.
+                if ($id === 0 || $result['id'] > $id) {
+                    $description = $result['description'];
+                    $id = $result['id'];
+                }
+            }
+        }
+
+        return [$id, $isavailable, $description];
+
+    }
+
+    /**
+     * Central function to check all available conditions.
+     *
+     * @param integer|null $optionid
+     * @param integer $userid
+     * @param boolean $onlyhardblock
+     * @return array
+     */
+    public static function get_condition_results(int $optionid = null, int $userid = 0, bool $onlyhardblock = false):array {
+        global $USER, $CFG;
+
+        require_once($CFG->dirroot . '/mod/booking/lib.php');
+
+        // We only get full description when we book for another user.
+        // It's a clear sign of higher rights.
+        $full = $USER->id == $userid ? false : true;
 
         $settings = singleton_service::get_instance_of_booking_option_settings($optionid);
 
@@ -131,10 +183,20 @@ class bo_info {
 
             // First, we have the hardcoded conditions already as instances.
             if ($classname !== 'stdClass') {
-                list($isavailable, $description) = $condition->get_description($settings, $userid, $full);
-                $resultsarray[$condition->id] = ['id' => $condition->id,
+                list($isavailable, $description, $insertpage, $button)
+                    = $condition->get_description($settings, $userid, $full);
+
+                if (!$isavailable && $onlyhardblock) {
+                    $isavailable = !$condition->hard_block($settings, $userid);
+                }
+                $resultsarray[$condition->id] = [
+                    'id' => $condition->id,
                     'isavailable' => $isavailable,
-                    'description' => $description];
+                    'description' => $description,
+                    'classname' => $classname,
+                    'button' => $button, // This indicates if this condition provides a button.
+                    'insertpage' => $insertpage // Bool, only in combination with is available false.
+                ];
             } else {
                 // Else we need to instantiate the condition first.
 
@@ -153,10 +215,21 @@ class bo_info {
                     continue;
                 }
                 // Then pass the availability-parameters.
-                list($isavailable, $description) = $instance->get_description($settings, $userid, $full);
+                list($isavailable, $description, $insertpage, $button) = $instance->get_description($settings, $userid, $full);
+
+                if (!$isavailable && $onlyhardblock) {
+                    // If we only want hard blocks, we turn the is_avaialbe function.
+                    // False will only stay false, if hardblock returns true.
+                    $isavailable = !$instance->hard_block($settings, $userid);
+                }
+
                 $resultsarray[$condition->id] = ['id' => $condition->id,
                     'isavailable' => $isavailable,
-                    'description' => $description];
+                    'description' => $description,
+                    'classname' => $classname,
+                    'button' => $button, // This indicates if this condition provides a button.
+                    'insertpage' => $insertpage, // Bool, only in combination with is available false.
+                ];
             }
 
             // Now we might need to override the result of a previous condition which has been resolved as false before.
@@ -212,23 +285,9 @@ class bo_info {
             return false;
         });
 
-        if (count($results) === 0) {
-            $id = 0;
-            $isavailable = true;
-            $description = '';
-        } else {
-            $id = 0;
-            $isavailable = false;
-            foreach ($results as $result) {
-                // If no Id has been defined or if id is higher, we take the descpription to return.
-                if ($id === 0 || $result['id'] > $id) {
-                    $description = $result['description'];
-                    $id = $result['id'];
-                }
-            }
-        }
+        ksort(($results));
 
-        return [$id, $isavailable, $description];
+        return $results;
 
     }
 
@@ -388,6 +447,82 @@ class bo_info {
     }
 
     /**
+     * Function to render instance of bo_condition.
+     *
+     * @param string $conditionname
+     * @return null|object
+     */
+    private static function get_condition($conditionname) {
+        $filename = 'mod_booking\bo_availability\conditions\\' . $conditionname . '.php';
+
+        if (class_exists($filename)) {
+            return new $filename();
+        }
+
+        return null;
+    }
+
+    /**
+     * This function renders the prebooking page for the right condition.
+     *
+     * @param int $optionid
+     * @param int $pagenumber
+     * @param int $userid
+     * @return array
+     */
+    public static function load_pre_booking_page(int $optionid, int $pagenumber, int $userid) {
+
+        $results = self::get_condition_results($optionid, $userid);
+
+        // Results have to be sorted the right way. At the moment, it depends on the id of the blocking condition.
+        usort($results, function ($a, $b) {
+            return $a['id'] < $b['id'] ? 1 : -1;
+        });
+
+        // Sorted List of blocking conditions which also provide a proper page.
+        $conditions = self::return_sorted_conditions($results);
+        $condition = self::return_class_of_current_page($conditions, $pagenumber);
+
+        // We throw an exception if we didn't get a valid pagenumber.
+        if (empty($condition)) {
+            throw new moodle_exception('wrongpagenumberforprebookingpage', 'mod_booking');
+        }
+
+        $data = self::return_data_for_steps($conditions, $pagenumber);
+
+        $template = 'mod_booking/bookingpage/header';
+
+        // We get the condition for the right page.
+        $condition = new $condition();
+        $object = $condition->render_page($optionid);
+
+        // Now we introduce the header at the first place.
+        $object['template'] = $template . ',' . $object['template'];
+        $dataarray = array_merge([$data], $object['data']);
+
+        $template = 'mod_booking/bookingpage/footer';
+
+        $footerdata = [
+            'data' => [
+                'optionid' => $optionid,
+                'userid' => $userid,
+            ]
+        ];
+
+        // Depending on the circumstances, keys are added to the array.
+        self::add_continue_button($footerdata, $conditions, $results, $pagenumber, count($conditions));
+        self::add_back_button($footerdata, $conditions, $results, $pagenumber, count($conditions));
+
+        $object['template'] = $object['template'] . ',' .  $template;
+        $dataarray = array_merge($dataarray, [$footerdata]);
+
+        $object['json'] = json_encode($dataarray);
+
+        // The condition renders the page we actually need.
+        return $object;
+    }
+
+    /**
      * Helper function to render condition descriptions and prices
      * for booking options.
      *
@@ -398,10 +533,17 @@ class bo_info {
      * @param stdClass $optionvalues object containing option data to render col_price
      * @param bool $shownotificationlist true for symbol to subscribe to notification list
      * @param stdClass $usertobuyfor user to buy for
+     * @param bool $modalfordescription
      */
-    public static function render_conditionmessage(string $description, string $style = 'warning',
-        int $optionid = 0, bool $showprice = false, stdClass $optionvalues = null,
-        bool $shownotificationlist = false, stdClass $usertobuyfor = null) {
+    public static function render_conditionmessage(
+            string $description,
+            string $style = 'warning',
+            int $optionid = 0,
+            bool $showprice = false,
+            stdClass $optionvalues = null,
+            bool $shownotificationlist = false,
+            stdClass $usertobuyfor = null,
+            bool $modalfordescription = false) {
 
         global $PAGE;
 
@@ -413,9 +555,16 @@ class bo_info {
         }
 
         // Show description.
-        if (!empty($description)) {
-            $renderedstring = html_writer::div($description, "alert alert-$style text-center pt-0 pb-0");
-        }
+        // If necessary in a modal.
+        // phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+        /* if (!empty($description)) {
+            if ($modalfordescription) {
+                $data = new prepagemodal($optionid, 'test', $description);
+                $renderedstring = $output->render_prepagemodal($data);
+            } else {
+                $renderedstring = html_writer::div($description, "alert alert-$style text-center");
+            }
+        } */
 
         // Show price and add to cart button.
         if ($showprice && !empty($optionvalues) && $optionid && !empty($usertobuyfor)) {
@@ -434,5 +583,316 @@ class bo_info {
         }
 
         return $renderedstring;
+    }
+
+    /**
+     * This is the standard function to render the bookit button. Most bo conditions will use it, because a lot is similiar.
+     * They can still alter the returned array.
+     *
+     * @param booking_option_settings $settings
+     * @param integer $userid
+     * @param string $label
+     * @param string $classes
+     * @param bool $includeprice
+     * @param bool $fullwidth
+     * @param string $role
+     * @param string $area
+     * @param bool $nojs
+     * @param string $dataaction
+     * @return array
+     */
+    public static function render_button(
+        booking_option_settings $settings,
+        int $userid,
+        string $label,
+        string $classes = 'alert alert-danger',
+        bool $includeprice = false,
+        bool $fullwidth = true,
+        string $role = 'alert',
+        string $area = 'option',
+        bool $nojs = true,
+        string $dataaction = '' // Use 'noforward' to disable automatic forwarding.
+    ) {
+
+        $user = singleton_service::get_instance_of_user($userid);
+
+        if (empty($user)) {
+            $user = null;
+        }
+
+        if ($fullwidth) {
+            // For view.php and default rendering.
+            $fullwidthclasses = 'w-100 mt-0 mb-0 pl-1 pr-1 pt-2 pb-2';
+        } else {
+            // For prepage modals we want to render the button different than on view.php.
+            $fullwidthclasses = 'pl-3 pr-3 pb-2 pt-2 m-3';
+        }
+
+        $data = [
+            'itemid' => $settings->id,
+            'area' => $area,
+            'userid' => $userid ?? 0,
+            'dataaction' => $dataaction,
+            'nojs' => $nojs,
+            'main' => [
+                'label' => $label,
+                'class' => "$classes $fullwidthclasses text-center",
+                'role' => $role,
+            ]
+        ];
+
+        if ($includeprice) {
+            if ($price = price::get_price('option', $settings->id, $user)) {
+                $data['price'] = [
+                    'price' => $price['price'],
+                    'currency' => $price['currency'],
+                ];
+            }
+        }
+
+        // The reason for this structure is that we can have a number of comma separated templates.
+        // And corresponding data objects in an array. This will be interpreted in JS.
+        $returnarray = [
+            'mod_booking/bookit_button', // The template.
+            $data, // The corresponding data object.
+        ];
+
+        return $returnarray;
+    }
+
+    /**
+     * To sort the prepages, depending on blocking conditions array.
+     * This is also used to determine the total number of pages displayed.
+     * Just count the pages returned.
+     * If there are just booking & confirmation pages, we supress them.
+     *
+     * @param array $results
+     * @return array
+     */
+    public static function return_sorted_conditions(array $results) {
+
+        // Make sure the keys are set.
+        $prepages = [];
+        $prepages['pre'] = [];
+        $prepages['post'] = [];
+        $prepages['book'] = null;
+
+        $showbutton = true;
+        $confirmation = null;
+        $showcheckout = false;
+
+        // First, sort all the pages according to this system:
+        // Depending on the BO_PREPAGE_x constant, we order them pre or post the real booking button.
+        foreach ($results as $result) {
+
+            if ($result['id'] === BO_COND_PRICEISSET &&
+                class_exists('local_shopping_cart\shopping_cart')) {
+                $showcheckout = true;
+            }
+
+            // One no button condition tetermines this for all.
+            if ($result['button'] === BO_BUTTON_NOBUTTON) {
+                $showbutton = false;
+            }
+
+            $newclass = [
+                'id' => $result['id'],
+                'classname' => $result['classname']
+            ];
+
+            if ($result['id'] === BO_COND_CONFIRMATION) {
+                $confirmation = $newclass;
+                /* We use 'showcheckout' to differentiate between "Booking complete"
+                and "Proceed to checkout" confirmation. */
+                $confirmation['showcheckout'] = $showcheckout;
+                continue;
+            }
+
+            switch ($result['insertpage']) {
+                case BO_PREPAGE_BOOK:
+                    $prepages['book'] = $newclass;
+                    break;
+                case BO_PREPAGE_PREBOOK:
+                    $prepages['pre'][] = $newclass;
+                    break;
+                case BO_PREPAGE_POSTBOOK:
+                    $prepages['post'][] = $newclass;
+                    break;
+            }
+        }
+
+        if ($confirmation) {
+            $prepages['post'][] = $confirmation;
+        }
+
+        // We assemble the array in the right order.
+
+        $conditionsarray = $prepages['pre'];
+        // We might not have a book condition.
+        if ($showbutton) {
+            $conditionsarray[] = $prepages['book'];
+        }
+        $conditionsarray = array_merge($conditionsarray, $prepages['post']);
+
+        // When there are no pre or post pages, we don't want show the booking page.
+
+        // We can in the future include a setting which will allow for always showing booking modal.
+        // But right now, we will always suppress the Booking modal, when there is only one page.
+        // This single page has to be necessarily the confirmation page.
+        if ((count($prepages['pre']) + count($prepages['post'])) < 2) {
+            return [];
+        } else {
+            return $conditionsarray;
+        }
+    }
+
+    /**
+     * This returns the data of the
+     *
+     * @param array $conditionsarray
+     * @param integer $pagenumber
+     * @return array
+     */
+    private static function return_data_for_steps(array $conditionsarray, int $pagenumber):array {
+
+        $data['tabs'] = [];
+
+        foreach ($conditionsarray as $key => $value) {
+
+            if (isset($value['showcheckout']) && $value['showcheckout'] == true) {
+                $name = 'checkout'; // So we'll get the string 'page:checkout'.
+            } else {
+                // In all other cases, we want to get the string of 'page:conditionname', e.g. 'page:confirmation'.
+                $array = explode('\\', $value['classname']);
+                $name = array_pop($array);
+            }
+            $data['tabs'][] = [
+                'name' => get_string('page:' . $name, 'mod_booking'),
+                'active' => $key <= $pagenumber ? true : false,
+            ];
+        };
+
+        return [
+            'data' => $data
+        ];
+    }
+
+    /**
+     * Creates a correctly sorted array for all the pages...
+     * ... and returns the classname as string of current page.
+     *
+     * @param array $conditionsarray
+     * @param integer $pagenumber
+     * @return string
+     */
+    private static function return_class_of_current_page(array $conditionsarray, int $pagenumber) {
+
+        // Now that we have the right order, we need to return the corresponding classname.
+        return $conditionsarray[$pagenumber]['classname'];
+    }
+
+    /**
+     * Go through conditions classes to see if somewhere a price is set.
+     *
+     * @param array $results
+     * @return boolean
+     */
+    private static function has_price_set(array $results):bool {
+        foreach ($results as $result) {
+            if ($result['classname'] == 'mod_booking\bo_availability\conditions\priceisset') {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Logic of the continue button in the prepage modal.
+     *
+     * @param array $footerdata
+     * @param array $conditions
+     * @param array $results
+     * @param integer $pagenumber
+     * @param integer $totalpages
+     * @return void
+     */
+    private static function add_continue_button(
+            array &$footerdata,
+            array $conditions,
+            array $results,
+            int $pagenumber,
+            int $totalpages) {
+
+        // Standardvalues.
+
+        $continuebutton = true;
+        $continueaction = 'continue';
+        $continuelabel = get_string('continue');
+        $continuelink = '#';
+
+        // If we are on the booking or priceissetpage, we don't want to show the continue button.
+        // The Thank you page only comes automatically.
+
+        if ($conditions[$pagenumber]['id'] === BO_COND_BOOKITBUTTON
+            || $conditions[$pagenumber]['id'] === BO_COND_PRICEISSET) {
+
+            // But we want to show the continue button when we are not at the last but one page.
+            // E.G. when there are subbookings later on.
+            if ($totalpages - $pagenumber <= 2) {
+                $continuebutton = false;
+            }
+        }
+
+        if ($conditions[$pagenumber]['id'] === BO_COND_CONFIRMATION) {
+            // We need to decide if we want to show on the last page a "go to checkout" button.
+            if (self::has_price_set($results)) {
+                $url = new moodle_url('/local/shopping_cart/checkout.php');
+                $continueaction = 'checkout';
+                $continuelabel = get_string('checkout', 'local_shopping_cart');
+                $continuelink = $url->out();
+                $continuebutton = true;
+            } else {
+                $continuebutton = true;
+                $continueaction = 'closemodal';
+                $continuelabel = get_string('close', 'mod_booking');
+            }
+        }
+
+        $footerdata['data']['continuebutton'] = $continuebutton; // Show button at all.
+        $footerdata['data']['continueaction'] = $continueaction; // Which action should be taken?
+        $footerdata['data']['continuelabel'] = $continuelabel; // The visible label.
+        $footerdata['data']['continuelink'] = $continuelink; // A hard link.
+    }
+
+    /**
+     * Logic of the back button in the prepage modal.
+     *
+     * @param array $footerdata
+     * @param array $conditions
+     * @param array $results
+     * @param integer $pagenumber
+     * @param integer $totalpages
+     * @return void
+     */
+    private static function add_back_button(
+            array &$footerdata,
+            array $conditions,
+            array $results,
+            int $pagenumber,
+            int $totalpages) {
+
+        // Standardvalues.
+        $backbutton = true;
+        $backaction = 'back';
+        $backlabel = get_string('back');
+
+        if ($pagenumber == 0 // If we are on the first page.
+            || $conditions[$pagenumber]['id'] === BO_COND_CONFIRMATION) { // If we are on the confirmation page.
+            $backbutton = false;
+        }
+
+        $footerdata['data']['backbutton'] = $backbutton; // Show button at all.
+        $footerdata['data']['backaction'] = $backaction; // Which action should be taken?
+        $footerdata['data']['backlabel'] = $backlabel; // The visible label.
     }
 }

@@ -32,16 +32,19 @@ require_once(__DIR__ . '/../../config.php');
 $cmid = required_param('cmid', PARAM_INT);
 $download = optional_param('download', '', PARAM_ALPHA);
 
-// No guest autologin.
-require_login(0, false);
-
 $urlparams = [
     'cmid' => $cmid
 ];
 
 $params = []; // SQL params.
 
-$context = context_system::instance();
+list($course, $cm) = get_course_and_cm_from_cmid($cmid, 'booking');
+require_course_login($course, false, $cm);
+$context = context_module::instance($cm->id);
+
+// In Moodle 4.0+ we want to turn the instance description off on every page except view.php.
+$PAGE->activityheader->disable();
+
 $PAGE->set_context($context);
 
 $baseurl = new moodle_url('/mod/booking/teachers_instance_report.php', $urlparams);

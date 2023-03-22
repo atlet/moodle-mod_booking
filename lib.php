@@ -31,7 +31,6 @@ use mod_booking\booking_option;
 use mod_booking\booking_rules\rules_info;
 use mod_booking\booking_utils;
 use mod_booking\dates_handler;
-use mod_booking\output\coursepage_available_options;
 use mod_booking\output\coursepage_shortinfo_and_button;
 use mod_booking\singleton_service;
 use mod_booking\teachers_handler;
@@ -42,6 +41,9 @@ define('MAX_PRICE_CATEGORIES', 9);
 
 // Currently up to 20 different semesters can be created.
 define('MAX_SEMESTERS', 20);
+
+// Time to confirm booking or cancellation in seconds.
+define('TIME_TO_CONFIRM', 20);
 
 // Define description parameters.
 define('DESCRIPTION_WEBSITE', 1); // Shows link button with text "book now" and no link to TeamsMeeting etc.
@@ -82,19 +84,33 @@ define('MSGCONTRPARAM_DO_NOT_SEND', 3);
 define('MSGCONTRPARAM_VIEW_CONFIRMATION', 4);
 
 // Define booking availability condition ids.
-define('BO_COND_JSON_USERPROFILEFIELD', 11);
-define('BO_COND_JSON_CUSTOMUSERPROFILEFIELD', 12);
-define('BO_COND_JSON_PREVIOUSLYBOOKED', 13);
+define('BO_COND_ISLOGGEDINPRICE', 190);
+define('BO_COND_ISLOGGEDIN', 180);
+define('BO_COND_CONFIRMCANCEL', 170);
+define('BO_COND_CANCELMYSELF', 105);
+define('BO_COND_ALREADYBOOKED', 150);
+define('BO_COND_ALREADYRESERVED', 140);
+define('BO_COND_ISCANCELLED', 130);
+define('BO_COND_ISBOOKABLE', 120);
+define('BO_COND_ONWAITINGLIST', 110);
+define('BO_COND_NOTIFYMELIST', 100);
+define('BO_COND_FULLYBOOKED', 90);
+define('BO_COND_MAX_NUMBER_OF_BOOKINGS', 80);
+define('BO_COND_OPTIONHASSTARTED', 70);
+define('BO_COND_BOOKING_TIME', 60);
+define('BO_COND_BOOKINGPOLICY', 50);
+define('BO_COND_SUBBOOKINGBLOCKS', 45);
+define('BO_COND_SUBBOOKING', 40);
 
-define('BO_COND_ISLOGGEDIN', 110);
-define('BO_COND_ALREADYBOOKED', 100);
-define('BO_COND_ISCANCELLED', 91);
-define('BO_COND_ISBOOKABLE', 90);
-define('BO_COND_ONWAITINGLIST', 80);
-define('BO_COND_FULLYBOOKED', 70);
-define('BO_COND_MAX_NUMBER_OF_BOOKINGS', 60);
-define('BO_COND_BOOKING_TIME', 50);
-define('BO_COND_PRICEISSET', 10); // Price has to be the lowest blocking condition.
+define('BO_COND_JSON_PREVIOUSLYBOOKED', 13);
+define('BO_COND_JSON_CUSTOMUSERPROFILEFIELD', 12);
+define('BO_COND_JSON_USERPROFILEFIELD', 11);
+
+define('BO_COND_NOSHOPPINGCART', 6);
+define('BO_COND_PRICEISSET', 5);
+define('BO_COND_CONFIRMBOOKIT', 2);
+define('BO_COND_BOOKITBUTTON', 1); // This is only used to show the book it button.
+define('BO_COND_CONFIRMATION', 0); // This is the last page after booking.
 
 // Define booking options status.
 define('BO_STATUS_NORMAL', 0);
@@ -105,6 +121,11 @@ define('CONDPARAM_ALL', 0);
 define('CONDPARAM_HARDCODED_ONLY', 1);
 define('CONDPARAM_JSON_ONLY', 2);
 define('CONDPARAM_MFORM_ONLY', 3);
+
+// Define status for booking & subbooking options.
+define('UNVERIFIED', 0);
+define('PENDING', 1);
+define('VERIFIED', 1);
 
 /**
  * @param stdClass $cm
@@ -422,6 +443,11 @@ function booking_add_instance($booking) {
         $booking->optionsfields = implode(',', $booking->optionsfields);
     }
 
+    if (isset($booking->optionsdownloadfields) && is_array($booking->optionsdownloadfields)
+        && count($booking->optionsdownloadfields) > 0) {
+        $booking->optionsdownloadfields = implode(',', $booking->optionsdownloadfields);
+    }
+
     if (isset($booking->signinsheetfields) && is_array($booking->signinsheetfields)
         && count($booking->signinsheetfields) > 0) {
         $booking->signinsheetfields = implode(',', $booking->signinsheetfields);
@@ -443,8 +469,11 @@ function booking_add_instance($booking) {
     $booking->beforecompletedtext = $booking->beforecompletedtext['text'] ?? null;
     $booking->aftercompletedtext = $booking->aftercompletedtext['text'] ?? null;
 
-    // To avoid errors.
-    $booking->bookingpolicy = $booking->bookingpolicy['text'] ?? '';
+    // If no policy was entered, we still have to check for HTML tags.
+    if (!isset($booking->bookingpolicy) || empty(strip_tags($booking->bookingpolicy))) {
+        $booking->bookingpolicy = '';
+    }
+
     // Insert answer options from mod_form.
     $booking->id = $DB->insert_record("booking", $booking);
 
@@ -493,6 +522,13 @@ function booking_add_instance($booking) {
 
     booking_grade_item_update($booking);
 
+    // When adding an instance, we need to invalidate the cache for booking instances.
+    cache_helper::invalidate_by_event('setbackbookinginstances', [$cmid]);
+
+    // Also purge caches for options table and booking_option_settings.
+    cache_helper::purge_by_event('setbackoptionstable');
+    cache_helper::purge_by_event('setbackoptionsettings');
+
     return $booking->id;
 }
 
@@ -536,6 +572,11 @@ function booking_update_instance($booking) {
 
     if (isset($booking->optionsfields) && is_array($booking->optionsfields) && count($booking->optionsfields) > 0) {
         $booking->optionsfields = implode(',', $booking->optionsfields);
+    }
+
+    if (isset($booking->optionsdownloadfields) && is_array($booking->optionsdownloadfields)
+        && count($booking->optionsdownloadfields) > 0) {
+        $booking->optionsdownloadfields = implode(',', $booking->optionsdownloadfields);
     }
 
     if (isset($booking->categoryid) && count($booking->categoryid) > 0) {
@@ -583,6 +624,13 @@ function booking_update_instance($booking) {
     if (isset($booking->aftercompletedtext['text'])) {
         $booking->aftercompletedtext = $booking->aftercompletedtext['text'];
     }
+
+    // If no policy was entered, we still have to check for HTML tags.
+    // NOTE: $booking->bookingpolicy is a string! So we never use ['text'] here!
+    if (!isset($booking->bookingpolicy) || empty(strip_tags($booking->bookingpolicy))) {
+        $booking->bookingpolicy = '';
+    }
+
     $booking->bookedtext = $booking->bookedtext['text'];
     $booking->waitingtext = $booking->waitingtext['text'];
     $booking->notifyemail = $booking->notifyemail['text'];
@@ -797,6 +845,14 @@ function booking_update_options($optionvalues, $context) {
         $option->priceformulaoff = 0; // Default: Turned on.
     }
 
+    // Link to feedback form.
+    if (isset($optionvalues->pollurl)) {
+        $option->pollurl = $optionvalues->pollurl;
+    } else {
+        $option->pollurl = '';
+    }
+
+    // Link to teachers' feedback form.
     if (isset($optionvalues->pollurlteachers)) {
         $option->pollurlteachers = $optionvalues->pollurlteachers;
     } else {
@@ -1004,9 +1060,8 @@ function booking_update_options($optionvalues, $context) {
                 $googer = new GoogleURLAPI($gapik);
                 if (!empty($gapik)) {
                     $onlyoneurl = new moodle_url('/mod/booking/view.php',
-                            array('id' => $optionvalues->id, 'optionid' => $optionvalues->optionid, 'action' => 'showonlyone',
+                            array('id' => $optionvalues->id, 'optionid' => $optionvalues->optionid,
                                    'whichview' => 'showonlyone'));
-                            $onlyoneurl->set_anchor('goenrol');
                     $shorturl = $googer->shorten(htmlspecialchars_decode($onlyoneurl->__toString()));
                     if ($shorturl) {
                         $option->shorturl = $shorturl;
@@ -1164,9 +1219,8 @@ function booking_update_options($optionvalues, $context) {
         if (!empty($gapik)) {
             $googer = new GoogleURLAPI($gapik);
             $onlyoneurl = new moodle_url('/mod/booking/view.php',
-                    array('id' => $optionvalues->id, 'optionid' => $optionid, 'action' => 'showonlyone',
+                    array('id' => $optionvalues->id, 'optionid' => $optionid,
                         'whichview' => 'showonlyone'));
-            $onlyoneurl->set_anchor('goenrol');
 
             $shorturl = $googer->shorten(htmlspecialchars_decode($onlyoneurl->__toString()));
             if ($shorturl) {
@@ -1226,14 +1280,23 @@ function booking_update_options($optionvalues, $context) {
         // Deal with multiple option dates (multisessions).
         deal_with_multisessions($optionvalues, $booking, $optionid, $context);
 
+        // Update start and end date of the option depending on the sessions.
+        booking_updatestartenddate($optionid);
+
         // Save relation for each newly created optiondate if checkbox is active.
         save_entity_relations_for_optiondates_of_option($optionvalues, $optionid);
 
-        // Trigger an event that booking option has been updated.
-        $event = \mod_booking\event\bookingoption_updated::create(array('context' => $context, 'objectid' => $optionid,
-                'userid' => $USER->id));
-        $event->trigger();
-
+        // Trigger an event that booking option has been updated - only if it is NOT a template.
+        if (!isset($optionvalues->addastemplate) || $optionvalues->addastemplate == 0) {
+            $event = \mod_booking\event\bookingoption_updated::create(
+                array(
+                    'context' => $context,
+                    'objectid' => $optionid,
+                    'userid' => $USER->id
+                )
+            );
+            $event->trigger();
+        }
         // Finally, we need to check if any existing booking rules are affected.
         if ($option->bookingid != 0) {
             rules_info::execute_rules_for_option($optionid);
@@ -1384,7 +1447,7 @@ function booking_get_user_status($userid, $optionid, $bookingid, $cmid) {
 function booking_myprofile_navigation(core_user\output\myprofile\tree $tree, $user, $iscurrentuser, $course) {
     if ($iscurrentuser) {
         $url = new moodle_url('/mod/booking/mybookings.php');
-        $string = get_string('mybookings', 'mod_booking');
+        $string = get_string('mybookingoptions', 'mod_booking');
         $node = new core_user\output\myprofile\node('miscellaneous', 'booking', $string, null, $url);
 
         $tree->add_node($node);
@@ -1410,6 +1473,8 @@ function booking_extend_settings_navigation(settings_navigation $settings, navig
     $course = $PAGE->course;
     $contextcourse = context_course::instance($course->id);
     $optionid = $PAGE->url->get_param('optionid');
+
+    $bookingsettings = singleton_service::get_instance_of_booking_settings_by_cmid($cm->id);
 
     $bookingisteacher = false; // Set to false by default.
     if (!is_null($optionid) && $optionid > 0) {
@@ -1451,20 +1516,6 @@ function booking_extend_settings_navigation(settings_navigation $settings, navig
         }
     }
 
-    if (has_capability('mod/booking:manageoptiontemplates', $context)) {
-        if (!empty($optionid)) {
-            $navref->add(get_string('copytotemplate', 'mod_booking'),
-                new moodle_url('/mod/booking/report.php',
-                        array('id' => $cm->id, 'optionid' => $optionid,
-                            'action' => 'copytotemplate', 'sesskey' => sesskey())),
-                            navigation_node::TYPE_CUSTOM, null, 'nav_copytotemplate');
-        }
-
-        $navref->add(get_string("manageoptiontemplates", "mod_booking"),
-            new moodle_url('/mod/booking/optiontemplatessettings.php', array('id' => $cm->id)),
-                navigation_node::TYPE_CUSTOM, null, 'nav_manageoptiontemplates');
-    }
-
     $urlparam = array('id' => $cm->id, 'optionid' => -1);
     if (!$templatedid = $DB->get_field('booking', 'templateid', ['id' => $cm->instance])) {
         $templatedid = get_config('booking', 'defaulttemplate');
@@ -1490,26 +1541,40 @@ function booking_extend_settings_navigation(settings_navigation $settings, navig
         $navref->add(get_string('recalculateprices', 'mod_booking'),
                 new moodle_url('/mod/booking/recalculateprices.php', array('id' => $cm->id)),
                 navigation_node::TYPE_CUSTOM, null, 'nav_recalculateprices');
-        $navref->add(get_string('teachers_instance_report', 'mod_booking'),
+        $navref->add(get_string('teachers_instance_report', 'mod_booking') . " ($bookingsettings->name)",
                 new moodle_url('/mod/booking/teachers_instance_report.php', ['cmid' => $cm->id]),
                 navigation_node::TYPE_CUSTOM, null, 'nav_teachers_instance_report');
     }
 
+    // We currently never show these entries as we are not sure if they work correctly.
+    // Filters, Permissions, Backup, Restore - will not be shown in "More..." menu.
+    $keys = $navref->get_children_key_list();
+    foreach ($keys as $key => $name) {
+        if ($name == 'roleassign' || $name == 'roleoverride' ||
+                    $name == 'rolecheck' || $name == 'filtermanage' || $name == 'logreport' ||
+                    $name == 'backup' || $name == 'restore') {
+            $navref->get($name)->remove();
+        }
+    }
+
     if (!is_null($optionid) && $optionid > 0) {
-        $option = $DB->get_record('booking_options', array('id' => $optionid));
-        $booking = $DB->get_record('booking', array('id' => $option->bookingid));
-        $keys = $navref->get_children_key_list();
+        // In previous booking versions Filters, Permissions, Backup, Restore where only hidden for booking options.
+        // phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+        /* $keys = $navref->get_children_key_list();
         foreach ($keys as $key => $name) {
-            if ($name == 'modedit' || $name == 'roleassign' || $name == 'roleoverride' ||
+            if ($name == 'roleassign' || $name == 'roleoverride' ||
                         $name == 'rolecheck' || $name == 'filtermanage' || $name == 'logreport' ||
                         $name == 'backup' || $name == 'restore') {
                 $node = $navref->get($name)->remove();
             }
-        }
+        } */
+
+        $option = $DB->get_record('booking_options', array('id' => $optionid));
+        $booking = $DB->get_record('booking', array('id' => $option->bookingid));
 
         if (has_capability('mod/booking:updatebooking', $context) ||
             has_capability('mod/booking:addeditownoption', $context)) {
-            $navref->add(get_string('edit', 'core'),
+            $navref->add(get_string('editbookingoption', 'mod_booking'),
                     new moodle_url('/mod/booking/editoptions.php',
                             array('id' => $cm->id, 'optionid' => $optionid)),
                             navigation_node::TYPE_CUSTOM, null, 'nav_edit');
@@ -1542,17 +1607,25 @@ function booking_extend_settings_navigation(settings_navigation $settings, navig
                                 navigation_node::TYPE_CUSTOM, null, 'nav_bookuserswithoutcompletedactivity');
             }
         }
-        $modinfo = get_fast_modinfo($course);
+
+        // TODO: Move booking options to another option currently does not work correcly.
+        // We temporarily remove it from booking until we are sure, it works.
+        // We need to make sure it works for: teachers, optiondates, prices, answers customfields etc.
+        // phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+        /* $modinfo = get_fast_modinfo($course);
         $bookinginstances = isset($modinfo->instances['booking']) ? count($modinfo->instances['booking']) : 0;
         if (has_capability('mod/booking:updatebooking', $contextcourse) && $bookinginstances > 1) {
             $navref->add(get_string('moveoptionto', 'booking'),
                 new moodle_url('/mod/booking/moveoption.php',
                     array('id' => $cm->id, 'optionid' => $optionid, 'sesskey' => sesskey())),
                     navigation_node::TYPE_CUSTOM, null, 'nav_moveoptionto');
-        }
-        if (has_capability ( 'mod/booking:readresponses', $context ) || booking_check_if_teacher ($option )) {
+        } */
+
+        if (has_capability ('mod/booking:readresponses', $context) || booking_check_if_teacher($option)) {
             $completion = new \completion_info($course);
-            if ($completion->is_enabled($cm) == COMPLETION_TRACKING_AUTOMATIC && $booking->enablecompletion > 0) {
+            if ($booking->enablecompletion > 0 &&
+                ($completion->is_enabled($cm) == COMPLETION_TRACKING_AUTOMATIC ||
+                $completion->is_enabled($cm) == COMPLETION_TRACKING_MANUAL)) {
                 $navref->add(get_string('confirmuserswith', 'booking'),
                     new moodle_url('/mod/booking/confirmactivity.php', array('id' => $cm->id, 'optionid' => $optionid)),
                     navigation_node::TYPE_CUSTOM, null, 'nav_confirmuserswith');
@@ -1573,22 +1646,42 @@ function booking_extend_settings_navigation(settings_navigation $settings, navig
                                 navigation_node::TYPE_CUSTOM, null, 'nav_deletebookingoption');
         }
     }
+
+    if (has_capability('mod/booking:manageoptiontemplates', $context)) {
+        if (!empty($optionid)) {
+            $navref->add(get_string('copytotemplate', 'mod_booking'),
+                new moodle_url('/mod/booking/report.php',
+                        array('id' => $cm->id, 'optionid' => $optionid,
+                            'action' => 'copytotemplate', 'sesskey' => sesskey())),
+                            navigation_node::TYPE_CUSTOM, null, 'nav_copytotemplate');
+        }
+
+        $navref->add(get_string("manageoptiontemplates", "mod_booking"),
+            new moodle_url('/mod/booking/optiontemplatessettings.php', array('id' => $cm->id)),
+                navigation_node::TYPE_CUSTOM, null, 'nav_manageoptiontemplates');
+    }
 }
 
 
 /**
  * Check if logged in user is in teachers db.
- *
+ * @param object $option optional option class
  * @return true if is assigned as teacher otherwise return false
  */
-function booking_check_if_teacher($option) {
+function booking_check_if_teacher(object $option = null) {
     global $DB, $USER;
 
-    $user = $DB->get_record('booking_teachers',
-            array('userid' => $USER->id,
-                'optionid' => $option->id));
+    if (empty($option)) {
+        // If we have no option, we check, if the teacher is a teacher of ANY option.
+        $user = $DB->get_records('booking_teachers',
+            ['userid' => $USER->id]);
+    } else {
+        // If we have an option, we check, if the teacher is a teacher of THIS option.
+        $user = $DB->get_record('booking_teachers',
+            ['userid' => $USER->id, 'optionid' => $option->id]);
+    }
 
-    if ($user === false) {
+    if (empty($user)) {
         return false;
     } else {
         return true;
@@ -1652,34 +1745,53 @@ function booking_activitycompletion_teachers($selectedusers, $booking, $cmid, $o
 function booking_generatenewnumbers($bookingdatabooking, $cmid, $optionid, $allselectedusers) {
     global $DB, $CFG;
 
+    $answerscount = $DB->get_field_sql(
+        "SELECT COUNT(*) AS answerscount
+        FROM {booking_answers}
+        WHERE optionid = :optionid AND waitinglist < 2",
+        ['optionid' => $optionid]);
+
     if (!empty($allselectedusers)) {
         $tmprecnum = $DB->get_record_sql(
-                'SELECT numrec FROM {booking_answers} WHERE optionid = ? ORDER BY numrec DESC LIMIT 1',
-                array($optionid));
+                "SELECT numrec
+                FROM {booking_answers}
+                WHERE optionid = :optionid AND waitinglist < 2
+                ORDER BY numrec DESC
+                LIMIT 1",
+                ['optionid' => $optionid]);
 
-        if ($tmprecnum->numrec == 0) {
+        // If NO users or ALL users are selected, we always want to start with 1.
+        if ($tmprecnum->numrec == 0 || count($allselectedusers) == $answerscount) {
             $recnum = 1;
         } else {
             $recnum = $tmprecnum->numrec + 1;
         }
 
-        foreach ($allselectedusers as $ui) {
+        foreach ($allselectedusers as $userid) {
             // TODO: Optimize DB query: get_records instead of loop.
-            $userdata = $DB->get_record('booking_answers',
-                    array('optionid' => $optionid, 'userid' => $ui));
+            $userdata = $DB->get_record_sql(
+                "SELECT *
+                FROM {booking_answers}
+                WHERE optionid = :optionid AND userid = :userid AND waitinglist < 2",
+                ['optionid' => $optionid, 'userid' => $userid]);
+
             $userdata->numrec = $recnum++;
             $DB->update_record('booking_answers', $userdata);
         }
     } else {
+        // Mysql and MariaDB use RAND().
         $random = "RAND()";
-
+        // Postgres uses RANDOM().
         if (isset($CFG->dbfamily) && $CFG->dbfamily == "postgres") {
             $random = "RANDOM()";
         }
 
         $allusers = $DB->get_records_sql(
-                "SELECT * FROM {booking_answers} WHERE optionid = ? ORDER BY {$random}",
-                array($optionid));
+                "SELECT *
+                FROM {booking_answers}
+                WHERE optionid = :optionid AND waitinglist < 2
+                ORDER BY {$random}",
+                ['optionid' => $optionid]);
 
         $recnum = 1;
 
@@ -1744,6 +1856,9 @@ function booking_activitycompletion($selectedusers, $booking, $cmid, $optionid) 
             }
         }
     }
+
+    // After activity completion, we need to purge caches for the option.
+    booking_option::purge_cache_for_option($optionid);
 }
 
 // GRADING AND RATING.
@@ -2085,7 +2200,7 @@ function booking_rate($ratings, $params) {
 /**
  * Given an ID of an instance of this module, will permanently delete the instance and data.
  *
- * @param int $id
+ * @param int $id this is the bookingid - not the cmid!
  * @return boolean
  */
 function booking_delete_instance($id) {
@@ -2166,6 +2281,11 @@ function booking_delete_instance($id) {
         teachers_handler::delete_booking_optiondates_teachers_by_bookingid($booking->id);
     }
 
+    // We also need to delete the booking teachers in the booking_teachers table!
+    if (!$DB->delete_records('booking_teachers', array("bookingid" => "$booking->id"))) {
+        $result = false;
+    }
+
     // Delete any entity relations for the booking instance.
     // TODO: this should be moved into delete_booking_option.
     if (class_exists('local_entities\entitiesrelation_handler')) {
@@ -2181,6 +2301,13 @@ function booking_delete_instance($id) {
     if (!$DB->delete_records("booking", array("id" => "$booking->id"))) {
         $result = false;
     }
+
+    // When deleting an instance, we need to invalidate the cache for booking instances.
+    cache_helper::invalidate_by_event('setbackbookinginstances', [$cm->id]);
+
+    // Also purge caches for options table and booking_option_settings.
+    cache_helper::purge_by_event('setbackoptionstable');
+    cache_helper::purge_by_event('setbackoptionsettings');
 
     return $result;
 }
@@ -2333,7 +2460,7 @@ function booking_get_extra_capabilities() {
  * @param bool $doenrol true if we want to enrol the teacher into the relevant course
  * @return bool true if teacher was subscribed
  */
-function subscribe_teacher_to_booking_option(int $userid, int $optionid, int $cmid, mixed $groupid = null,
+function subscribe_teacher_to_booking_option(int $userid, int $optionid, int $cmid, $groupid = null,
     bool $doenrol = true) {
 
     global $DB, $USER;
@@ -2502,18 +2629,19 @@ function mod_booking_cm_info_view(cm_info $cm) {
 
     if (!empty($booking)) {
         $html = '';
-        // Only show options list on course page if setting 'showlistoncoursepage' is set to 1.
-        if (isset($booking->settings->showlistoncoursepage) && $booking->settings->showlistoncoursepage == 1) {
-            $data = new coursepage_available_options($cm);
-            $output = $PAGE->get_renderer('mod_booking');
-            $html .= $output->render_coursepage_available_options($data);
-        } else if (isset($booking->settings->showlistoncoursepage) && $booking->settings->showlistoncoursepage == 2) {
-            // If showlistoncoursepage is set to 2, it means there should only be course name, a short info text...
-            // ...and a button redirecting to available booking options.
+
+        if (isset($booking->settings->showlistoncoursepage) &&
+            ($booking->settings->showlistoncoursepage == 1 || $booking->settings->showlistoncoursepage == 2)) {
+
+            /* NOTE: For backwards compatibility, we kept both values (1 and 2).
+            Coursepage_available_options are no longer supported! */
+
+            // Show course name, a short info text and a button redirecting to available booking options.
             $data = new coursepage_shortinfo_and_button($cm);
             $output = $PAGE->get_renderer('mod_booking');
             $html .= $output->render_coursepage_shortinfo_and_button($data);
         }
+
         if ($html !== '') {
             $cm->set_content($html);
         }
@@ -2542,7 +2670,7 @@ function get_list_of_booking_events() {
         // We need to filter all classes that extend event base, or the base class itself.
         if (is_a($event, \core\event\base::class, true)) {
             $parts = explode('\\', $event);
-            $eventwithnamespace = "\\${event}";
+            $eventwithnamespace = "\\{$event}";
             $eventinformation[$eventwithnamespace] = $eventwithnamespace::get_name() .
                 " (" . array_pop($parts) . ")";
         }

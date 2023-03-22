@@ -26,7 +26,9 @@
 
  namespace mod_booking\bo_availability\conditions;
 
+use context_system;
 use mod_booking\bo_availability\bo_condition;
+use mod_booking\bo_availability\bo_info;
 use mod_booking\booking_option_settings;
 use MoodleQuickForm;
 
@@ -80,20 +82,8 @@ class booking_time implements bo_condition {
         // Here, the logic is easier when we set available to true first.
         $isavailable = true;
 
-        // This condition is either hardcoded with the standard booking opening or booking closing time, or its customized.
-
-        if ($this->id == -2) {
-            $openingtime = $settings->bookingopeningtime ?? null;
-            $closingtime = $settings->bookingclosingtime ?? null;
-        } else {
-
-            $jsonstring = $settings->availability ?? '';
-
-            $jsonobject = json_decode($jsonstring);
-
-            $openingtime = $jsonobject->openingtime ?? null;
-            $closingtime = $jsonobject->closingtime ?? null;
-        }
+        // Get opening and closing time from option settings.
+        list($openingtime, $closingtime) = $this->get_booking_opening_and_closing_time($settings);
 
         // If there is a bookingopeningtime and now is smaller, we return false.
         if (!empty($openingtime)
@@ -112,6 +102,29 @@ class booking_time implements bo_condition {
         }
 
         return $isavailable;
+    }
+
+    /**
+     * The hard block is complementary to the is_available check.
+     * While is_available is used to build eg also the prebooking modals and...
+     * ... introduces eg the booking policy or the subbooking page, the hard block is meant to prevent ...
+     * ... unwanted booking. It's the check just before booking if we really...
+     * ... want the user to book. It will return always return false on subbookings...
+     * ... as they are not necessary, but return true when the booking policy is not yet answered.
+     * Hard block is only checked if is_available already returns false.
+     *
+     * @param booking_option_settings $booking_option_settings
+     * @param integer $userid
+     * @return boolean
+     */
+    public function hard_block(booking_option_settings $settings, $userid):bool {
+
+        $context = context_system::instance();
+        if (has_capability('mod/booking:overrideboconditions', $context)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -137,15 +150,9 @@ class booking_time implements bo_condition {
 
         $isavailable = $this->is_available($settings, $userid, $not);
 
-        if ($isavailable) {
-            $description = $full ? get_string('bo_cond_booking_time_full_available', 'mod_booking') :
-                get_string('bo_cond_booking_time_available', 'mod_booking');
-        } else {
-            $description = $full ? get_string('bo_cond_booking_time_full_not_available', 'mod_booking') :
-                get_string('bo_cond_booking_time_not_available', 'mod_booking');
-        }
+        $description = $this->get_description_string($isavailable, $full, $settings);
 
-        return [$isavailable, $description];
+        return [$isavailable, $description, BO_PREPAGE_NONE, BO_BUTTON_MYALERT];
     }
 
     /**
@@ -189,5 +196,107 @@ class booking_time implements bo_condition {
         if ($showhorizontalline) {
             $mform->addElement('html', '<hr class="w-50"/>');
         }
+    }
+
+    /**
+     * The page refers to an additional page which a booking option can inject before the booking process.
+     * Not all bo_conditions need to take advantage of this. But eg a condition which requires...
+     * ... the acceptance of a booking policy would render the policy with this function.
+     *
+     * @param integer $optionid
+     * @return array
+     */
+    public function render_page(int $optionid) {
+        return [];
+    }
+
+    /**
+     * Some conditions (like price & bookit) provide a button.
+     * Renders the button, attaches js to the Page footer and returns the html.
+     * Return should look somehow like this.
+     * ['mod_booking/bookit_button', $data];
+     *
+     * @param booking_option_settings $settings
+     * @param int $userid
+     * @param boolean $full
+     * @param boolean $not
+     * @return array
+     */
+    public function render_button(booking_option_settings $settings,
+        $userid = 0, $full = false, $not = false, bool $fullwidth = true): array {
+        global $USER;
+
+        $label = $this->get_description_string(false, $full, $settings);
+
+        return bo_info::render_button($settings, $userid, $label, 'alert alert-warning', true, $fullwidth, 'alert', 'option');
+    }
+
+    /**
+     * Helper function to return localized description strings.
+     *
+     * @param bool $isavailable
+     * @param bool $full
+     * @param booking_option_settings $settings
+     * @return string
+     */
+    private function get_description_string($isavailable, $full, $settings) {
+        if ($isavailable) {
+            $description = get_string('bo_cond_booking_time_available', 'mod_booking');
+        } else {
+            // Localized time format.
+            switch(current_language()) {
+                case 'de':
+                    $timeformat = "d.m.Y, H:i";
+                    break;
+                default:
+                    $timeformat = "F j, Y, g:i a";
+                    break;
+            }
+
+            // Get opening and closing time from option settings.
+            list($openingtime, $closingtime) = $this->get_booking_opening_and_closing_time($settings);
+
+            $description = '';
+            if (!empty($openingtime) && time() < $openingtime) {
+                $openingdatestring = date($timeformat, $openingtime);
+                $description .= $full ? get_string('bo_cond_booking_opening_time_full_not_available', 'mod_booking',
+                    $openingdatestring) : get_string('bo_cond_booking_opening_time_not_available', 'mod_booking');
+            }
+            if (!empty($closingtime) && time() > $closingtime) {
+                $closingdatestring = date($timeformat, $closingtime);
+                $description .= $full ? get_string('bo_cond_booking_closing_time_full_not_available', 'mod_booking',
+                    $closingdatestring) : get_string('bo_cond_booking_closing_time_not_available', 'mod_booking');
+            }
+            // Fallback: If description is still empty, we still want to show that it's not available.
+            if (empty($description)) {
+                $description = get_string('bo_cond_booking_time_not_available', 'mod_booking');
+            }
+        }
+
+        return $description;
+    }
+
+    /**
+     * Helper function to get opening and closing time from settings.
+     * @param booking_option_settings $settings
+     * @return array an array containing int $bookingopeningtime and $bookingclosingtime
+     */
+    private function get_booking_opening_and_closing_time(booking_option_settings $settings) {
+
+        // This condition is either hardcoded with the standard booking opening or booking closing time, or its customized.
+        if ($this->id == BO_COND_BOOKING_TIME) {
+            $openingtime = $settings->bookingopeningtime ?? null;
+            $closingtime = $settings->bookingclosingtime ?? null;
+        } else {
+
+            $jsonstring = $settings->availability ?? '';
+
+            $jsonobject = json_decode($jsonstring);
+
+            $openingtime = $jsonobject->openingtime ?? null;
+            $closingtime = $jsonobject->closingtime ?? null;
+        }
+
+        return [$openingtime, $closingtime];
     }
 }

@@ -36,10 +36,10 @@ export const init = () => {
                 return;
             }
             const userid = button.dataset.userid;
-            const optionid = button.dataset.optionid;
+            const itemid = button.dataset.itemid;
 
             button.addEventListener('click', () => {
-                toggleNotifiy(button, userid, optionid);
+                toggleNotifiy(button, userid, itemid);
             });
             button.dataset.initialized = true;
         });
@@ -57,9 +57,6 @@ export const init = () => {
     userid,
     optionid) => {
 
-    // eslint-disable-next-line no-console
-    console.log('we trigger call', userid, optionid);
-
     Ajax.call([{
         methodname: "mod_booking_toggle_notify_user",
         args: {
@@ -67,9 +64,6 @@ export const init = () => {
             'optionid': optionid
         },
         done: function(res) {
-
-            // eslint-disable-next-line no-console
-            console.log('res.status: ', res.status);
 
             toggleButton(button, res.status);
 

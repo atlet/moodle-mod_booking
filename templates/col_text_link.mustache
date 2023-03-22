@@ -22,27 +22,43 @@
 
     Data attributes required for JS:
     * data-region
+    
+    Example context (json):
+    {
+        "itemid" : 3,
+        "componentname" : "mod_booking",
+        "modalcounter" : 1,
+        "modaltitle" : "main",
+        "userid" : 133,
+        "editoptionurl" : "URL",
+        "manageresponsesurl" : "URL",
+        "optiondatesteachersurl" : "URL",
+        "showundocancel" : true,
+        "undocancellink" : "URL",
+        "showcancel" : true,
+        "cancellink": "URL"
+    }
 }}
-  
+
 {{#editoptionurl}}
 <div id="coltextlink-dropdown" class="dropdown">
-  <button class="btn btn-light dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+  <button class="btn btn-white dropdown-toggle mt-1" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
     <i class="fa fa-gear" aria-hidden="true"></i>
   </button>
   <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
       <h6 class="dropdown-header">{{#str}} actions {{/str}}</h6>
       <a class="dropdown-item editoption" href="{{editoptionurl}}" target="_self">
-        <i class="fa fa-edit" aria-hidden="true"></i> {{#str}} updatebooking, mod_booking {{/str}}
+        <i class="fa fa-edit fa-fw" aria-hidden="true"></i> {{#str}} editbookingoption, mod_booking {{/str}}
       </a>
       <a class="dropdown-item manageresponses" href="{{manageresponsesurl}}" target="_self">
-        <i class="fa fa-ticket" aria-hidden="true"></i> {{#str}} manageresponses, mod_booking {{/str}}
+        <i class="fa fa-ticket fa-fw" aria-hidden="true"></i> {{#str}} manageresponses, mod_booking {{/str}}
       </a>
       {{#showcancel}}{{{cancellink}}}{{/showcancel}}
       {{#showundocancel}}{{{undocancellink}}}{{/showundocancel}}
       {{#optiondatesteachersurl}}
       <h6 class="dropdown-header">{{#str}} reports {{/str}}</h6>
       <a class="dropdown-item" href="{{optiondatesteachersurl}}" target="_self">
-        <i class="fa fa-table" aria-hidden="true"></i> {{#str}} optiondatesteachersreport, mod_booking {{/str}}
+        <i class="fa fa-table fa-fw" aria-hidden="true"></i> {{#str}} optiondatesteachersreport, mod_booking {{/str}}
       </a>
       {{/optiondatesteachersurl}}
   </div>

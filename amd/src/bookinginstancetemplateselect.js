@@ -64,7 +64,6 @@ define(['jquery', 'core/ajax'], function($, ajax) {
                             $('#id_defaultoptionsort').val(obj.defaultoptionsort);
                             $('#id_enablepresence').val(obj.enablepresence);
                             $('#id_templateid').val(obj.templateid);
-                            $('#id_showdescriptionmode').val(obj.showdescriptionmode);
                             $('#id_showlistoncoursepage').val(obj.showlistoncoursepage);
                             $('#id_coursepageshortinfo').val(obj.coursepageshortinfo);
                             // Known issue: coursepageshortinfo won't be unhidden when filled from template.
@@ -117,7 +116,6 @@ define(['jquery', 'core/ajax'], function($, ajax) {
                             $('#id_numgenerator').val(obj.numgenerator);
                             $('#id_paginationnum').val(obj.paginationnum);
                             $('#id_banusernames').val(obj.banusernames);
-                            $('#id_showhelpfullnavigationlinks').val(obj.showhelpfullnavigationlinks);
                             $('#id_completionmodule').val(obj.completionmodule);
                             $('#id_comments').val(obj.comments);
                             $('#id_ratings').val(obj.ratings);
@@ -143,6 +141,7 @@ define(['jquery', 'core/ajax'], function($, ajax) {
                             // - course
                             // - enablecompletion
                             // - optionsfields
+                            // - optionsdownloadfields
                             // - reportfields
                             // - responsesfields
                             // - scale

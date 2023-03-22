@@ -129,10 +129,16 @@ abstract class booking_user_selector_base extends user_selector_base {
  */
 class booking_potential_user_selector extends booking_user_selector_base {
 
+    /** @var array $options */
     public $options;
 
-    public function __construct($name, $options) {
+    /** @var bool $bookanyone */
+    public $bookanyone;
+
+    public function __construct($name, $options, $bookanyone = false) {
+
         $this->options = $options;
+        $this->bookanyone = $bookanyone;
         parent::__construct($name, $options);
     }
 
@@ -153,11 +159,11 @@ class booking_potential_user_selector extends booking_user_selector_base {
         $groupsql = '';
         if ($onlygroupmembers) {
             list($groupsql, $groupparams) = \mod_booking\booking::booking_get_groupmembers_sql($this->course->id);
-            list($esql, $eparams) = get_enrolled_sql($this->options['accesscontext'], null, null, true);
+            list($enrolledsql, $eparams) = get_enrolled_sql($this->options['accesscontext'], null, null, true);
             $groupsql = " AND u.id IN (" . $groupsql.")";
             $params = array_merge($eparams, $groupparams);
         } else {
-            list($esql, $params) = get_enrolled_sql($this->options['accesscontext'], null, null, true);
+            list($enrolledsql, $params) = get_enrolled_sql($this->options['accesscontext'], null, null, true);
         }
 
         $option = new stdClass();
@@ -174,10 +180,23 @@ class booking_potential_user_selector extends booking_user_selector_base {
             $searchcondition .= ' AND u.institution LIKE :onlyinstitution';
         }
 
+        // If true, anyone can be booked - even users not enrolled.
+        // Only SITE admins are allowed to do this!
+        if ($this->bookanyone && is_siteadmin()) {
+            $enrolledsqlpart = '';
+        } else {
+            $enrolledsqlpart = "AND u.id IN (
+                SELECT esql.id
+                FROM ($enrolledsql) AS esql
+                WHERE esql.id > 1
+            )";
+        }
+
         $sql = " FROM {user} u
         WHERE $searchcondition
         AND u.suspended = 0
-        AND u.id IN (SELECT nnn.id FROM ($esql) AS nnn WHERE nnn.id > 1)
+        AND u.deleted = 0
+        $enrolledsqlpart
         $groupsql
         AND u.id NOT IN (
             SELECT ba.userid
@@ -206,10 +225,18 @@ class booking_potential_user_selector extends booking_user_selector_base {
             return array();
         }
 
-        if ($search) {
-            $groupname = get_string('enrolledusersmatching', 'enrol', $search);
+        if ($this->bookanyone) {
+            if ($search) {
+                $groupname = get_string('usersmatching', 'mod_booking');
+            } else {
+                $groupname = get_string('allmoodleusers', 'mod_booking');
+            }
         } else {
-            $groupname = get_string('enrolledusers', 'enrol');
+            if ($search) {
+                $groupname = get_string('usersmatching', 'mod_booking');
+            } else {
+                $groupname = get_string('enrolledusers', 'mod_booking');
+            }
         }
 
         return array($groupname => $availableusers);
@@ -325,7 +352,7 @@ function booking_confirm_booking($optionid, $user, $cm, $url) {
     }
     $message = "<h2>" . get_string('confirmbookingoffollowing', 'booking') . "</h2>" .
              $requestedcourse;
-    $message .= "<p><b>" . get_string('agreetobookingpolicy', 'booking') . ":</b></p>";
+    $message .= "<p><b>" . get_string('bookingpolicyagree', 'booking') . ":</b></p>";
     $message .= "<p>" . format_text($option->booking->settings->bookingpolicy) . "<p>";
     echo $OUTPUT->confirm($message, new moodle_url('/mod/booking/view.php', $optionidarray), $url);
     echo $OUTPUT->footer();
@@ -399,8 +426,6 @@ function get_rendered_eventdescription(int $optionid, int $cmid,
     // - Rendered live on the website (eg wihin a modal) -> use button.
     // - Rendered in calendar event -> use link.php? link.
     // - Rendered in ical file for mail -> use link.php? link.
-
-    $booking = singleton_service::get_instance_of_booking_by_cmid($cmid);
 
     $data = new bookingoption_description($optionid, null, $descriptionparam, true, $forbookeduser);
     $output = $PAGE->get_renderer('mod_booking');

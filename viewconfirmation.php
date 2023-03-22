@@ -22,7 +22,7 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 require_once(__DIR__ . '/../../config.php');
-require_once("locallib.php");
+require_once($CFG->dirroot . '/mod/booking/locallib.php');
 
 use mod_booking\booking_option;
 use mod_booking\message_controller;
@@ -37,6 +37,9 @@ $PAGE->set_url($url);
 list($course, $cm) = get_course_and_cm_from_cmid($cmid);
 
 require_course_login($course, false, $cm);
+
+// In Moodle 4.0+ we want to turn the instance description off on every page except view.php.
+$PAGE->activityheader->disable();
 
 if (!$bookingoption = new booking_option($cmid, $optionid, array(), 0, 0, false)) {
     throw new invalid_parameter_exception("Course module id is incorrect");
@@ -55,7 +58,12 @@ echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string("bookedtext", "booking"), 3, 'helptitle', 'uniqueid');
 
 $user = $DB->get_record('user', array('id' => $USER->id));
-$answer = $DB->get_record('booking_answers', array('userid' => $USER->id, 'optionid' => $optionid));
+$answer = $DB->get_record_sql(
+    "SELECT * FROM {booking_answers}
+    WHERE userid = :userid
+    AND optionid = :optionid
+    AND waitinglist < 2",
+    ['userid' => $USER->id, 'optionid' => $optionid]);
 if (!$answer) {
     echo $OUTPUT->error_text(get_string("notbooked", "booking"));
     echo $OUTPUT->continue_button(new moodle_url('/course/view.php', array('id' => $course->id)));

@@ -2671,7 +2671,7 @@ function xmldb_booking_upgrade($oldversion) {
     if ($oldversion < 2022090802) {
         // Get rid of the old "unique option names" workaround.
         // We use a separate "identifier" field now.
-        migrate_booking_option_identifiers();
+        migrate_booking_option_identifiers_2022090802();
 
         // Booking savepoint reached.
         upgrade_mod_savepoint(true, 2022090802, 'booking');
@@ -3044,7 +3044,7 @@ function xmldb_booking_upgrade($oldversion) {
 
     if ($oldversion < 2022112901) {
         // We need to migrate optionids to itemids and set the area to 'option'.
-        migrate_optionids_for_prices();
+        migrate_optionids_for_prices_2022112901();
 
         // Booking savepoint reached.
         upgrade_mod_savepoint(true, 2022112901, 'booking');
@@ -3303,6 +3303,128 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Booking savepoint reached.
         upgrade_mod_savepoint(true, 2023011600, 'booking');
+    }
+
+    if ($oldversion < 2023020300) {
+
+        // Define field showhelpfullnavigationlinks to be dropped from booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('showhelpfullnavigationlinks');
+
+        // Conditionally launch drop field showhelpfullnavigationlinks.
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2023020300, 'booking');
+    }
+
+    if ($oldversion < 2023020600) {
+
+        // Define field showdescriptionmode to be dropped from booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('showdescriptionmode');
+
+        // Conditionally launch drop field showdescriptionmode.
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2023020600, 'booking');
+    }
+
+    if ($oldversion < 2023021000) {
+
+        // Define field itemid to be added to booking_subbooking_answers.
+        $table = new xmldb_table('booking_subbooking_answers');
+        $field = new xmldb_field('itemid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'id');
+
+        // Conditionally launch add field itemid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2023021000, 'booking');
+    }
+
+    if ($oldversion < 2023021100) {
+
+        // Define field optionid to be added to booking_subbooking_answers.
+        $table = new xmldb_table('booking_subbooking_answers');
+        $field = new xmldb_field('optionid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'itemid');
+
+        // Conditionally launch add field optionid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2023021100, 'booking');
+    }
+
+    if ($oldversion < 2023021700) {
+        // Add field defaultoptionsort in case it was dropped.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('defaultoptionsort', XMLDB_TYPE_CHAR, '255', null, null, null, 'text', 'bookingimagescustomfield');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2023021700, 'booking');
+    }
+
+    if ($oldversion < 2023022100) {
+        // Add field optionsdownloadfields to table booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('optionsdownloadfields', XMLDB_TYPE_TEXT, 'small', null, null, null, null,
+            'optionsfields');
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2023022100, 'booking');
+    }
+
+    if ($oldversion < 2023022600) {
+
+        // Define field json to be added to booking_answers.
+        $table = new xmldb_table('booking_answers');
+        $field = new xmldb_field('json', XMLDB_TYPE_TEXT, null, null, null, null, null, 'notes');
+
+        // Conditionally launch add field json.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2023022600, 'booking');
+    }
+
+    if ($oldversion < 2023022800) {
+        // We need to migrate optionsfields for the new view.php.
+        migrate_optionsfields_2023022800();
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2023022800, 'booking');
+    }
+
+    if ($oldversion < 2023031301) {
+
+        // Changing precision of field allowupdatedays on table booking to (10).
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('allowupdatedays', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'teacherroleid');
+
+        // Launch change of precision for field allowupdatedays.
+        $dbman->change_field_precision($table, $field);
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2023031301, 'booking');
     }
 
     return true;

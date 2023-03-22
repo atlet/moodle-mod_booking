@@ -49,10 +49,11 @@ class mod_booking_generator extends testing_module_generator {
         $record = (object) (array) $record;
 
         $defaultsettings = array(
-            'assessed'    => 0,
-            'showviews'   => 'mybooking,myoptions,showall,showactive,myinstitution',
-            'whichview'   => 'showall',
-            'optionsfields' => 'text,coursestarttime,maxanswers',
+            'assessed' => 0,
+            'showviews' => 'mybooking,myoptions,showall,showactive,myinstitution',
+            'whichview' => 'showall',
+            'optionsfields' => 'description,statusdescription,teacher,showdates,dayofweektime,
+                                location,institution,minanswers',
             'reportsfields' => 'optionid,booking,institution,location,coursestarttime,
                                 city,department,courseendtime,numrec,userid,username,
                                 firstname,lastname,email,completed,waitinglist,status,

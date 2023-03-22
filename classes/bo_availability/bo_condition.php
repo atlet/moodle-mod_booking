@@ -77,6 +77,23 @@ interface bo_condition {
      */
     public function is_available(booking_option_settings $settings, $userid, $not);
 
+
+    /**
+     * The hard block is complementary to the is_available check.
+     * While is_available is used to build eg also the prebooking modals and...
+     * ... introduces eg the booking policy or the subbooking page, the hard block is meant to prevent ...
+     * ... unwanted booking. It's the check just before booking if we really...
+     * ... want the user to book. It will return always return false on subbookings...
+     * ... as they are not necessary, but return true when the booking policy is not yet answered.
+     * Hard block is only checked if is_available already returns false.
+     *
+     * @param booking_option_settings $booking_option_settings
+     * @param integer $userid
+     * @return boolean
+     */
+    public function hard_block(booking_option_settings $settings, $userid):bool;
+
+
     /**
      * Obtains a string describing this restriction (whether or not
      * it actually applies). Used to obtain information that is displayed to
@@ -106,4 +123,27 @@ interface bo_condition {
      */
     public function add_condition_to_mform(MoodleQuickForm &$mform, int $optionid);
 
+    /**
+     * Render the supplementary page before the booking process.
+     * This
+     *
+     * @param int $optionid
+     * @return array
+     */
+    public function render_page(int $optionid);
+
+    /**
+     * Some conditions (like price & bookit) provide a button.
+     * This function returns the html and the data to render the button.
+     * Return should look somehow like this.
+     * ['mod_booking/bookit_button', $data];
+     *
+     * @param booking_option_settings $settings
+     * @param int $userid
+     * @param bool $full
+     * @param bool $not
+     * @return array
+     */
+    public function render_button(booking_option_settings $settings,
+        int $userid = 0, bool $full = false, bool $not = false, bool $fullwidth = true): array;
 }

@@ -1,0 +1,227 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template mod_booking/bookingoption_description_prepagemodal_bookit
+
+    Classes required for JS:
+    * none
+
+    Data attributes required for JS:
+    * data-region
+
+    Example context (json):
+    {
+        "identifier": "2345",
+        "title": "AERIAL YOGA",
+        "titleprefix": "pf2345",
+        "modalcounter": 1,
+        "invisible": "0",
+        "annotation": "",
+        "userid": "2",
+        "description": "Flow Yoga Multistyle MindestteilnehmerInnen: 6",
+        "statusdescription": "v",
+        "imageurl": "http://localhost:58000/pluginfile.php/22/mod_booking/bookingimages/1/Aerialyoga.png",
+        "location": "1",
+        "address": "1090 Wien Tendlergasse 11",
+        "institution": "TENDLERGASSE",
+        "duration": "0 days  1 hours  0 minutes",
+        "booknowbutton": null,
+        "dates": [
+            {
+            "datestring": "3 March 2023, 10:30 AM - 11:45 AM",
+            "customfields": []
+            },
+            {
+            "datestring": "10 March 2023, 10:30 AM - 11:45 AM",
+            "customfields": []
+            }
+        ],
+        "teachers": [
+            "Maxima Yoga"
+        ],
+        "price": "79.00",
+        "priceformulaadd": "0.00",
+        "priceformulamultiply": "1.00",
+        "currency": "EUR",
+        "pricecategoryname": "Price",
+        "dayofweektime": "FR, 10:30 - 11:45",
+        "customfields": {
+            "sport": [
+            "AERIAL YOGA"
+            ],
+            "botags": [
+            ""
+            ]
+        },
+        "bookinginformation": {
+            "waiting": 0,
+            "booked": 1,
+            "reserved": 0,
+            "onnotifylist": false,
+            "maxanswers": "12",
+            "freeonlist": 11,
+            "fullybooked": false,
+            "showmanageresponses": true,
+            "manageresponsesurl": "http://localhost:58000/mod/booking/report.php?id=7&optionid=1"
+        },
+        "usertobuyfor": {
+            "id": "2",
+            "auth": "manual",
+            "confirmed": "1",
+            "policyagreed": "0",
+            "deleted": "0",
+            "suspended": "0",
+            "mnethostid": "1",
+            "username": "admin",
+            "password": "$2y$10$pAVtIFwAUH\bNSuVXjTgouqEjgxoYMb74bTiF0UEEoHJkKhrK0QdG",
+            "idnumber": "",
+            "firstname": "Admin",
+            "lastname": "User",
+            "email": "install@wunderbyte.at",
+            "emailstop": "0",
+            "phone1": "",
+            "phone2": "",
+            "institution": "",
+            "department": "",
+            "address": "",
+            "city": "",
+            "country": "",
+            "lang": "en",
+            "calendartype": "gregorian",
+            "theme": "",
+            "timezone": "99",
+            "firstaccess": "1669485049",
+            "lastaccess": "1678538409",
+            "lastlogin": "1678350420",
+            "currentlogin": "1678533798",
+            "lastip": "10.0.2.2",
+            "secret": "",
+            "picture": "0",
+            "description": "",
+            "descriptionformat": "1",
+            "mailformat": "1",
+            "maildigest": "0",
+            "maildisplay": "1",
+            "autosubscribe": "1",
+            "trackforums": "0",
+            "timecreated": "0",
+            "timemodified": "1669485103",
+            "trustbitmask": "0",
+            "imagealt": null,
+            "lastnamephonetic": "",
+            "firstnamephonetic": "",
+            "middlename": "",
+            "alternatename": "",
+            "moodlenetprofile": null,
+            "profile": []
+        },
+        "bookitsection": " HTML of Booked button",
+        "unitstring": "Units: 1.3",
+        "showmanageresponses": true,
+        "manageresponsesurl": "http://site/mod/booking/report.php?id=7&optionid=1"
+    }
+}}
+
+<p class="m-3">{{#str}} doyouwanttobook, mod_booking, {{title}} {{/str}}</p>
+<div class="bookingoption-description-prepagemodal-bookit w-100 ml-3 mr-3 mb-3 mt-1 p-2 text-justify bg-light border border-secondary rounded">
+    <div class="container-fluid">
+        <div class="row">
+            {{#imageurl}}
+            <div class="col-md-3">
+                <img class="w-100 rounded" src="{{imageurl}}" alt="{{title}}">
+            </div>
+            {{/imageurl}}
+            {{#imageurl}}<div class="col-md-9">{{/imageurl}}
+            {{^imageurl}}<div class="col-md-12">{{/imageurl}}
+                <h2 class="title" >{{#titleprefix}}{{.}} - {{/titleprefix}}{{title}}</h2>
+                <h6 class="h6-category">
+                    {{sport}}
+                </h6>
+                <div class="ml-3" {{^teachers}} style="display:none"{{/teachers}}>
+                    {{#teachers}}
+                        <span class="mr-1"><i class="fa fa-graduation-cap" aria-hidden="true"></i> {{.}}</span>
+                    {{/teachers}}
+                </div>
+                <ul class="infolist" style="list-style: none;">
+                    {{#dayofweektime}}
+                    <li>
+                        <span>
+                            <i class="fa fa-fw fa-clock-o" aria-hidden="true"></i>
+                        </span>
+                        <span class="d-md-none">
+                            {{#str}} dayofweektime, mod_booking {{/str}}
+                        </span>
+                            {{.}}
+                        <span>
+                            {{#unitstring}} ({{.}}) {{/unitstring}}
+                        </span>
+                    </li>
+                    {{/dayofweektime}}
+                    {{#location}}
+                    <li>
+                        <span>
+                            <i class="fa fa-fw fa-map-marker" aria-hidden="true"></i>
+                        </span>
+                        <span class="d-md-none">
+                            {{#str}} location, mod_booking {{/str}}
+                        </span>
+                        <span>
+                            {{{.}}}
+                        </span>
+                    </li>
+                    {{/location}}
+                    {{#institution}}
+                    <li>
+                        <span>
+                            <i class="fa fa-fw fa-building-o" aria-hidden="true"></i>
+                        </span>
+                        <span class="d-md-none">
+                            {{#str}} institution, mod_booking {{/str}}
+                        </span>
+                        <span>
+                            {{{.}}}
+                        </span>
+                    </li>
+                    {{/institution}}
+                </ul>
+                <a class="collapseoptiondatesbutton" data-toggle="collapse" href="#collapseoptiondates" role="button" aria-expanded="false" aria-controls="collapseoptiondates">
+                    {{#str}} showdates, mod_booking {{/str}}
+                </a>
+                <div id="collapseoptiondates" class="collapse list-group-item">
+                <div class="list-group">
+                    {{#dates}}
+                        <div class="list-group-item">
+                            <div>
+                                <b>{{{datestring}}}</b>
+                            </div>
+                            <div {{^customfields}}style="display:none"{{/customfields}}>
+                                <ul>
+                                    {{#customfields}}
+                                        <li>
+                                            {{name}}{{{value}}}
+                                        </li>
+                                    {{/customfields}}
+                                </ul>
+                            </div>
+                        </div>
+                    {{/dates}}
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

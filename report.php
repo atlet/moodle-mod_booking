@@ -26,7 +26,7 @@
 use mod_booking\output\booked_users;
 
 require_once(__DIR__ . '/../../config.php');
-require_once("locallib.php");
+require_once($CFG->dirroot . '/mod/booking/locallib.php');
 require_once("{$CFG->libdir}/tablelib.php");
 require_once("{$CFG->dirroot}/mod/booking/classes/all_userbookings.php");
 require_once("{$CFG->dirroot}/user/profile/lib.php");
@@ -163,6 +163,9 @@ list($course, $cm) = get_course_and_cm_from_cmid($id);
 
 require_course_login($course, false, $cm);
 
+// In Moodle 4.0+ we want to turn the instance description off on every page except view.php.
+$PAGE->activityheader->disable();
+
 $context = context_module::instance($cm->id);
 
 $bookingoption = new \mod_booking\booking_option($cm->id, $optionid, $urlparams, $page, 25,
@@ -264,7 +267,6 @@ $tableallbookings->is_downloading($download, $filename, $sheetname);
 $tablebaseurl = $currenturl;
 $tablebaseurl->remove_params('page');
 $tableallbookings->define_baseurl($tablebaseurl);
-$tableallbookings->defaultdownloadformat = 'ods';
 $tableallbookings->sortable(true, 'firstname');
 if (has_capability('mod/booking:downloadresponses', $context)) {
     $tableallbookings->is_downloadable(true);
@@ -386,14 +388,12 @@ if (!$tableallbookings->is_downloading()) {
                 $bookingoption->option) || has_capability('moodle/rating:rate', $context))) {
 
             $allusers = $bookingoption->get_all_users();
-            $bookedusers = array();
             $ratings = array();
-            foreach ($allusers as $baid => $user) {
+            foreach ($allusers as $userid => $user) {
                 if (in_array($user->userid, $allselectedusers) && $user->userid != $USER->id) {
                     $rating = new stdClass();
-                    $bookedusers[$user->userid] = $baid;
-                    $bookinganswerid = "rating" . $bookedusers[$user->userid];
-
+                    $baid = $user->baid;
+                    $bookinganswerid = "rating" . $baid;
                     $rating->rateduserid = $user->userid;
                     $rating->itemid = $baid;
                     $rating->rating = $_POST[$bookinganswerid];
@@ -408,7 +408,7 @@ if (!$tableallbookings->is_downloading()) {
             if (!empty($ratings)) {
                 booking_rate($ratings, $params);
                 redirect($url,
-                        (empty($bookingoption->option->notificationtext) ? get_string('ratingsuccess',
+                        (empty($bookingoption->option->notificationtext) ? get_string('ratingsuccessful',
                                 'booking') : $bookingoption->option->notificationtext), 5);
             }
         } else if (isset($_POST['sendreminderemail']) &&
@@ -630,8 +630,8 @@ if (!$tableallbookings->is_downloading()) {
 
     foreach ($bookingoption->teachers as $value) {
         $teachers[] = html_writer::link(
-                new moodle_url('/user/profile.php', array('id' => $value->userid)),
-                "{$value->firstname} {$value->lastname}", array());
+                new moodle_url('/mod/booking/teacher.php', array('teacherid' => $value->userid)),
+                "{$value->firstname} {$value->lastname}");
     }
 
     $linkst = '';
@@ -652,7 +652,7 @@ if (!$tableallbookings->is_downloading()) {
                     array());
         }
 
-        $linkst = "(" . implode(", ", $linkst) . ")";
+        $linkst = empty($linkst) ? "" : "(" . implode(", ", $linkst) . ")";
     }
 
     if ($isteacher) {
@@ -814,9 +814,8 @@ if (!$tableallbookings->is_downloading()) {
     $tableallbookings->finish_output();
 
     $onlyoneurl = new moodle_url('/mod/booking/view.php',
-            array('id' => $id, 'optionid' => $optionid, 'action' => 'showonlyone',
+            array('id' => $id, 'optionid' => $optionid,
                 'whichview' => 'showonlyone'));
-    $onlyoneurl->set_anchor('goenrol');
 
     $pollurl = trim($bookingoption->option->pollurl);
     if (!empty($pollurl)) {
@@ -825,7 +824,7 @@ if (!$tableallbookings->is_downloading()) {
                  ($bookingoption->option->pollsend ? ' &#x2713;' : '') . ' | ';
     }
 
-    echo html_writer::link($onlyoneurl, get_string('onlythisbookingurl', 'booking'), array());
+    echo html_writer::link($onlyoneurl, get_string('onlythisbookingoption', 'booking'), array());
     if (!empty($bookingoption->option->shorturl)) {
         echo " ({$bookingoption->option->shorturl})";
     }
@@ -857,7 +856,7 @@ if (!$tableallbookings->is_downloading()) {
 
     $customfields = '';
 
-    list($columns, $headers, $userprofilefields) = $bookingoption->booking->get_fields();
+    list($columns, $headers, $userprofilefields) = $bookingoption->booking->get_manage_responses_fields();
 
     if ($userprofilefields) {
         foreach ($userprofilefields as $profilefield) {

@@ -169,8 +169,8 @@ class mobile {
             'pagnumber' => $pagnumber, 'courseid' => $args->courseid, 'booking' => $booking,
                         'booking_option' => $options, 'cmid' => $cm->id, 'activeview' => $whichview,
             'string' => array(
-                'showactive' => get_string('showactive', 'booking'),
-                'showallbookings' => get_string('showallbookings', 'booking'),
+                'showactive' => get_string('activebookingoptions', 'booking'),
+                'showallbookingoptions' => get_string('showallbookingoptions', 'booking'),
                 'showmybookingsonly' => get_string('showmybookingsonly', 'booking'),
                 'next' => get_string('next', 'booking'),
                 'previous' => get_string('previous', 'booking')
@@ -351,7 +351,7 @@ class mobile {
             }
             $message .= '<br><br>' . get_string('confirmbookingoffollowing', 'booking');
             if (!empty($booking->settings->bookingpolicy)) {
-                $message .= "<br><br>" . get_string('agreetobookingpolicy', 'booking');
+                $message .= "<br><br>" . get_string('bookingpolicyagree', 'booking');
                 $message .= "<br>" . format_text($booking->settings->bookingpolicy, FORMAT_HTML);
             }
             $bnow = (empty($booking->settings->btnbooknowname) ? get_string('booknow', 'booking') :

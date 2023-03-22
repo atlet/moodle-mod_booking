@@ -106,7 +106,10 @@ class booking_answers {
             AND u.deleted = 0
             ORDER BY ba.timecreated ASC"; */
 
-            $sql = "SELECT ba.id as baid, ba.userid as id, ba.userid, ba.waitinglist, ba.timecreated, ba.optionid
+            $sql = "SELECT
+                ba.id as baid, ba.userid as id, ba.userid,
+                ba.waitinglist, ba.completed,
+                ba.timecreated, ba.optionid
             FROM {booking_answers} ba
             WHERE ba.optionid = :optionid
             ORDER BY ba.timecreated ASC";
@@ -192,10 +195,14 @@ class booking_answers {
             $userid = $USER->id;
         }
 
-        if (isset($this->usersonlist[$userid])) {
-            return STATUSPARAM_BOOKED;
+        if (isset($this->usersreserved[$userid])) {
+            return STATUSPARAM_RESERVED;
+        } else if (isset($this->userstonotify[$userid])) {
+            return STATUSPARAM_NOTIFYMELIST;
         } else if (isset($this->usersonwaitinglist[$userid])) {
             return STATUSPARAM_WAITINGLIST;
+        } else if (isset($this->usersonlist[$userid])) {
+            return STATUSPARAM_BOOKED;
         } else {
             return STATUSPARAM_NOTBOOKED;
         }
@@ -238,6 +245,7 @@ class booking_answers {
 
         $returnarray['waiting'] = count($this->usersonwaitinglist);
         $returnarray['booked'] = count($this->usersonlist);
+        $returnarray['reserved'] = count($this->usersreserved);
 
         $returnarray['onnotifylist'] = $this->user_on_notificationlist($userid);
 
@@ -263,9 +271,15 @@ class booking_answers {
             $returnarray['freeonwaitinglist'] = $returnarray['maxoverbooking'] - $returnarray['waiting'];
         }
 
+        if (!empty($this->bookingoptionsettings->minanswers) && $this->bookingoptionsettings->minanswers > 0) {
+            $returnarray['minanswers'] = $this->bookingoptionsettings->minanswers;
+        }
+
         // First check list of booked users.
         if (isset($this->usersonlist[$userid]) && $this->usersonlist[$userid]->waitinglist == STATUSPARAM_BOOKED) {
             $returnarray = array('iambooked' => $returnarray);
+        } else if (isset($this->usersreserved[$userid]) && $this->usersreserved[$userid]->waitinglist == STATUSPARAM_RESERVED) {
+            $returnarray = array('iamreserved' => $returnarray);
         } else if (isset($this->usersonwaitinglist[$userid]) &&
             $this->usersonwaitinglist[$userid]->waitinglist == STATUSPARAM_WAITINGLIST) {
             // Now check waiting list.
@@ -273,10 +287,6 @@ class booking_answers {
         } else {
             // Else it's not booked.
             $returnarray = array('notbooked' => $returnarray);
-        }
-
-        if ($this->bookingoptionsettings->minanswers != 0) {
-            $returnarray['minanswers'] = $this->bookingoptionsettings->minanswers;
         }
 
         return $returnarray;
@@ -329,4 +339,34 @@ class booking_answers {
 
         return $DB->count_records_sql($sql, $params);
     }
+
+    /**
+     * Uncached function to get booking status of user regarding the subbooking.
+     *
+     * @param integer $subbookingid
+     * @param integer $userid
+     * @return integer
+     */
+    public function subbooking_user_status(int $subbookingid, int $userid = 0) {
+        global $DB;
+
+        $sql = "SELECT *
+            FROM {booking_subbooking_answers}
+            WHERE sboptionid=:subbookingid
+            AND optionid=:optionid
+            AND status <= :statusparam"; // We get booked, waitinglist and reserved.
+
+        $params = [
+            'subbookingid' => $subbookingid,
+            'optionid' => $this->optionid,
+            'statusparam' => STATUSPARAM_RESERVED,
+        ];
+
+        if ($record = $DB->get_record_sql($sql, $params)) {
+            return $record->status;
+        } else {
+            return STATUSPARAM_NOTBOOKED;
+        }
+    }
+
 }

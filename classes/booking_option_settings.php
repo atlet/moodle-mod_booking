@@ -19,10 +19,14 @@ namespace mod_booking;
 use context_module;
 use context_system;
 use local_entities\entitiesrelation_handler;
+use mod_booking\bo_availability\bo_subinfo;
+use mod_booking\bo_availability\conditions\subbooking;
 use mod_booking\customfield\booking_handler;
+use mod_booking\subbookings\subbookings_info;
 use moodle_exception;
 use stdClass;
 use moodle_url;
+use User;
 
 /**
  * Settings class for booking option instances.
@@ -196,11 +200,11 @@ class booking_option_settings {
     /** @var string $optiondatesteachersurl */
     public $optiondatesteachersurl = null;
 
-    /** @var string $imageurl */
-    public $imageurl = null;
-
     /** @var array $entity for displaying enity information [id, name]*/
     public $entity = [];
+
+    /** @var array $load_subbookings for storing subbookings  */
+    public $subbookings = [];
 
     /** @var float $priceformulaadd */
     public $priceformulaadd = null;
@@ -219,6 +223,10 @@ class booking_option_settings {
 
     /** @var int $status like 1 for cancelled */
     public $status = null;
+
+    /** @var string $imageurl url */
+    public $imageurl = '';
+
 
     /**
      * Constructor for the booking option settings class.
@@ -455,6 +463,14 @@ class booking_option_settings {
                 $dbrecord->entity = $this->entity;
             } else {
                 $this->entity = $dbrecord->entity;
+            }
+
+            // If the key "subbookings" is not yet set, we need to load them via handler first.
+            if (!isset($dbrecord->subbookings)) {
+                $this->load_subbookings($optionid);
+                $dbrecord->subbookings = $this->subbookings;
+            } else {
+                $this->subbookings = $dbrecord->subbookings;
             }
 
             return $dbrecord;
@@ -747,6 +763,10 @@ class booking_option_settings {
         }
     }
 
+    private function load_subbookings(int $optionid) {
+        $this->subbookings = subbookings_info::load_subbookings($optionid);
+    }
+
     /**
      * Returns the cached settings as stClass.
      * We will always have them in cache if we have constructed an instance,
@@ -969,5 +989,83 @@ class booking_option_settings {
         }
         $title .= $this->text;
         return $title;
+    }
+
+    /**
+     * Especially to create a shopping cart and such...
+     * ... we want one central function where we always get all the necessary keys.
+     *
+     * @param object $user
+     * @return array
+     */
+    public function return_booking_option_information(object $user = null):array {
+
+        global $USER;
+
+        if (empty($user)) {
+            $user = $USER;
+        }
+
+        $price = price::get_price('option', $this->id, $user);
+        $canceluntil = booking_option::return_cancel_until_date($this->id);
+
+        $returnarray = [
+            'itemid' => $this->id,
+            'title' => $this->text,
+            'price' => $price['price'] ?? null,
+            'currency' => $price['currency'] ?? null,
+            'userid' => $user->id,
+            'component' => 'mod_booking',
+            'area' => 'option',
+            'description' => $this->description,
+            'imageurl' => $this->imageurl ?? '',
+            'canceluntil' => $canceluntil ?? 0,
+            'coursestarttime' => $this->coursestarttime ?? 0,
+            'courseendtime' => $this->courseendtime ?? 0,
+        ];
+
+        return $returnarray;
+    }
+
+    /**
+     * Especially to create a shopping cart and such...
+     * ... we want one central function where we always get all the necessary keys.
+     *
+     * @param integer $subbookingid
+     * @param object $user
+     * @return array
+     */
+    public function return_subbooking_option_information(int $subbookingid, object $user = null):array {
+
+        global $USER;
+
+        if (empty($user)) {
+            $user = $USER;
+        }
+
+        $subbooking = subbookings_info::get_subbooking_by_area_and_id('subbooking', $subbookingid);
+
+        // This is the price for the subbooking id.
+        $price = $subbooking->return_price($user);
+        $description = $subbooking->return_description($user);
+
+        // But some subbookings might have a different price, eg. when you can buy one item multiple times.
+        $canceluntil = booking_option::return_cancel_until_date($this->id);
+
+        $returnarray = [
+            'itemid' => $subbookingid,
+            'name' => $subbooking->name,
+            'price' => $price['price'] ?? "0.00",
+            'currency' => $price['currency'] ?? 'EUR',
+            'userid' => $user->id,
+            'component' => 'mod_booking',
+            'area' => 'subbooking',
+            'description' => $description,
+            'canceluntil' => $canceluntil ?? 0,
+            'coursestarttime' => $this->coursestarttime ?? 0,
+            'courseendtime' => $this->courseendtime ?? 0,
+        ];
+
+        return $returnarray;
     }
 }

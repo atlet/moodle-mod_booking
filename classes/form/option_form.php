@@ -36,13 +36,14 @@ use mod_booking\singleton_service;
 use local_entities\entitiesrelation_handler;
 use local_entities\local\entities\entitydate;
 use mod_booking\bo_availability\bo_info;
+use mod_booking\subbookings\subbookings_info;
 use mod_booking\dates_handler;
-use mod_booking\event\teacher_added;
 use mod_booking\teachers_handler;
 use moodle_url;
+use moodleform;
 use stdClass;
 
-class option_form extends \moodleform {
+class option_form extends moodleform {
 
     /** @var bool $formmode 'simple' or 'expert' */
     public $formmode = null;
@@ -446,6 +447,10 @@ class option_form extends \moodleform {
         // Add availability conditions.
         bo_info::add_conditions_to_mform($mform, $optionid);
 
+        // TODO: expert/simple mode needs to work with this too!
+        // Add subbookings options.
+        subbookings_info::add_subbookings_to_mform($mform, $this->_customdata);
+
         // Workaround: Only show, if it is not turned off in the option form config.
         // We currently need this, because hideIf does not work with headers.
         // In expert mode, we do not hide anything.
@@ -482,7 +487,7 @@ class option_form extends \moodleform {
             !isset($optionformconfig['bookingoptiontextheader']) || $optionformconfig['bookingoptiontextheader'] == 1) {
             // Booking option text.
             $mform->addElement('header', 'bookingoptiontextheader',
-                    get_string('bookingoptiontext', 'mod_booking'));
+                    get_string('textdependingonstatus', 'mod_booking'));
         }
 
         // Workaround: Only show, if it is not turned off in the option form config.
@@ -905,7 +910,6 @@ class option_form extends \moodleform {
         $link = new moodle_url('/mod/booking/view.php', [
             'optionid' => $fromform->optionid,
             'id' => $fromform->id,
-            'action' => 'showonlyone',
             'whichview' => 'showonlyone']);
 
         foreach ($datestobook as $date) {

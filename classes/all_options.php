@@ -86,8 +86,8 @@ class all_options extends table_sql {
             $ddoptions[] = '<div class="dropdown-item">' . html_writer::link(
                     new moodle_url('/mod/booking/editoptions.php',
                         array('id' => $this->cm->id, 'optionid' => $values->id)),
-                    $OUTPUT->pix_icon('t/editstring', get_string('updatebooking', 'mod_booking')) .
-                    get_string('updatebooking', 'mod_booking')) . '</div>';
+                    $OUTPUT->pix_icon('t/editstring', get_string('editbookingoption', 'mod_booking')) .
+                    get_string('editbookingoption', 'mod_booking')) . '</div>';
 
             // Multiple dates session.
             $ddoptions[] = '<div class="dropdown-item">' .
@@ -111,13 +111,12 @@ class all_options extends table_sql {
             // Show only one option.
             $onlyoneurl = new moodle_url('/mod/booking/view.php',
                 array('id' => $this->cm->id, 'optionid' => $values->id,
-                    'action' => 'showonlyone', 'whichview' => 'showonlyone'));
-            $onlyoneurl->set_anchor('goenrol');
+                    'whichview' => 'showonlyone'));
             $ddoptions[] = '<div class="dropdown-item">' .
                 html_writer::link($onlyoneurl,
                     $OUTPUT->pix_icon('i/publish',
-                        get_string('onlythisbookingurl', 'mod_booking')) .
-                    get_string('onlythisbookingurl', 'mod_booking')) . '</div>';
+                        get_string('onlythisbookingoption', 'mod_booking')) .
+                    get_string('onlythisbookingoption', 'mod_booking')) . '</div>';
 
             if (has_capability('mod/booking:updatebooking', $this->context)) {
                 $ddoptions[] = '<div class="dropdown-item">' . html_writer::link(new moodle_url('/mod/booking/report.php',
@@ -216,7 +215,7 @@ class all_options extends table_sql {
         }
 
         // Use the renderer to output this column.
-        $data = new \mod_booking\output\col_coursestarttime($this->booking, $values->id);
+        $data = new \mod_booking\output\col_coursestarttime($values->id, $this->booking);
         $output = $PAGE->get_renderer('mod_booking');
         // We can go with the data from bookingoption_description directly to modal.
         return $output->render_col_coursestarttime($data);
@@ -286,17 +285,7 @@ class all_options extends table_sql {
             $data->invisible = true;
         }
 
-        $ret = '';
-
-        if ($this->booking->settings->showdescriptionmode == 0) {
-            // We will have a number of modals on this site, therefore we have to distinguish them.
-            $data->modalcounter = $values->id;
-
-            // We can go with the data from bookingoption_description directly to modal.
-            $ret = $output->render_col_text_modal($data);
-        } else {
-            $ret = $output->render_bookingoption_description($data);
-        }
+        $ret = $output->render_bookingoption_description($data);
 
         // Progress bar showing the consumed quota visually.
         if (get_config('booking', 'showprogressbars')) {
@@ -329,14 +318,6 @@ class all_options extends table_sql {
         }
 
         return $output;
-    }
-
-    protected function col_availableplaces($values) {
-
-        // We moved this code to booking_utils so it's available outside of table_sql.
-
-        $utils = new booking_utils;
-        return $utils->return_button_based_on_record($this->booking, $this->context, $values);
     }
 
     /**

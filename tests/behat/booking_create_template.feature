@@ -29,30 +29,28 @@ Feature: In a booking create a template
     When I am on "Course 1" course homepage
     Then I should see "My booking"
     And I follow "My booking"
-    ## And I follow "Actions menu"
     And I follow "New booking option"
     And I set the following fields to these values:
-      | Booking option name | New option - Webinar |
+      | Booking option name | New option - Template |
     Then I click on "Start and end time of course are known" "checkbox"
     Then I set the field "Add to course calendar" to "Add to calendar (visible only to course participants)"
     And I set the following fields to these values:
-      | coursestarttime[day]    | 31       |
-      | coursestarttime[month]  | December |
-      | coursestarttime[year]   | 2022     |
-      | coursestarttime[hour]   | 09       |
-      | coursestarttime[minute] | 00       |
+      | coursestarttime[day]    | ##tomorrow##%d## |
+      | coursestarttime[month]  | ##tomorrow##%B## |
+      | coursestarttime[year]   | ##tomorrow##%Y## |
+      | coursestarttime[hour]   | 09               |
+      | coursestarttime[minute] | 00               |
     And I set the following fields to these values:
-      | courseendtime[day]    | 31       |
-      | courseendtime[month]  | December |
-      | courseendtime[year]   | 2023     |
-      | courseendtime[hour]   | 09       |
-      | courseendtime[minute] | 00       |
+      | courseendtime[day]    | ##tomorrow##%d##     |
+      | courseendtime[month]  | ##tomorrow##%B##     |
+      | courseendtime[year]   | ## + 1 year ## %Y ## |
+      | courseendtime[hour]   | 09                   |
+      | courseendtime[minute] | 00                   |
     Then I set the field "Add as template" to "Use as global template"
     And I press "Save and go back"
-    ## And I follow "Actions menu"
     And I follow "New booking option"
     And I set the following fields to these values:
-      | Populate from template | New option - Webinar         |
+      | Populate from template | New option - Template        |
       | Booking option name    | Option created from template |
     And I press "Save and go back"
     Then I should see "Option created from template"

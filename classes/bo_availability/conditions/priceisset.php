@@ -26,10 +26,11 @@
 
  namespace mod_booking\bo_availability\conditions;
 
+use context_module;
 use mod_booking\bo_availability\bo_condition;
-use mod_booking\booking_answers;
+use mod_booking\booking_option;
 use mod_booking\booking_option_settings;
-use mod_booking\output\col_price;
+use mod_booking\output\bookit_price;
 use mod_booking\price;
 use mod_booking\singleton_service;
 use MoodleQuickForm;
@@ -85,10 +86,6 @@ class priceisset implements bo_condition {
         // This is the return value. Not available to begin with.
         $isavailable = false;
 
-        // Get the booking answers for this instance.
-        $bookinganswer = singleton_service::get_instance_of_booking_answers($settings);
-        $user = singleton_service::get_instance_of_user($userid);
-
         $priceitems = price::get_prices_from_cache_or_db('option', $settings->id);
 
         // If the user is not yet booked we return true.
@@ -103,6 +100,23 @@ class priceisset implements bo_condition {
         }
 
         return $isavailable;
+    }
+
+    /**
+     * The hard block is complementary to the is_available check.
+     * While is_available is used to build eg also the prebooking modals and...
+     * ... introduces eg the booking policy or the subbooking page, the hard block is meant to prevent ...
+     * ... unwanted booking. It's the check just before booking if we really...
+     * ... want the user to book. It will return always return false on subbookings...
+     * ... as they are not necessary, but return true when the booking policy is not yet answered.
+     * Hard block is only checked if is_available already returns false.
+     *
+     * @param booking_option_settings $booking_option_settings
+     * @param integer $userid
+     * @return boolean
+     */
+    public function hard_block(booking_option_settings $settings, $userid):bool {
+        return true;
     }
 
     /**
@@ -128,15 +142,16 @@ class priceisset implements bo_condition {
 
         $isavailable = $this->is_available($settings, $userid, $not);
 
-        if ($isavailable) {
-            $description = $full ? get_string('bo_cond_priceisset_full_available', 'mod_booking') :
-                get_string('bo_cond_priceisset_available', 'mod_booking');
-        } else {
-            $description = $full ? get_string('bo_cond_priceisset_full_not_available', 'mod_booking') :
-                get_string('bo_cond_priceisset_not_available', 'mod_booking');
+        $description = $this->get_description_string($isavailable, $full);
+
+        // If shopping cart is not installed, we still want to allow admins to book for others.
+        $context = context_module::instance($settings->cmid);
+        if (!class_exists('local_shopping_cart\shopping_cart') &&
+            has_capability('mod/booking:bookforothers', $context)) {
+            return [$isavailable, $description, BO_PREPAGE_NONE, BO_BUTTON_MYALERT];
         }
 
-        return [$isavailable, $description];
+        return [$isavailable, $description, BO_PREPAGE_NONE, BO_BUTTON_MYBUTTON];
     }
 
     /**
@@ -148,5 +163,75 @@ class priceisset implements bo_condition {
      */
     public function add_condition_to_mform(MoodleQuickForm &$mform, int $optionid = 0) {
         // Do nothing.
+    }
+
+    /**
+     * The page refers to an additional page which a booking option can inject before the booking process.
+     * Not all bo_conditions need to take advantage of this. But eg a condition which requires...
+     * ... the acceptance of a booking policy would render the policy with this function.
+     *
+     * @param integer $optionid
+     * @return array
+     */
+    public function render_page(int $optionid) {
+        $response = [
+            'data' => [],
+            // phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+            /* 'json' => '', */
+            'template' => '',
+            'buttontype' => 0, // This means that the continue button is enabled.
+        ];
+
+        return $response;
+    }
+
+    /**
+     * Some conditions (like price & bookit) provide a button.
+     * Renders the button, attaches js to the Page footer and returns the html.
+     * Return should look somehow like this.
+     * ['mod_booking/bookit_button', $data];
+     *
+     * @param booking_option_settings $settings
+     * @param int $userid
+     * @param bool $full
+     * @param bool $not
+     * @return array
+     */
+    public function render_button(booking_option_settings $settings,
+        int $userid = 0, bool $full = false, bool $not = false, bool $fullwidth = true): array {
+
+        global $USER;
+
+        $userid = !empty($userid) ? $userid : $USER->id;
+
+        $settings = singleton_service::get_instance_of_booking_option_settings($settings->id);
+
+        $user = singleton_service::get_instance_of_user($userid);
+
+        $data = $settings->return_booking_option_information($user);
+
+        if ($fullwidth) {
+            $data['fullwidth'] = $fullwidth;
+        }
+
+        return ['mod_booking/bookit_price', $data];
+    }
+
+    /**
+     * Helper function to return localized description strings.
+     *
+     * @param bool $isavailable
+     * @param bool $full
+     * @return string
+     */
+    private function get_description_string($isavailable, $full): string {
+        if ($isavailable) {
+            $description = $full ? get_string('bo_cond_priceisset_full_available', 'mod_booking') :
+                get_string('bo_cond_priceisset_available', 'mod_booking');
+        } else {
+            $description = $full ? get_string('bo_cond_priceisset_full_not_available', 'mod_booking') :
+                get_string('bo_cond_priceisset_not_available', 'mod_booking');
+        }
+        return $description;
     }
 }

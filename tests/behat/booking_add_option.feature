@@ -33,8 +33,8 @@ Feature: In a booking instance create booking options
       | Event type                       | Webinar                                                |
       | Booking text                     | This is the description for the test booking instance. |
       | Organizer name                   | Teacher 1                                              |
-      | Sort by                          | Booking option name                                    |
-      | Default view for booking options | All bookings                                           |
+      | Sort by                          | Name (without prefix)                                  |
+      | Default view for booking options | All booking options                                    |
     And I press "Save and return to course"
     Then I should see "Test booking"
     And I log out
@@ -48,25 +48,27 @@ Feature: In a booking instance create booking options
       | Booking option name | Test option - Webinar |
     And I set the field "startendtimeknown" to "checked"
     And I set the field "addtocalendar" to "1"
+    And I wait "1" seconds
     And I set the following fields to these values:
-      | coursestarttime[day]    | 31       |
-      | coursestarttime[month]  | December |
-      | coursestarttime[year]   | 2021     |
-      | coursestarttime[hour]   | 09       |
-      | coursestarttime[minute] | 00       |
+      | coursestarttime[day]    | ## tomorrow ## %d ## |
+      | coursestarttime[month]  | ## tomorrow ## %B ## |
+      | coursestarttime[year]   | ## tomorrow ## %Y ## |
+      | coursestarttime[hour]   | 00                    |
+      | coursestarttime[minute] | 00                    |
     And I set the following fields to these values:
-      | courseendtime[day]    | 31       |
-      | courseendtime[month]  | December |
-      | courseendtime[year]   | 2022     |
-      | courseendtime[hour]   | 09       |
-      | courseendtime[minute] | 00       |
+      | courseendtime[day]    | ## + 1 year ## %d ## |
+      | courseendtime[month]  | ## + 1 year ## %B ## |
+      | courseendtime[year]   | ## + 1 year ## %Y ## |
+      | courseendtime[hour]   | 00                   |
+      | courseendtime[minute] | 00                   |
     And I press "Save and go back"
-    And I should see "Book now"
+    And I should see "Book now" in the "#allbookingoptionstable_r1" "css_element"
     And I log out
     And I am on the "Course 1" course page logged in as student1
     And I follow "My booking"
-    And I press "Book now"
-    Then I should see "Your booking was successfully saved"
-    And I press "Continue"
-    And I should see "Booked"
-    And I should not see "Book now"
+    And I wait "1" seconds
+    And I click on "Book now" "text" in the "#allbookingoptionstable_r1 .booknow" "css_element"
+    And I should see "Do you really want to book?" in the "#allbookingoptionstable_r1" "css_element"
+    And I click on "Do you really want to book?" "text" in the "#allbookingoptionstable_r1" "css_element"
+    And I should see "Booked" in the "#allbookingoptionstable_r1" "css_element"
+    And I should not see "Book now" in the "#allbookingoptionstable_r1" "css_element"

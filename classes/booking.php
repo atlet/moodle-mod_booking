@@ -151,6 +151,15 @@ class booking {
     }
 
     /**
+     * Returm number of displayed rows of options per page for pagination (or given default)
+     * @return int
+     */
+    public function get_pagination_setting():int {
+        $paginationnum = (int) $this->settings->paginationnum > 0 ? (int) $this->settings->paginationnum : 40;
+        return $paginationnum;
+    }
+
+    /**
      * get all the user ids who are allowed to book capability mod/booking:choose available in
      * $this->canbookusers
      */
@@ -419,11 +428,82 @@ class booking {
     }
 
     /**
-     * Get extra fields to display in report.php and view.php
+     * Get fields for download of booking options.
+     * @param bool $download true for download, else for page
+     * @return array an array of headers and columns
+     */
+    public function get_bookingoptions_fields(bool $download = false) {
+
+        if ($download) {
+            $fields = explode(',', $this->settings->optionsdownloadfields);
+        } else {
+            $fields = explode(',', $this->settings->optionsfields);
+        }
+
+        $columns = [];
+        $headers = [];
+
+        foreach ($fields as $value) {
+            switch ($value) {
+                case 'identifier':
+                    $headers[] = get_string('optionidentifier', 'mod_booking');
+                    $columns[] = 'identifier';
+                    break;
+                case 'titleprefix':
+                    $headers[] = get_string('titleprefix', 'mod_booking');
+                    $columns[] = 'titleprefix';
+                    break;
+                case 'text':
+                    $headers[] = get_string('bookingoption', 'mod_booking');
+                    $columns[] = 'text';
+                    break;
+                case 'description':
+                    $headers[] = get_string('description', 'mod_booking');
+                    $columns[] = 'description';
+                    break;
+                case 'teacher':
+                    $headers[] = get_string('teachers', 'mod_booking');
+                    $columns[] = 'teacher';
+                    break;
+                case 'showdates':
+                    $headers[] = get_string('dates', 'mod_booking');
+                    $columns[] = 'showdates';
+                    break;
+                case 'dayofweektime':
+                    $headers[] = get_string('dayofweektime', 'mod_booking');
+                    $columns[] = 'dayofweektime';
+                    break;
+                case 'location':
+                    $headers[] = get_string('location', 'mod_booking');
+                    $columns[] = 'location';
+                    break;
+                case 'institution':
+                    $headers[] = get_string('institution', 'mod_booking');
+                    $columns[] = 'institution';
+                    break;
+                case 'course':
+                    $headers[] = get_string('course', 'core');
+                    $columns[] = 'course';
+                    break;
+                case 'minanswers':
+                    $headers[] = get_string('minanswers', 'mod_booking');
+                    $columns[] = 'minanswers';
+                    break;
+                case 'bookings':
+                    $headers[] = get_string('bookings', 'mod_booking');
+                    $columns[] = 'bookings';
+                    break;
+            }
+        }
+        return [$headers, $columns];
+    }
+
+    /**
+     * Get extra fields to display in report.php.
      *
      * @return string[][]|array[]
      */
-    public function get_fields() {
+    public function get_manage_responses_fields() {
         global $DB;
         $reportfields = explode(',', $this->settings->reportfields);
         list($addquoted, $addquotedparams) = $DB->get_in_or_equal($reportfields);
@@ -549,9 +629,15 @@ class booking {
 
                 if ($nrec === 0) {
                     $bookingoption = $DB->get_record('booking_options', array('id' => $this->settings->autcrtemplate));
-                    $bookingoption->text = "{$USER->institution} - " . fullname($USER);
+                    $bookingoption->text = '';
+                    if (!empty($USER->institution)) {
+                        $bookingoption->text .= "{$USER->institution} - ";
+                    } else {
+                        $bookingoption->text .= "[AUTO] ";
+                    }
+                    $bookingoption->text .= "{$USER->firstname} {$USER->lastname}";
                     $bookingoption->bookingid = $this->id;
-                    $bookingoption->description = (is_null($bookingoption->description) ? '' : $bookingoption->description);
+                    $bookingoption->description = (empty($bookingoption->description) ? '' : $bookingoption->description);
                     unset($bookingoption->id);
 
                     $nrecid = $DB->insert_record('booking_options', $bookingoption, true, false);
@@ -608,31 +694,35 @@ class booking {
      * Where means that it restricts the number of total records.
      * This distinction is important for the automatic filter generation of Wunderbyte Table.
      *
-     * @param integer $limitfrom
-     * @param integer $limitnum
+     * @param int $limitfrom
+     * @param int $limitnum
      * @param string $searchtext
-     * @param string $fields
-     * @param [type] $context
+     * @param ?string $fields
+     * @param ?object $context
      * @param array $filterarray
      * @param array $wherearray
+     * @param ?int $userid
+     * @param int $bookingparam
+     * @param string $additionalwhere
      * @return void
      */
     public static function get_options_filter_sql($limitfrom = 0,
                                                 $limitnum = 0,
                                                 $searchtext = '',
-                                                $fields = "*",
+                                                $fields = null,
                                                 $context = null,
                                                 $filterarray = [],
                                                 $wherearray = [],
                                                 $userid = null,
-                                                $bookingparam = STATUSPARAM_BOOKED) {
+                                                $bookingparam = STATUSPARAM_BOOKED,
+                                                $additionalwhere = '') {
 
         global $DB;
 
         $groupby = " bo.id ";
 
         if (empty($fields)) {
-            $fields = " DISTINCT s1.*";
+            $fields = "DISTINCT s1.*";
         }
 
         $where = '';
@@ -752,6 +842,11 @@ class booking {
                 $where .= " AND " . $DB->sql_like("$key", ":$paramsvaluekey", false);
                 $params[$paramsvaluekey] = $value;
             }
+        }
+
+        // We add additional conditions to $where, if there are any.
+        if (!empty($additionalwhere)) {
+            $where .= " AND " . $additionalwhere;
         }
 
         return [$fields, $from, $where, $params, $filter];
@@ -902,7 +997,6 @@ class booking {
             $link = new moodle_url('/mod/booking/view.php', [
                 'optionid' => $record->optionid,
                 'id' => $optionsettings->cmid,
-                'action' => 'showonlyone',
                 'whichview' => 'showonlyone']);
 
             $newentittydate = new entitydate(

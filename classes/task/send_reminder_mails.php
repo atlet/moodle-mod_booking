@@ -42,7 +42,7 @@ class send_reminder_mails extends \core\task\scheduled_task {
         global $DB;
         $now = time();
 
-        echo "run send_reminder_mails task" . "\n";
+        mtrace("run send_reminder_mails task");
 
         $toprocess = $DB->get_records_sql(
            'SELECT bo.id optionid, bo.bookingid, bo.coursestarttime, b.daystonotify, b.daystonotify2, bo.sent, bo.sent2
@@ -54,7 +54,7 @@ class send_reminder_mails extends \core\task\scheduled_task {
 
         foreach ($toprocess as $record) {
 
-            echo json_encode($record) . "\n";
+            mtrace(json_encode($record));
 
             // Check if first notification is sent already.
             if ($record->sent == 0) {
@@ -68,12 +68,7 @@ class send_reminder_mails extends \core\task\scheduled_task {
                     // Use an event to log that reminder1 has been sent.
                     $event = reminder1_sent::create(array(
                         'context' => context_system::instance(),
-                        'objectid' => $record->optionid,
-                        'other' => array(
-                            'msgparam' => MSGPARAM_REMINDER_PARTICIPANT,
-                            'record' => $record,
-                            'daystonotify' => $record->daystonotify
-                        )
+                        'objectid' => $record->optionid
                     ));
                     $event->trigger();
                 }
@@ -90,12 +85,7 @@ class send_reminder_mails extends \core\task\scheduled_task {
                     // Use an event to log that reminder2 has been sent.
                     $event = reminder2_sent::create(array(
                         'context' => context_system::instance(),
-                        'objectid' => $record->optionid,
-                        'other' => array(
-                            'msgparam' => MSGPARAM_REMINDER_PARTICIPANT,
-                            'record' => $record,
-                            'daystonotify2' => $record->daystonotify2
-                        )
+                        'objectid' => $record->optionid
                     ));
                     $event->trigger();
                 }
@@ -128,7 +118,7 @@ class send_reminder_mails extends \core\task\scheduled_task {
 
         foreach ($sessionstoprocess as $sessionrecord) {
 
-            echo json_encode($sessionrecord) . "\n";
+            mtrace(json_encode($sessionrecord));
 
             // Check if session notification has been sent already.
             if ($sessionrecord->sent == 0) {
@@ -159,10 +149,10 @@ class send_reminder_mails extends \core\task\scheduled_task {
             AND bo.sentteachers = 0", array('now' => $now));
 
         if (count($toprocess) > 0) {
-            echo "send_reminder_mails task: send teacher notifications - START" . "\n";
+            mtrace("send_reminder_mails task: send teacher notifications - START");
             foreach ($toprocess as $record) {
 
-                echo json_encode($record) . "\n";
+                mtrace(json_encode($record));
 
                 // Check if teacher notification has been sent already.
                 if ($record->sentteachers == 0) {
@@ -186,7 +176,7 @@ class send_reminder_mails extends \core\task\scheduled_task {
                     }
                 }
             }
-            echo "send_reminder_mails task: send teacher notifications - DONE" . "\n";
+            mtrace("send_reminder_mails task: send teacher notifications - DONE");
         }
     }
 

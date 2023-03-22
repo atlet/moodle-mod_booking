@@ -26,6 +26,7 @@
 
 namespace mod_booking\bo_availability\conditions;
 
+use context_system;
 use mod_booking\bo_availability\bo_condition;
 use mod_booking\bo_availability\bo_info;
 use mod_booking\booking_option_settings;
@@ -49,8 +50,8 @@ require_once($CFG->dirroot . '/user/profile/lib.php');
  */
 class userprofilefield_1_default implements bo_condition {
 
-    /** @var int $id Id is set via json during construction */
-    public $id = null;
+    /** @var int $id Id is set via json during construction but we still need a default ID */
+    public $id = BO_COND_JSON_USERPROFILEFIELD;
 
     /** @var stdClass $customsettings an stdclass coming from the json which passes custom settings */
     public $customsettings = null;
@@ -133,7 +134,7 @@ class userprofilefield_1_default implements bo_condition {
                             }
                             break;
                         case '~':
-                            if (strpos($this->customsettings->value, $value)) {
+                            if (mb_strpos($value, $this->customsettings->value) !== false) {
                                 $isavailable = true;
                             }
                             break;
@@ -143,7 +144,7 @@ class userprofilefield_1_default implements bo_condition {
                             }
                             break;
                         case '!~':
-                            if (!strpos($this->customsettings->value, $value)) {
+                            if (!(mb_strpos($value, $this->customsettings->value) !== false)) {
                                 $isavailable = true;
                             }
                             break;
@@ -183,6 +184,28 @@ class userprofilefield_1_default implements bo_condition {
     }
 
     /**
+     * The hard block is complementary to the is_available check.
+     * While is_available is used to build eg also the prebooking modals and...
+     * ... introduces eg the booking policy or the subbooking page, the hard block is meant to prevent ...
+     * ... unwanted booking. It's the check just before booking if we really...
+     * ... want the user to book. It will return always return false on subbookings...
+     * ... as they are not necessary, but return true when the booking policy is not yet answered.
+     * Hard block is only checked if is_available already returns false.
+     *
+     * @param booking_option_settings $booking_option_settings
+     * @param integer $userid
+     * @return boolean
+     */
+    public function hard_block(booking_option_settings $settings, $userid):bool {
+
+        $context = context_system::instance();
+        if (has_capability('mod/booking:overrideboconditions', $context)) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Obtains a string describing this restriction (whether or not
      * it actually applies). Used to obtain information that is displayed to
      * students if the activity is not available to them, and for staff to see
@@ -205,17 +228,9 @@ class userprofilefield_1_default implements bo_condition {
 
         $isavailable = $this->is_available($settings, $userid, $not);
 
-        if ($isavailable) {
-            $description = $full ? get_string('bo_cond_userprofilefield_full_available', 'mod_booking') :
-                get_string('bo_cond_userprofilefield_available', 'mod_booking');
-        } else {
-            $description = $full ? get_string('bo_cond_userprofilefield_full_not_available',
-                'mod_booking',
-                $this->customsettings) :
-                get_string('bo_cond_userprofilefield_not_available', 'mod_booking');
-        }
+        $description = $this->get_description_string($isavailable, $full, $settings);
 
-        return [$isavailable, $description];
+        return [$isavailable, $description, false, BO_BUTTON_MYALERT];
     }
 
     /**
@@ -293,9 +308,14 @@ class userprofilefield_1_default implements bo_condition {
                 $mform->hideIf('bo_cond_userprofilefield_overrideoperator', 'bo_cond_userprofilefield_overrideconditioncheckbox',
                     'notchecked');
 
-                $overrideconditions = bo_info::get_conditions(CONDPARAM_HARDCODED_ONLY);
+                $overrideconditions = bo_info::get_conditions(CONDPARAM_MFORM_ONLY);
                 $overrideconditionsarray = [];
                 foreach ($overrideconditions as $overridecondition) {
+                    // We do not combine conditions with each other.
+                    if ($overridecondition->id == BO_COND_JSON_USERPROFILEFIELD) {
+                        continue;
+                    }
+
                     // Remove the namespace from classname.
                     $fullclassname = get_class($overridecondition); // With namespace.
                     $classnameparts = explode('\\', $fullclassname);
@@ -353,6 +373,18 @@ class userprofilefield_1_default implements bo_condition {
     }
 
     /**
+     * The page refers to an additional page which a booking option can inject before the booking process.
+     * Not all bo_conditions need to take advantage of this. But eg a condition which requires...
+     * ... the acceptance of a booking policy would render the policy with this function.
+     *
+     * @param integer $optionid
+     * @return array
+     */
+    public function render_page(int $optionid) {
+        return [];
+    }
+
+    /**
      * Returns a condition object which is needed to create the condition JSON.
      *
      * @param stdClass $fromform
@@ -401,5 +433,59 @@ class userprofilefield_1_default implements bo_condition {
             $defaultvalues->bo_cond_userprofilefield_overridecondition = $acdefault->overrides;
             $defaultvalues->bo_cond_userprofilefield_overrideoperator = $acdefault->overrideoperator;
         }
+    }
+
+    /**
+     * Some conditions (like price & bookit) provide a button.
+     * Renders the button, attaches js to the Page footer and returns the html.
+     * Return should look somehow like this.
+     * ['mod_booking/bookit_button', $data];
+     *
+     * @param booking_option_settings $settings
+     * @param int $userid
+     * @param boolean $full
+     * @param boolean $not
+     * @return array
+     */
+    public function render_button(booking_option_settings $settings,
+        $userid = 0, $full = false, $not = false, bool $fullwidth = true): array {
+
+        $label = $this->get_description_string(false, $full, $settings);
+
+        return bo_info::render_button($settings, $userid, $label, 'alert alert-warning', true, $fullwidth, 'alert', 'option');
+    }
+
+    /**
+     * Helper function to return localized description strings.
+     *
+     * @param bool $isavailable
+     * @param bool $full
+     * @param booking_option_settings $settings
+     * @return string
+     */
+    private function get_description_string($isavailable, $full, $settings) {
+        if ($isavailable) {
+            $description = $full ? get_string('bo_cond_userprofilefield_full_available', 'mod_booking') :
+                get_string('bo_cond_userprofilefield_available', 'mod_booking');
+        } else {
+
+            if (!$this->customsettings) {
+                // This description can only works with the right custom settings.
+                $availabilityarray = json_decode($settings->availability);
+
+                foreach ($availabilityarray as $availability) {
+                    if (strpos($availability->class, 'userprofilefield_1_default') > 0) {
+
+                        $this->customsettings = (object)$availability;
+                    }
+                }
+            }
+
+            $description = $full ? get_string('bo_cond_userprofilefield_full_not_available',
+                'mod_booking',
+                $this->customsettings) :
+                get_string('bo_cond_userprofilefield_not_available', 'mod_booking');
+        }
+        return $description;
     }
 }

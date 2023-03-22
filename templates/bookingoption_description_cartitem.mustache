@@ -22,6 +22,45 @@
 
     Data attributes required for JS:
     * data-region
+
+    Example context (json):
+    {
+        "titleprefix" : "titleprefix",
+        "description": "Booking option description",
+        "location" : "location",
+        "institution" : "institution",
+        "address" : "address",
+        "statusdescription" : "statusdescription",
+        "booknowbutton": "booknow button HTML",
+        "showteacherslabel": true,
+        "showdateslabel": true,
+        "price": "79.00",
+        "priceformulaadd": "0.00",
+        "priceformulamultiply": "1.00",
+        "currency": "EUR",
+        "pricecategoryname": "Price",
+        "teachers": [
+            {
+                "userid": "1006",
+                "firstname": "Maxima",
+                "lastname": "Yoga",
+                "email": "maxima.yoga@mailnotexisting.net",
+                "institution": "Institution",
+                "teacherurl": "url"
+            }
+        ],
+        "dates": [
+            {
+                "datestring": "datestring",
+                "customfields": [
+                    {
+                        "name" : "custom field name",
+                        "value" : "custom field value"
+                    }
+                ]
+            }
+        ]
+    }
 }}
 
 
@@ -40,7 +79,7 @@
         {{#description}}<div class="bo_description"><p>{{{.}}}</p></div>{{/description}}
         {{#price}}<div class="bo_price">{{.}} {{currency}} {{pricecategoryname}}</div>{{/price}}
         {{> mod_booking/bookingoption_description_teachers }}
-        <a class="collapseoptiondatesbutton" data-toggle="collapse" href="#collapseoptiondates_{{modalcounter}}" role="button" aria-expanded="false" aria-controls="collapseOptiondates">
+        <a class="collapseoptiondatesbutton" data-toggle="collapse" href="#collapseoptiondates_{{modalcounter}}" role="button" aria-expanded="false" aria-controls="collapseoptiondates_{{modalcounter}}">
             {{#str}} showdates, mod_booking {{/str}}
         </a>
         <div id="collapseoptiondates_{{modalcounter}}" class="collapse list-group-item">

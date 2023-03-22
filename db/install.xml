@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="mod/booking/db" VERSION="20221128" COMMENT="XMLDB file for Moodle mod/booking"
+<XMLDB PATH="mod/booking/db" VERSION="2022122000" COMMENT="XMLDB file for Moodle mod/booking"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
 >
@@ -62,7 +62,6 @@
         <FIELD NAME="numgenerator" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="paginationnum" TYPE="int" LENGTH="5" NOTNULL="true" DEFAULT="25" SEQUENCE="false"/>
         <FIELD NAME="banusernames" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
-        <FIELD NAME="showhelpfullnavigationlinks" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false"/>
         <FIELD NAME="daystonotify" TYPE="int" LENGTH="3" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="notifyemail" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="daystonotifyteachers" TYPE="int" LENGTH="3" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Days in advance to send notification mail to teachers."/>
@@ -78,6 +77,7 @@
         <FIELD NAME="responsesfields" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="reportfields" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="optionsfields" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="optionsdownloadfields" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="beforebookedtext" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="beforecompletedtext" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="aftercompletedtext" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
@@ -86,9 +86,8 @@
         <FIELD NAME="ratings" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="removeuseronunenrol" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Remove user from booking, when it's unenrooled from course."/>
         <FIELD NAME="teacherroleid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="allowupdatedays" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="How many days before closing unenrolment."/>
+        <FIELD NAME="allowupdatedays" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="How many days before closing unenrolment."/>
         <FIELD NAME="templateid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
-        <FIELD NAME="showdescriptionmode" TYPE="int" LENGTH="1" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Setting that specifies how to show descriptions (0 = modal / 1 = inline)."/>
         <FIELD NAME="showlistoncoursepage" TYPE="int" LENGTH="1" NOTNULL="false" DEFAULT="1" SEQUENCE="false" COMMENT="Setting that specifies if a list of available booking options should be shown on the coursepage."/>
         <FIELD NAME="coursepageshortinfo" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
         <FIELD NAME="bookingimagescustomfield" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
@@ -186,6 +185,7 @@
         <FIELD NAME="numrec" TYPE="int" LENGTH="11" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="status" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="notes" TYPE="text" NOTNULL="false" SEQUENCE="false"/>
+        <FIELD NAME="json" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="Supplementary information on this booking option json encoded for max flexibility."/>
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
@@ -459,7 +459,7 @@
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="optionid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Id of the bookingoption to which this subbooking is connected."/>
-        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Individual name of the subboking"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Individual name of the subbooking"/>
         <FIELD NAME="type" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Type of the subbooking. Has to correspond to the class name in the subbookings folder."/>
         <FIELD NAME="json" TYPE="text" NOTNULL="false" SEQUENCE="false" COMMENT="The json which stores settings corresponding to the configuration of the individual subbooking."/>
         <FIELD NAME="block" TYPE="int" LENGTH="1" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="1 blocks the booking of the corresponding booking option. This makes sense for timeslot bookings eg."/>
@@ -474,6 +474,8 @@
     <TABLE NAME="booking_subbooking_answers" COMMENT="Stores the anwers (the bookings) of a user for a particular subbooking.">
       <FIELDS>
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="itemid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="itemid can be the same as sboptionid, but there are some types (eg. timeslots which provide slots) where one sboptionid provides a lot of itemids."/>
+        <FIELD NAME="optionid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false"/>
         <FIELD NAME="sboptionid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="id of the booked subbooking"/>
         <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="false" DEFAULT="0" SEQUENCE="false" COMMENT="Userid of the booked user."/>
         <FIELD NAME="usermodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false"/>

@@ -31,8 +31,13 @@ $id = required_param('id', PARAM_INT); // Course module id.
 $templateid = optional_param('templateid', 0, PARAM_INT);
 $action = optional_param('action', 0, PARAM_ALPHANUM);
 list($course, $cm) = get_course_and_cm_from_cmid($id);
+
 // No guest autologin.
-require_course_login($course, false);
+require_course_login($course, false, $cm);
+
+// In Moodle 4.0+ we want to turn the instance description off on every page except view.php.
+$PAGE->activityheader->disable();
+
 $pageurl = new moodle_url('/mod/booking/customreporttemplates.php',  array('id' => $id));
 
 if (($action === 'delete') && ($templateid > 0)) {
@@ -59,7 +64,7 @@ $cancel = new moodle_url('/mod/booking/view.php', array('id' => $cm->id));
 $addnew = new moodle_url('/mod/booking/customreporttemplatesadd.php', array('id' => $cm->id));
 
 echo '<div style="width: 100%; text-align: center; display:table;">';
-$button = $OUTPUT->single_button($cancel, get_string('cancel', 'booking'), 'get');
+$button = $OUTPUT->single_button($cancel, get_string('cancel', 'core'), 'get');
 echo html_writer::tag('span', $button, array('style' => 'text-align: right; display:table-cell;'));
 $button = $OUTPUT->single_button($addnew, get_string('addnewreporttemplate', 'booking'), 'get');
 echo html_writer::tag('span', $button, array('style' => 'text-align: left; display:table-cell;'));

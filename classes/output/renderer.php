@@ -53,32 +53,32 @@ class renderer extends plugin_renderer_base {
         if (!empty($USER->institution) && in_array('myinstitution', $showviews)) {
             $tmpurlparams['whichview'] = 'myinstitution';
             $row[] = new tabobject('myinstitution',
-                    new moodle_url('/mod/booking/view.php', $tmpurlparams, "goenrol"),
-                    get_string('showonlymyinstitutions', 'mod_booking'));
+                    new moodle_url('/mod/booking/view.php', $tmpurlparams),
+                    get_string('myinstitution', 'mod_booking'));
         }
         if (in_array('showactive', $showviews)) {
             $tmpurlparams['whichview'] = 'showactive';
             $row[] = new tabobject('showactive',
-                new moodle_url('/mod/booking/view.php', $tmpurlparams, "goenrol"),
+                new moodle_url('/mod/booking/view.php', $tmpurlparams),
                 get_string('showactive', 'mod_booking'));
         }
         if (in_array('showall', $showviews)) {
             $tmpurlparams['whichview'] = 'showall';
             $row[] = new tabobject('showall',
-                new moodle_url('/mod/booking/view.php', $tmpurlparams, "goenrol"),
-                get_string('showallbookings', 'mod_booking'));
+                new moodle_url('/mod/booking/view.php', $tmpurlparams),
+                get_string('showallbookingoptions', 'mod_booking'));
         }
         if (in_array('mybooking', $showviews)) {
             $tmpurlparams['whichview'] = 'mybooking';
             $row[] = new tabobject('mybooking',
-                new moodle_url('/mod/booking/view.php', $tmpurlparams, "goenrol"),
+                new moodle_url('/mod/booking/view.php', $tmpurlparams),
                 get_string('showmybookingsonly', 'mod_booking'));
         }
 
         if ($myoptions > 0 && in_array('myoptions', $showviews)) {
             $tmpurlparams['whichview'] = 'myoptions';
             $row[] = new tabobject('myoptions',
-                    new moodle_url('/mod/booking/view.php', $tmpurlparams, "goenrol"),
+                    new moodle_url('/mod/booking/view.php', $tmpurlparams),
                     get_string('myoptions', 'booking', $myoptions));
         }
 
@@ -452,47 +452,12 @@ class renderer extends plugin_renderer_base {
     }
 
     /** Function to render bookingoption_description in template.
-     * This is actually nearly the same database as for bookingoption_description, only wrapped in a modal.
-     */
-    public function render_col_text_modal(mod_booking\output\bookingoption_description $data) {
-        $o = '';
-        $data = $data->export_for_template($this);
-        $data['modaltitle'] = $data['title'];
-        unset($data['title']);
-        $o .= $this->render_from_template('mod_booking/col_text_modal', $data);
-        return $o;
-    }
-
-    /** Function to render bookingoption_description in template.
-     * This is actually nearly the same database as for bookingoption_description, only wrapped in a modal with ajax.
-     * @param stdClass $data
-     */
-    public function render_col_text_modal_js(stdClass $data) {
-        $o = '';
-        $data = (array)$data;
-        $o .= $this->render_from_template('mod_booking/col_text_modal', $data);
-        return $o;
-    }
-
-    /** Function to render bookingoption_description in template.
      * This creates a link on a dedicated optionview.php, instead of the modal.
      */
     public function render_col_text_link(stdClass $data) {
         $o = '';
         $data = (array)$data;
         $o .= $this->render_from_template('mod_booking/col_text_link', $data);
-        return $o;
-    }
-
-    /**
-     * Render function.
-     * @param $data array
-     * @return string
-     */
-    public function render_coursepage_available_options($data) {
-        $o = '';
-        $data = $data->export_for_template($this);
-        $o .= $this->render_from_template('mod_booking/coursepage_available_options', $data);
         return $o;
     }
 
@@ -545,13 +510,13 @@ class renderer extends plugin_renderer_base {
     }
 
     /**
-     * Render a bookingoptions_table.
+     * Render a bookingoptions_wbtable using wunderbyte_table plugin.
      *
-     * @param templatable $bookingoptionstable
+     * @param templatable $bookingoptionswbtable
      * @return string|boolean
      */
-    public function render_bookingoptions_table(templatable $bookingoptionstable) {
-        $data = $bookingoptionstable->export_for_template($this);
+    public function render_bookingoptions_wbtable(templatable $bookingoptionswbtable) {
+        $data = $bookingoptionswbtable->export_for_template($this);
         return $this->render_from_template('mod_booking/shortcodes_table', $data);
     }
 
@@ -670,6 +635,96 @@ class renderer extends plugin_renderer_base {
         $o = '';
         $data = $data->export_for_template($this);
         $o .= $this->render_from_template('mod_booking/booked_users', $data);
+        return $o;
+    }
+
+    /**
+     * Render subbookings list
+     * @param $data array
+     * @return string
+     */
+    public function render_subbookingslist($data) {
+        $data = $data->export_for_template($this);
+        return $this->render_from_template('mod_booking/subbookingslist', $data);
+    }
+
+    /**
+     * Render subbookings pre page modal.
+     * @param $data array
+     * @return string
+     */
+    public function render_prepagemodal($data) {
+        $data = $data->export_for_template($this);
+        return $this->render_from_template('mod_booking/bookingpage/prepagemodal', $data);
+    }
+
+    /**
+     * Render subbooking timeslot
+     * @param $data array
+     * @return string
+     */
+    public function render_sb_timeslot($data) {
+        $data = $data->export_for_template($this);
+        return $this->render_from_template('mod_booking/subbooking/timeslottable', $data);
+    }
+
+    /**
+     * Render output for bookit.
+     * @param $data array
+     * @return string
+     */
+    public function render_bookit_price($data) {
+        $o = '';
+        $data = $data->export_for_template($this);
+        $o .= $this->render_from_template('mod_booking/bookit_price', $data);
+        return $o;
+    }
+
+    /**
+     * Render output for bookit button.
+     * @param $data array
+     * @param $template string
+     * @return string
+     */
+    public function render_bookit_button($data, string $template) {
+        $o = '';
+        $data = $data->export_for_template($this);
+        $o .= $this->render_from_template($template, $data);
+        return $o;
+    }
+
+    /** Function to render the page of a single teacher
+     * @param any $data
+     * @return string
+     */
+    public function render_teacherpage($data) {
+        $o = '';
+        $data = $data->export_for_template($this);
+        $o .= $this->render_from_template('mod_booking/page_teacher', $data);
+        return $o;
+    }
+
+    /** Function to render the page showing all teachers
+     * @param any $data
+     * @return string
+     */
+    public function render_allteacherspage($data) {
+        $o = '';
+        $data = $data->export_for_template($this);
+        $o .= $this->render_from_template('mod_booking/page_allteachers', $data);
+        return $o;
+    }
+
+    /**
+     * Render main booking options view.
+     * @param $data array
+     * @param $template string
+     * @return string
+     */
+    public function render_view($data) {
+        $o = '';
+        $data = $data->export_for_template($this);
+        $o .= $this->render_from_template('mod_booking/view', $data);
         return $o;
     }
 }

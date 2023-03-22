@@ -199,9 +199,6 @@ class booking_settings {
     /** @var string $banusernames */
     public $banusernames = null;
 
-    /** @var int $showhelpfullnavigationlinks */
-    public $showhelpfullnavigationlinks = null;
-
     /** @var int $daystonotify */
     public $daystonotify = null;
 
@@ -247,6 +244,9 @@ class booking_settings {
     /** @var string $optionsfields */
     public $optionsfields = null;
 
+    /** @var string $optionsdownloadfields */
+    public $optionsdownloadfields = null;
+
     /** @var string $beforebookedtext */
     public $beforebookedtext = null;
 
@@ -276,9 +276,6 @@ class booking_settings {
 
     /** @var int $templateid */
     public $templateid = null;
-
-    /** @var int $showdescriptionmode */
-    public $showdescriptionmode = null;
 
     /** @var int $showlistoncoursepage */
     public $showlistoncoursepage = null;
@@ -430,7 +427,6 @@ class booking_settings {
             $this->numgenerator = $dbrecord->numgenerator;
             $this->paginationnum = $dbrecord->paginationnum;
             $this->banusernames = $dbrecord->banusernames;
-            $this->showhelpfullnavigationlinks = $dbrecord->showhelpfullnavigationlinks;
             $this->daystonotify = $dbrecord->daystonotify;
             $this->notifyemail = $dbrecord->notifyemail;
             $this->daystonotifyteachers = $dbrecord->daystonotifyteachers;
@@ -446,6 +442,7 @@ class booking_settings {
             $this->responsesfields = $dbrecord->responsesfields;
             $this->reportfields = $dbrecord->reportfields;
             $this->optionsfields = $dbrecord->optionsfields;
+            $this->optionsdownloadfields = $dbrecord->optionsdownloadfields;
             $this->beforebookedtext = $dbrecord->beforebookedtext;
             $this->beforecompletedtext = $dbrecord->beforecompletedtext;
             $this->aftercompletedtext = $dbrecord->aftercompletedtext;
@@ -456,7 +453,6 @@ class booking_settings {
             $this->teacherroleid = $dbrecord->teacherroleid;
             $this->allowupdatedays = $dbrecord->allowupdatedays;
             $this->templateid = $dbrecord->templateid;
-            $this->showdescriptionmode = $dbrecord->showdescriptionmode;
             $this->showlistoncoursepage = $dbrecord->showlistoncoursepage;
             $this->coursepageshortinfo = $dbrecord->coursepageshortinfo;
             $this->bookingimagescustomfield = $dbrecord->bookingimagescustomfield;

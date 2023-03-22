@@ -26,7 +26,7 @@ use mod_booking\output\bookingoption_description;
 use mod_booking\singleton_service;
 
 require_once(__DIR__ . '/../../config.php');
-require_once("locallib.php");
+require_once($CFG->dirroot . '/mod/booking/locallib.php');
 
 global $DB, $PAGE, $OUTPUT, $USER;
 
@@ -61,7 +61,6 @@ if ($settings = singleton_service::get_instance_of_booking_option_settings($opti
 
     $PAGE->navbar->add($settings->text);
     $PAGE->set_title(format_string($settings->text));
-    $PAGE->set_heading($settings->text);
     $PAGE->set_pagelayout('standard');
 
     echo $OUTPUT->header();
@@ -72,7 +71,7 @@ if ($settings = singleton_service::get_instance_of_booking_option_settings($opti
     $output = $PAGE->get_renderer('mod_booking');
     $data = new bookingoption_description($settings->id, null, DESCRIPTION_OPTIONVIEW, true, null, $user);
 
-    if (isset($data->invisible) && $data->invisible == 1) {
+    if ($data->is_invisible()) {
         // If the user does have the capability to see invisible options...
         if (has_capability('mod/booking:canseeinvisibleoptions', $context)) {
             // ... then show it.
