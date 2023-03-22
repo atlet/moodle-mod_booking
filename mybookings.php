@@ -43,8 +43,8 @@ echo $OUTPUT->box_start();
 
 $table = new mybookings_table('mybookings');
 
-$fields = 'ba.id id, c.id courseid, c.fullname fullname, b.id bookingid, b.name name, bo.text text, bo.id optionid,
-    bo.coursestarttime coursestarttime, bo.courseendtime courseendtime, cm.id cmid';
+$fields = "ba.id id, c.id courseid, c.fullname fullname, b.id bookingid, b.name, bo.text, bo.id optionid,
+    bo.coursestarttime coursestarttime, bo.courseendtime courseendtime, cm.id cmid2";
 $from = "{booking_answers} ba
     LEFT JOIN
     {booking_options} bo
