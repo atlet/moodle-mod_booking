@@ -2330,3 +2330,6 @@ $string['age'] = 'Age';
 
 $string['accept'] = "Accept";
 $string['close'] = "Close";
+
+// Headmaster view
+$string['headmasterview'] = 'Headmaster reports';
