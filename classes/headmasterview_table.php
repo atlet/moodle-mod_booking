@@ -41,16 +41,20 @@ class headmasterview_table extends table_sql {
         $columnheaders = [
             'firstname'  => get_string('firstname'),
             'lastname'  => get_string('lastname'),
-            'cfullname'  => get_string('bstcourse', 'booking'),
             'bname'       => get_string('bookingname', 'booking'),
-            'botext'     => get_string('bookingoptionsmenu', 'booking'),
-            'completed'  => get_string('completed', 'booking'),
-            'waitinglist'   => get_string('waitinglist', 'booking'),
-            'status'   => get_string('status', 'booking'),
+            'coursestarttime'     => get_string('coursestarttime', 'booking'),
         ];
         $this->define_columns(array_keys($columnheaders));
         $this->define_headers(array_values($columnheaders));
 
         $this->pageable(true);
+    }
+
+    protected function col_coursestarttime($values) {
+        if ($values->coursestarttime == 0) {
+            return '';
+        }
+
+        return userdate($values->coursestarttime);
     }
 }
