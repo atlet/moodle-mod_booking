@@ -246,7 +246,7 @@ class all_userbookings extends \table_sql {
      * @see \flexible_table::wrap_html_start()
      */
     public function wrap_html_start() {
-        echo '<form method="post" id="studentsform">' . "\n";
+        echo '<form method="post" id="studentsform" class="mform">' . "\n";
         $ratingoptions = $this->ratingoptions;
         if (!empty($ratingoptions)) {
             foreach ($ratingoptions as $name => $value) {
@@ -372,6 +372,18 @@ class all_userbookings extends \table_sql {
                 echo '<div class="singlebutton"><input type="submit" class="btn btn-secondary" name="generaterecnum" value="' .
                          get_string('generaterecnum', 'booking') . '" onclick="return confirm(\'' .
                          get_string('generaterecnumareyousure', 'booking') . '\')"/></div>';
+            }
+
+            // Issue certificate
+            if (has_capability('mod/booking:readresponses', \context_module::instance($this->cm->id)) || booking_check_if_teacher($option)) {
+                if (!empty($this->bookingdata->booking->settings->template)) {
+                    echo '<div class="singlebutton"><input type="submit" class="btn btn-secondary" name="issuecertificateall" value="' .
+                    get_string('issuecertificate', 'booking') . " " . get_string('issuecertificateall', 'booking') . '" /></div>';
+                     echo '<div class="singlebutton"><input type="submit" class="btn btn-secondary" name="issuecertificateselected" value="' .
+                     get_string('issuecertificate', 'booking') . " " . get_string('issuecertificateselected', 'booking') . '" /></div>';
+                     echo '<div class="singlebutton"><input type="submit" class="btn btn-secondary" name="issuecertificateconfirmed" value="' .
+                     get_string('issuecertificate', 'booking') . " " . get_string('issuecertificateconfirmed', 'booking') . '" /></div>';
+                }
             }
 
             $connectedbooking = $DB->get_record("booking",

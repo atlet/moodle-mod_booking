@@ -2333,3 +2333,22 @@ $string['close'] = "Close";
 
 // Headmaster view
 $string['headmasterview'] = 'Headmaster reports';
+
+// Course certificate
+$string['coursecertificate'] = 'Booking certificate';
+$string['chooseatemplate'] = 'Choose a template...';
+$string['template'] = 'Template';
+$string['managetemplates'] = 'Manage certificate templates';
+$string['notemplateswarningwithlink'] = 'There are no available templates. Please go to <a href="{$a}">certificate template management page</a> and create a new one.';
+$string['notemplateswarning'] = 'There are no available templates. Please contact the site administrator.';
+$string['selecttemplatewarning'] = 'Once this activity issues at least one certificate, this field will be locked and will no longer be editable.';
+$string['selectdate'] = 'Select date';
+$string['expirydate'] = 'Expiry date';
+$string['issuecertificate'] = 'Issue certificate';
+$string['issuecertificateall'] = 'to all students';
+$string['issuecertificateselected'] = 'to selcted students';
+$string['issuecertificateconfirmed'] = 'to confirmed students';
+$string['allcertificatesgenerated'] = 'Certificates were issued to all students with completed status.';
+$string['allcertificatesgeneratedall'] = 'Certificates were issued to all students.';
+$string['allcertificatesgeneratedselected'] = 'Certificates were issued to all selected students.';
+$string['selectaction'] = "Select action";

@@ -225,6 +225,79 @@ if ($action == 'deletebookingoption' && $confirm == 1 &&
     die();
 }
 
+if (isset($_POST['issuecertificateall']) && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
+    $allusers = $DB->get_records('booking_answers', array('optionid' => $optionid));
+    $issuedata = $bookingoption->get_data_for_certificate();
+
+    if (!empty($bookingoption->booking->settings->template)) {
+        $template = \tool_certificate\template::instance($bookingoption->booking->settings->template);
+
+        foreach ($allusers as $user) {
+            $template->issue_certificate(
+                $user->userid,
+                $bookingoption->booking->settings->expires,
+                $issuedata,
+                'mod_booking',
+                $course->id
+            );
+        }
+    }
+
+    redirect($url, get_string('allcertificatesgeneratedall', 'booking'), 5);
+}
+
+if (isset($_POST['issuecertificateconfirmed']) && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
+    $allusers = $DB->get_records('booking_answers', array('optionid' => $optionid, 'completed' => 1));
+    $issuedata = $bookingoption->get_data_for_certificate();
+
+    if (!empty($bookingoption->booking->settings->template)) {
+        $template = \tool_certificate\template::instance($bookingoption->booking->settings->template);
+
+        foreach ($allusers as $user) {
+            $template->issue_certificate(
+                $user->userid,
+                $bookingoption->booking->settings->expires,
+                $issuedata,
+                'mod_booking',
+                $course->id
+            );
+        }
+    }
+
+    redirect($url, get_string('allcertificatesgenerated', 'booking'), 5);
+}
+
+if (isset($_POST['issuecertificateselected']) && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
+    $issuedata = $bookingoption->get_data_for_certificate();
+
+    $allselectedusers = [];
+
+    if (isset($_POST['user'])) {
+        foreach ($_POST['user'] as $value) {
+            $allselectedusers[] = array_keys($value)[0];
+        }
+    }
+
+    if (empty($allselectedusers)) {
+        redirect($url, get_string('selectatleastoneuser', 'booking', $bookingoption->option->howmanyusers), 5);
+    }
+
+    if (!empty($bookingoption->booking->settings->template)) {
+        $template = \tool_certificate\template::instance($bookingoption->booking->settings->template);
+
+        foreach ($allselectedusers as $selecteduserid) {
+            $template->issue_certificate(
+                $selecteduserid,
+                $bookingoption->booking->settings->expires,
+                $issuedata,
+                'mod_booking',
+                $course->id
+            );
+        }
+    }
+    redirect($url, get_string('userssuccessfullenrolled', 'booking'), 5);
+}
+
 // Create title string and add prefix if one exists.
 $titlestring = $bookingoption->option->text;
 if (!empty($bookingoption->option->titleprefix)) {

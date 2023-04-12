@@ -3427,5 +3427,35 @@ function xmldb_booking_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2023031301, 'booking');
     }
 
+    if ($oldversion < 2023041200) {
+
+        // Define field template to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('template', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'semesterid');
+
+        // Conditionally launch add field template.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2023041200, 'booking');
+    }
+
+    if ($oldversion < 2023041201) {
+
+        // Define field expires to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('expires', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'template');
+
+        // Conditionally launch add field expires.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2023041201, 'booking');
+    }
+
     return true;
 }
