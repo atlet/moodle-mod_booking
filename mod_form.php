@@ -265,7 +265,8 @@ class mod_booking_mod_form extends moodleform_mod {
             'waitinglist' => get_string('searchwaitinglist', 'mod_booking'),
             'city' => new lang_string('city'),
             'department' => new lang_string('department'),
-            'notes' => get_string('notes', 'mod_booking')
+            'notes' => get_string('notes', 'mod_booking'),
+            'certificateid' => get_string('certificateid', 'booking')
         );
 
         $reportfields = array('optionid' => get_string("optionid", "booking"),

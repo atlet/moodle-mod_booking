@@ -226,20 +226,22 @@ if ($action == 'deletebookingoption' && $confirm == 1 &&
 }
 
 if (isset($_POST['issuecertificateall']) && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
-    $allusers = $DB->get_records('booking_answers', array('optionid' => $optionid));
+    $allusers = $DB->get_records('booking_answers', array('optionid' => $optionid, 'certificateid' => null));
     $issuedata = $bookingoption->get_data_for_certificate();
 
     if (!empty($bookingoption->booking->settings->template)) {
         $template = \tool_certificate\template::instance($bookingoption->booking->settings->template);
 
         foreach ($allusers as $user) {
-            $template->issue_certificate(
+            $cid = $template->issue_certificate(
                 $user->userid,
                 $bookingoption->booking->settings->expires,
                 $issuedata,
                 'mod_booking',
                 $course->id
             );
+
+            $DB->execute("UPDATE {booking_answers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => $cid, 'optionid' => $optionid, 'userid' => $user->userid]);
         }
     }
 
@@ -247,20 +249,22 @@ if (isset($_POST['issuecertificateall']) && (has_capability('mod/booking:readres
 }
 
 if (isset($_POST['issuecertificateconfirmed']) && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
-    $allusers = $DB->get_records('booking_answers', array('optionid' => $optionid, 'completed' => 1));
+    $allusers = $DB->get_records('booking_answers', array('optionid' => $optionid, 'completed' => 1, 'certificateid' => null));
     $issuedata = $bookingoption->get_data_for_certificate();
 
     if (!empty($bookingoption->booking->settings->template)) {
         $template = \tool_certificate\template::instance($bookingoption->booking->settings->template);
 
         foreach ($allusers as $user) {
-            $template->issue_certificate(
+            $cid = $template->issue_certificate(
                 $user->userid,
                 $bookingoption->booking->settings->expires,
                 $issuedata,
                 'mod_booking',
                 $course->id
             );
+
+            $DB->execute("UPDATE {booking_answers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => $cid, 'optionid' => $optionid, 'userid' => $user->userid]);
         }
     }
 
@@ -282,17 +286,21 @@ if (isset($_POST['issuecertificateselected']) && (has_capability('mod/booking:re
         redirect($url, get_string('selectatleastoneuser', 'booking', $bookingoption->option->howmanyusers), 5);
     }
 
+    $allusers = $DB->get_records_sql("SELECT * FROM {booking_answers} WHERE certificateid IS null AND optionid = :optionid AND userid IN (" . implode(',', $allselectedusers) . ")", ['optionid' => $optionid]);
+
     if (!empty($bookingoption->booking->settings->template)) {
         $template = \tool_certificate\template::instance($bookingoption->booking->settings->template);
 
-        foreach ($allselectedusers as $selecteduserid) {
-            $template->issue_certificate(
-                $selecteduserid,
+        foreach ($allusers as $user) {
+            $cid = $template->issue_certificate(
+                $user->userid,
                 $bookingoption->booking->settings->expires,
                 $issuedata,
                 'mod_booking',
                 $course->id
             );
+
+            $DB->execute("UPDATE {booking_answers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => $cid, 'optionid' => $optionid, 'userid' => $user->userid]);
         }
     }
     redirect($url, get_string('userssuccessfullenrolled', 'booking'), 5);
@@ -576,6 +584,10 @@ if (!$tableallbookings->is_downloading()) {
                 $columns[] = 'completed';
                 $headers[] = get_string('completed', 'mod_booking');
                 break;
+            case 'certificateid':
+                $columns[] = 'certificateid';
+                $headers[] = get_string('certificateid', 'mod_booking');
+                break;
             case 'status':
                 if ($bookingoption->booking->settings->enablepresence) {
                     $columns[] = 'status';
@@ -676,6 +688,7 @@ if (!$tableallbookings->is_downloading()) {
             ba.userid,
             ba.waitinglist,
             ba.notes,
+            ba.certificateid,
             \'\' otheroptions,
             ba.numrec' . $customfields;
     $from = ' {booking_answers} ba

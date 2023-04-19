@@ -143,6 +143,18 @@ class all_userbookings extends \table_sql {
         }
     }
 
+    protected function col_certificateid($values) {
+        if (!$this->is_downloading()) {
+            $completed = '';
+            if ($values->certificateid) {
+                $completed = '&#x2713;';
+            }
+            return $completed;
+        } else {
+            return $values->certificateid;
+        }
+    }
+
     protected function col_rating($values) {
         global $PAGE;
         $output = '';

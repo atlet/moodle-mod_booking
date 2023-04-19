@@ -1122,6 +1122,7 @@ $string['whichviewerror'] = 'You have to include the default view in: Views to s
 $string['showviews'] = 'Views to show in the booking options overview';
 $string['enablepresence'] = 'Enable presence';
 $string['removeuseronunenrol'] = 'Remove user from booking upon unenrolment from associated course?';
+$string['certificateid'] = 'Certificate';
 
 // Editoptions.php.
 $string['editbookingoption'] = 'Edit booking option';
