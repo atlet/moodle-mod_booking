@@ -1493,6 +1493,8 @@ function booking_extend_settings_navigation(settings_navigation $settings, navig
         $bookingisteacher = booking_check_if_teacher ($option->option);
     }
 
+    $booking = new \mod_booking\booking($cm->id);
+
     if (!$course) {
         return;
     }
@@ -1670,6 +1672,13 @@ function booking_extend_settings_navigation(settings_navigation $settings, navig
         $navref->add(get_string("manageoptiontemplates", "mod_booking"),
             new moodle_url('/mod/booking/optiontemplatessettings.php', array('id' => $cm->id)),
                 navigation_node::TYPE_CUSTOM, null, 'nav_manageoptiontemplates');
+    }
+
+    if (has_capability('tool/certificate:viewallcertificates', $context) && isset($booking->settings->template) && !empty($booking->settings->template)) {
+        $navref->add(get_string('issuedcertificates', 'mod_booking'),
+                new moodle_url('/admin/tool/certificate/certificates.php',
+                        array('templateid' => $booking->settings->template)),
+                            navigation_node::TYPE_CUSTOM, null, 'nav_certificates');
     }
 }
 
