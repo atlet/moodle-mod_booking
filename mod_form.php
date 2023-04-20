@@ -894,6 +894,10 @@ class mod_booking_mod_form extends moodleform_mod {
         $mform->hideIf('expires', 'expirydatetype', 'noteq', 1);
         $mform->disabledIf('expires', 'expirydatetype', 'noteq', 1);
 
+        $mform->addElement('text', 'maxcerts', get_string('maxcertsperuser', 'booking'));
+        $mform->setType('maxcerts', PARAM_INT);
+        $mform->setDefault('maxcerts', 1);
+
         // Custom labels.
         $mform->addElement('header', 'customlabels', get_string('customlabelsdeprecated', 'mod_booking'));
 

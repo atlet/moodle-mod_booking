@@ -233,15 +233,19 @@ if (isset($_POST['issuecertificateall']) && (has_capability('mod/booking:readres
         $template = \tool_certificate\template::instance($bookingoption->booking->settings->template);
 
         foreach ($allusers as $user) {
-            $cid = $template->issue_certificate(
-                $user->userid,
-                $bookingoption->booking->settings->expires,
-                $issuedata,
-                'mod_booking',
-                $course->id
-            );
+            $rn = $DB->count_records_sql("SELECT COUNT(*) FROM  {booking_answers} WHERE bookingid = :bookingid AND userid = :userid AND certificateid IS NOT null", ['bookingid' => $bookingoption->booking->id, 'userid' => $user->userid]);
 
-            $DB->execute("UPDATE {booking_answers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => $cid, 'optionid' => $optionid, 'userid' => $user->userid]);
+            if ($rn < $bookingoption->booking->settings->maxcerts) {
+                $cid = $template->issue_certificate(
+                    $user->userid,
+                    $bookingoption->booking->settings->expires,
+                    $issuedata,
+                    'mod_booking',
+                    $course->id
+                );
+
+                $DB->execute("UPDATE {booking_answers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => $cid, 'optionid' => $optionid, 'userid' => $user->userid]);
+            }
         }
     }
 
@@ -256,15 +260,19 @@ if (isset($_POST['issuecertificateconfirmed']) && (has_capability('mod/booking:r
         $template = \tool_certificate\template::instance($bookingoption->booking->settings->template);
 
         foreach ($allusers as $user) {
-            $cid = $template->issue_certificate(
-                $user->userid,
-                $bookingoption->booking->settings->expires,
-                $issuedata,
-                'mod_booking',
-                $course->id
-            );
+            $rn = $DB->count_records_sql("SELECT COUNT(*) FROM  {booking_answers} WHERE bookingid = :bookingid AND userid = :userid AND certificateid IS NOT null", ['bookingid' => $bookingoption->booking->id, 'userid' => $user->userid]);
 
-            $DB->execute("UPDATE {booking_answers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => $cid, 'optionid' => $optionid, 'userid' => $user->userid]);
+            if ($rn < $bookingoption->booking->settings->maxcerts) {
+                $cid = $template->issue_certificate(
+                    $user->userid,
+                    $bookingoption->booking->settings->expires,
+                    $issuedata,
+                    'mod_booking',
+                    $course->id
+                );
+
+                $DB->execute("UPDATE {booking_answers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => $cid, 'optionid' => $optionid, 'userid' => $user->userid]);
+            }
         }
     }
 
@@ -292,15 +300,19 @@ if (isset($_POST['issuecertificateselected']) && (has_capability('mod/booking:re
         $template = \tool_certificate\template::instance($bookingoption->booking->settings->template);
 
         foreach ($allusers as $user) {
-            $cid = $template->issue_certificate(
-                $user->userid,
-                $bookingoption->booking->settings->expires,
-                $issuedata,
-                'mod_booking',
-                $course->id
-            );
+            $rn = $DB->count_records_sql("SELECT COUNT(*) FROM  {booking_answers} WHERE bookingid = :bookingid AND userid = :userid AND certificateid IS NOT null", ['bookingid' => $bookingoption->booking->id, 'userid' => $user->userid]);
 
-            $DB->execute("UPDATE {booking_answers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => $cid, 'optionid' => $optionid, 'userid' => $user->userid]);
+            if ($rn < $bookingoption->booking->settings->maxcerts) {
+                $cid = $template->issue_certificate(
+                    $user->userid,
+                    $bookingoption->booking->settings->expires,
+                    $issuedata,
+                    'mod_booking',
+                    $course->id
+                );
+
+                $DB->execute("UPDATE {booking_answers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => $cid, 'optionid' => $optionid, 'userid' => $user->userid]);
+            }
         }
     }
     redirect($url, get_string('userssuccessfullenrolled', 'booking'), 5);

@@ -3472,5 +3472,21 @@ function xmldb_booking_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2023041900, 'booking');
     }
 
+    if ($oldversion < 2023042000) {
+
+        // Define field maxcerts to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('maxcerts', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '1', 'expires');
+
+        // Conditionally launch add field maxcerts.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2023042000, 'booking');
+    }
+
+
     return true;
 }

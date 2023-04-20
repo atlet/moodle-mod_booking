@@ -2353,3 +2353,4 @@ $string['allcertificatesgenerated'] = 'Certificates were issued to all students 
 $string['allcertificatesgeneratedall'] = 'Certificates were issued to all students.';
 $string['allcertificatesgeneratedselected'] = 'Certificates were issued to all selected students.';
 $string['selectaction'] = "Select action";
+$string['maxcertsperuser'] = "Max certs per user";
