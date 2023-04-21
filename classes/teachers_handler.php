@@ -64,42 +64,67 @@ class teachers_handler {
      * @return void
      */
     public function add_to_mform(MoodleQuickForm &$mform) {
-        global $DB;
-
+        global $DB, $COURSE;
         // Workaround: Only show, if it is not turned off in the option form config.
         // We currently need this, because hideIf does not work with headers.
         // In expert mode, we always show everything.
         $showteachersheader = true;
         $formmode = get_user_preferences('optionform_mode');
         if ($formmode !== 'expert') {
-            $cfgteachersheader = $DB->get_field('booking_optionformconfig', 'active',
-                ['elementname' => 'bookingoptionteachers']);
+            $cfgteachersheader = $DB->get_field(
+                'booking_optionformconfig',
+                'active',
+                ['elementname' => 'bookingoptionteachers']
+            );
             if ($cfgteachersheader === "0") {
                 $showteachersheader = false;
             }
         }
         if ($showteachersheader) {
-            $mform->addElement('header', 'bookingoptionteachers',
-                get_string('teachers', 'mod_booking'));
+            $mform->addElement(
+                'header',
+                'bookingoptionteachers',
+                get_string('teachers', 'mod_booking')
+            );
         }
 
         $options = [
             'tags' => false,
             'multiple' => true
         ];
-        /* Important note: Currently, all users can be added as teachers for a booking option.
-        In the future, there might be a user profile field defining users which are allowed
-        to be added as teachers. */
+        /**
+         * Andraž - I fixed this, so now it showns only enroled users. IT has no sense to show all users from Moodle...if you have a lot of users the settings page freezes.
+         * TODO: I suggest that we add settings to show only users enroled in course with speciffic role.
+         */
         $userrecords = $DB->get_records_sql(
-            "SELECT id, firstname, lastname, email FROM {user}"
+            "SELECT
+            u.id,
+          u.firstname,
+          u.lastname,
+          u.email
+        FROM
+          {user_enrolments} ue
+          JOIN {enrol} e ON e.id = ue.enrolid
+          AND e.status = 0
+          JOIN {user} u ON u.id = ue.userid
+          AND u.deleted = 0
+          AND u.suspended = 0
+        WHERE
+          ue.status = 0
+          AND e.courseid = {$COURSE->id}"
         );
         $allowedusers = [];
         foreach ($userrecords as $userrecord) {
             $allowedusers[$userrecord->id] = "$userrecord->firstname $userrecord->lastname ($userrecord->email)";
         }
 
-        $mform->addElement('autocomplete', 'teachersforoption', get_string('assignteachers', 'mod_booking'),
-            $allowedusers, $options);
+        $mform->addElement(
+            'autocomplete',
+            'teachersforoption',
+            get_string('assignteachers', 'mod_booking'),
+            $allowedusers,
+            $options
+        );
         $mform->addHelpButton('teachersforoption', 'teachersforoption', 'mod_booking');
 
         // We only show link to teaching journal if it's an already existing booking option.
@@ -109,8 +134,12 @@ class teachers_handler {
                 'id' => $optionsettings->cmid,
                 'optionid' => $this->optionid
             ]);
-            $mform->addElement('static', 'info:teachersforoptiondates', '',
-                    get_string('info:teachersforoptiondates', 'mod_booking', $optiondatesteachersreporturl->out()));
+            $mform->addElement(
+                'static',
+                'info:teachersforoptiondates',
+                '',
+                get_string('info:teachersforoptiondates', 'mod_booking', $optiondatesteachersreporturl->out())
+            );
         }
     }
 
@@ -176,8 +205,13 @@ class teachers_handler {
                 // It's a new teacher or the teacher was not enrolled into the course.
                 if (!subscribe_teacher_to_booking_option($newteacherid, $this->optionid, $optionsettings->cmid, null, $doenrol)) {
                     // Add teacher to group not yet implemented! (Third parameter of the function).
-                    throw new moodle_exception('cannotaddsubscriber', 'booking', '', null,
-                        'Cannot add subscriber with id: ' . $newteacherid);
+                    throw new moodle_exception(
+                        'cannotaddsubscriber',
+                        'booking',
+                        '',
+                        null,
+                        'Cannot add subscriber with id: ' . $newteacherid
+                    );
                 }
             }
         }
@@ -186,8 +220,13 @@ class teachers_handler {
             if (!in_array($oldteacherid, $teacherids)) {
                 // The teacher has been removed.
                 if (!unsubscribe_teacher_from_booking_option($oldteacherid, $this->optionid, $optionsettings->cmid)) {
-                    throw new moodle_exception('cannotremovesubscriber', 'booking', '', null,
-                        'Cannot remove subscriber with id: ' . $oldteacherid);
+                    throw new moodle_exception(
+                        'cannotremovesubscriber',
+                        'booking',
+                        '',
+                        null,
+                        'Cannot remove subscriber with id: ' . $oldteacherid
+                    );
                 }
             }
         }
@@ -204,7 +243,7 @@ class teachers_handler {
     public static function subscribe_teacher_to_all_optiondates(int $optionid, int $userid) {
         global $DB;
 
-        if (empty($optionid) || empty ($userid)) {
+        if (empty($optionid) || empty($userid)) {
             throw new moodle_exception('Could not connect teacher to optiondates because of missing userid or optionid.');
         }
 
@@ -258,7 +297,7 @@ class teachers_handler {
     public static function remove_teacher_from_all_optiondates(int $optionid, int $userid) {
         global $DB;
 
-        if (empty($optionid) || empty ($userid)) {
+        if (empty($optionid) || empty($userid)) {
             throw new moodle_exception('Could not remove teacher from optiondates because of missing userid or optionid.');
         }
 

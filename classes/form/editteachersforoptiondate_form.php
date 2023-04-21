@@ -132,7 +132,7 @@ class editteachersforoptiondate_form extends \core_form\dynamic_form {
      * The form definition.
      */
     public function definition() {
-        global $DB;
+        global $DB, $COURSE;
 
         $mform = $this->_form;
 
@@ -157,19 +157,39 @@ class editteachersforoptiondate_form extends \core_form\dynamic_form {
             'tags' => false,
             'multiple' => true
         ];
-        /* Important note: Currently, all users can be added as teachers for optiondates.
-        In the future, there might be a user profile field defining users which are allowed
-        to be added as substitute teachers. */
+        /**
+         * Andraž - I fixed this, so now it showns only enroled users. IT has no sense to show all users from Moodle...if you have a lot of users the settings page freezes.
+         * TODO: I suggest that we add settings to show only users enroled in course with speciffic role.
+         */
         $userrecords = $DB->get_records_sql(
-            "SELECT id, firstname, lastname, email FROM {user}"
+            "SELECT
+            u.id,
+          u.firstname,
+          u.lastname,
+          u.email
+        FROM
+          {user_enrolments} ue
+          JOIN {enrol} e ON e.id = ue.enrolid
+          AND e.status = 0
+          JOIN {user} u ON u.id = ue.userid
+          AND u.deleted = 0
+          AND u.suspended = 0
+        WHERE
+          ue.status = 0
+          AND e.courseid = {$COURSE->id}"
         );
         $allowedusers = [];
         foreach ($userrecords as $userrecord) {
             $allowedusers[$userrecord->id] = "$userrecord->firstname $userrecord->lastname ($userrecord->email)";
         }
 
-        $mform->addElement('autocomplete', 'teachersforoptiondate', get_string('teachers', 'mod_booking'),
-            $allowedusers, $options);
+        $mform->addElement(
+            'autocomplete',
+            'teachersforoptiondate',
+            get_string('teachers', 'mod_booking'),
+            $allowedusers,
+            $options
+        );
         $mform->setDefault('teachersforoptiondate', $teachers);
 
         $mform->addElement('text', 'reason', get_string('reason', 'mod_booking'));
@@ -194,8 +214,12 @@ class editteachersforoptiondate_form extends \core_form\dynamic_form {
                 $errors['reason'] = get_string('error:reasonfornoteacher', 'mod_booking');
             }
         } else {
-            $teachersforoption = $DB->get_fieldset_select('booking_teachers', 'userid', 'optionid = :optionid',
-                ['optionid' => $data['optionid']]);
+            $teachersforoption = $DB->get_fieldset_select(
+                'booking_teachers',
+                'userid',
+                'optionid = :optionid',
+                ['optionid' => $data['optionid']]
+            );
             $teachersforoptiondate = $data['teachersforoptiondate'];
             sort($teachersforoption);
             sort($teachersforoptiondate);
@@ -218,7 +242,7 @@ class editteachersforoptiondate_form extends \core_form\dynamic_form {
             $cmid = $this->optional_param('cmid', '', PARAM_RAW);
         }
 
-        $url = new moodle_url('/mod/booking/optiondates_teachers_report.php' , array('id' => $cmid, 'optionid' => $optionid));
+        $url = new moodle_url('/mod/booking/optiondates_teachers_report.php', array('id' => $cmid, 'optionid' => $optionid));
         return $url;
     }
 }
