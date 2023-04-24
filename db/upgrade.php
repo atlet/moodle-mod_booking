@@ -25,23 +25,47 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Rename field text on table booking to text.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('text', XMLDB_TYPE_TEXT, 'small', null, XMLDB_NOTNULL, null, null,
-                'name');
+        $field = new xmldb_field(
+            'text',
+            XMLDB_TYPE_TEXT,
+            'small',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            null,
+            'name'
+        );
 
         // Launch rename field text.
         $dbman->rename_field($table, $field, 'intro');
 
         // Rename field format on table booking to format.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('format', XMLDB_TYPE_INTEGER, '4', null, XMLDB_NOTNULL,
-                null, '0', 'intro');
+        $field = new xmldb_field(
+            'format',
+            XMLDB_TYPE_INTEGER,
+            '4',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'intro'
+        );
 
         // Launch rename field format.
         $dbman->rename_field($table, $field, 'introformat');
 
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('bookingpolicyformat', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL,
-                null, '0', 'bookingpolicy');
+        $field = new xmldb_field(
+            'bookingpolicyformat',
+            XMLDB_TYPE_INTEGER,
+            '2',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'bookingpolicy'
+        );
 
         // Conditionally launch add field completionsubmit.
         if (!$dbman->field_exists($table, $field)) {
@@ -51,8 +75,16 @@ function xmldb_booking_upgrade($oldversion) {
     }
     if ($oldversion < 2011020403) {
         $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('descriptionformat', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL,
-                null, '0', 'description');
+        $field = new xmldb_field(
+            'descriptionformat',
+            XMLDB_TYPE_INTEGER,
+            '2',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'description'
+        );
 
         // Conditionally launch add field completionsubmit.
         if (!$dbman->field_exists($table, $field)) {
@@ -64,8 +96,16 @@ function xmldb_booking_upgrade($oldversion) {
     if ($oldversion < 2012091601) {
         // Define field autoenrol to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('autoenrol', XMLDB_TYPE_INTEGER, '4', null, null, null, '0',
-                'timemodified');
+        $field = new xmldb_field(
+            'autoenrol',
+            XMLDB_TYPE_INTEGER,
+            '4',
+            null,
+            null,
+            null,
+            '0',
+            'timemodified'
+        );
 
         // Conditionally launch add field autoenrol.
         if (!$dbman->field_exists($table, $field)) {
@@ -80,25 +120,57 @@ function xmldb_booking_upgrade($oldversion) {
     if ($oldversion < 2012091602) {
         $table = new xmldb_table('booking');
 
-        $field = new xmldb_field('bookedtext', XMLDB_TYPE_TEXT, 'medium', null, null, null, null,
-                'autoenrol');
+        $field = new xmldb_field(
+            'bookedtext',
+            XMLDB_TYPE_TEXT,
+            'medium',
+            null,
+            null,
+            null,
+            null,
+            'autoenrol'
+        );
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
-        $field = new xmldb_field('waitingtext', XMLDB_TYPE_TEXT, 'medium', null, null, null, null,
-                'bookedtext');
+        $field = new xmldb_field(
+            'waitingtext',
+            XMLDB_TYPE_TEXT,
+            'medium',
+            null,
+            null,
+            null,
+            null,
+            'bookedtext'
+        );
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('statuschangetext', XMLDB_TYPE_TEXT, 'medium', null, null, null,
-                null, 'waitingtext');
+        $field = new xmldb_field(
+            'statuschangetext',
+            XMLDB_TYPE_TEXT,
+            'medium',
+            null,
+            null,
+            null,
+            null,
+            'waitingtext'
+        );
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('deletedtext', XMLDB_TYPE_TEXT, 'medium', null, null, null, null,
-                'statuschangetext');
+        $field = new xmldb_field(
+            'deletedtext',
+            XMLDB_TYPE_TEXT,
+            'medium',
+            null,
+            null,
+            null,
+            null,
+            'statuschangetext'
+        );
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
@@ -108,8 +180,16 @@ function xmldb_booking_upgrade($oldversion) {
     if ($oldversion < 2012091603) {
         // Define field maxperuser to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('maxperuser', XMLDB_TYPE_INTEGER, '10', null, null, null, '0',
-                'deletedtext');
+        $field = new xmldb_field(
+            'maxperuser',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            null,
+            null,
+            '0',
+            'deletedtext'
+        );
 
         // Conditionally launch add field maxperuser.
         if (!$dbman->field_exists($table, $field)) {
@@ -122,16 +202,32 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field addtocalendar to be added to booking_options.
         $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('addtocalendar', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null,
-                '0', 'timemodified');
+        $field = new xmldb_field(
+            'addtocalendar',
+            XMLDB_TYPE_INTEGER,
+            '2',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'timemodified'
+        );
 
         // Conditionally launch add field addtocalendar.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('calendarid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0',
-                'addtocalendar');
+        $field = new xmldb_field(
+            'calendarid',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            null,
+            null,
+            '0',
+            'addtocalendar'
+        );
 
         // Conditionally launch add field calendarid.
         if (!$dbman->field_exists($table, $field)) {
@@ -147,32 +243,72 @@ function xmldb_booking_upgrade($oldversion) {
         $table = new xmldb_table('booking');
         $tableoptions = new xmldb_table('booking_options');
 
-        $field = new xmldb_field('duration', XMLDB_TYPE_CHAR, '255', null, null, null, null,
-                'maxperuser');
+        $field = new xmldb_field(
+            'duration',
+            XMLDB_TYPE_CHAR,
+            '255',
+            null,
+            null,
+            null,
+            null,
+            'maxperuser'
+        );
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('points', XMLDB_TYPE_INTEGER, '10', null, null, null, null,
-                'duration');
+        $field = new xmldb_field(
+            'points',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            null,
+            null,
+            null,
+            'duration'
+        );
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('organizatorname', XMLDB_TYPE_CHAR, '255', null, null, null, null,
-                'points');
+        $field = new xmldb_field(
+            'organizatorname',
+            XMLDB_TYPE_CHAR,
+            '255',
+            null,
+            null,
+            null,
+            null,
+            'points'
+        );
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('pollurl', XMLDB_TYPE_CHAR, '255', null, null, null, null,
-                'organizatorname');
+        $field = new xmldb_field(
+            'pollurl',
+            XMLDB_TYPE_CHAR,
+            '255',
+            null,
+            null,
+            null,
+            null,
+            'organizatorname'
+        );
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('pollurl', XMLDB_TYPE_CHAR, '255', null, null, null, null,
-                'calendarid');
+        $field = new xmldb_field(
+            'pollurl',
+            XMLDB_TYPE_CHAR,
+            '255',
+            null,
+            null,
+            null,
+            null,
+            'calendarid'
+        );
         if (!$dbman->field_exists($tableoptions, $field)) {
             $dbman->add_field($tableoptions, $field);
         }
@@ -186,8 +322,16 @@ function xmldb_booking_upgrade($oldversion) {
         }
 
         // Define field addtogroup to be added to booking.
-        $field = new xmldb_field('addtogroup', XMLDB_TYPE_INTEGER, '4', null, null, null, '0',
-                'pollurl');
+        $field = new xmldb_field(
+            'addtogroup',
+            XMLDB_TYPE_INTEGER,
+            '4',
+            null,
+            null,
+            null,
+            '0',
+            'pollurl'
+        );
 
         // Conditionally launch add field addtogroup.
         if (!$dbman->field_exists($table, $field)) {
@@ -211,8 +355,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field groupid to be added to booking_options.
         $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('groupid', XMLDB_TYPE_INTEGER, '11', null, null, null, null,
-                'pollurl');
+        $field = new xmldb_field(
+            'groupid',
+            XMLDB_TYPE_INTEGER,
+            '11',
+            null,
+            null,
+            null,
+            null,
+            'pollurl'
+        );
 
         // Conditionally launch add field groupid.
         if (!$dbman->field_exists($table, $field)) {
@@ -250,8 +402,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field categoryid to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('categoryid', XMLDB_TYPE_INTEGER, '10', null, null, null, null,
-                'addtogroup');
+        $field = new xmldb_field(
+            'categoryid',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            null,
+            null,
+            null,
+            'addtogroup'
+        );
 
         // Conditionally launch add field categoryid.
         if (!$dbman->field_exists($table, $field)) {
@@ -266,8 +426,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field pollurltext to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('pollurltext', XMLDB_TYPE_TEXT, null, null, null, null, null,
-                'categoryid');
+        $field = new xmldb_field(
+            'pollurltext',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'categoryid'
+        );
 
         // Conditionally launch add field pollurltext.
         if (!$dbman->field_exists($table, $field)) {
@@ -292,8 +460,13 @@ function xmldb_booking_upgrade($oldversion) {
         // Adding keys to table booking_teachers.
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
         $table->add_key('bookingid', XMLDB_KEY_FOREIGN, array('bookingid'), 'booking', array('id'));
-        $table->add_key('optionid', XMLDB_KEY_FOREIGN, array('optionid'), 'booking_options',
-                array('id'));
+        $table->add_key(
+            'optionid',
+            XMLDB_KEY_FOREIGN,
+            array('optionid'),
+            'booking_options',
+            array('id')
+        );
 
         // Adding indexes to table booking_teachers.
         $table->add_index('userid', XMLDB_INDEX_NOTUNIQUE, array('userid'));
@@ -311,8 +484,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field additionalfields to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('additionalfields', XMLDB_TYPE_TEXT, null, null, null, null, null,
-                'pollurltext');
+        $field = new xmldb_field(
+            'additionalfields',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'pollurltext'
+        );
 
         // Conditionally launch add field additionalfields.
         if (!$dbman->field_exists($table, $field)) {
@@ -327,16 +508,32 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field daystonotify to be added to booking_options.
         $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('daystonotify', XMLDB_TYPE_INTEGER, '3', null, null, null, '0',
-                'groupid');
+        $field = new xmldb_field(
+            'daystonotify',
+            XMLDB_TYPE_INTEGER,
+            '3',
+            null,
+            null,
+            null,
+            '0',
+            'groupid'
+        );
 
         // Conditionally launch add field daystonotify.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('sent', XMLDB_TYPE_INTEGER, '1', null, null, null, '0',
-                'daystonotify');
+        $field = new xmldb_field(
+            'sent',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            null,
+            null,
+            '0',
+            'daystonotify'
+        );
 
         // Conditionally launch add field sent.
         if (!$dbman->field_exists($table, $field)) {
@@ -352,26 +549,58 @@ function xmldb_booking_upgrade($oldversion) {
         $table = new xmldb_table('booking');
         $tableoptions = new xmldb_table('booking_options');
 
-        $field = new xmldb_field('poolurl', XMLDB_TYPE_CHAR, '255', null, null, null, null,
-                'organizatorname');
+        $field = new xmldb_field(
+            'poolurl',
+            XMLDB_TYPE_CHAR,
+            '255',
+            null,
+            null,
+            null,
+            null,
+            'organizatorname'
+        );
         if ($dbman->field_exists($table, $field)) {
             $dbman->rename_field($table, $field, 'pollurl');
         }
 
-        $field = new xmldb_field('poolurl', XMLDB_TYPE_CHAR, '255', null, null, null, null,
-                'organizatorname');
+        $field = new xmldb_field(
+            'poolurl',
+            XMLDB_TYPE_CHAR,
+            '255',
+            null,
+            null,
+            null,
+            null,
+            'organizatorname'
+        );
         if ($dbman->field_exists($table, $field)) {
             $dbman->rename_field($table, $field, 'pollurl');
         }
 
-        $field = new xmldb_field('poolurltext', XMLDB_TYPE_TEXT, null, null, null, null, null,
-                'categoryid');
+        $field = new xmldb_field(
+            'poolurltext',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'categoryid'
+        );
         if ($dbman->field_exists($table, $field)) {
             $dbman->rename_field($table, $field, 'pollurltext');
         }
 
-        $field = new xmldb_field('poolurl', XMLDB_TYPE_CHAR, '255', null, null, null, null,
-                'calendarid');
+        $field = new xmldb_field(
+            'poolurl',
+            XMLDB_TYPE_CHAR,
+            '255',
+            null,
+            null,
+            null,
+            null,
+            'calendarid'
+        );
         if ($dbman->field_exists($tableoptions, $field)) {
             $dbman->rename_field($tableoptions, $field, 'pollurl');
         }
@@ -384,8 +613,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Changing type of field categoryid on table booking to text.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('categoryid', XMLDB_TYPE_TEXT, null, null, null, null, null,
-                'addtogroup');
+        $field = new xmldb_field(
+            'categoryid',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'addtogroup'
+        );
 
         // Launch change of type for field categoryid.
         $dbman->change_field_type($table, $field);
@@ -398,8 +635,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Changing the default of field eventtype on table booking to Booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('eventtype', XMLDB_TYPE_CHAR, '255', null, null, null, 'Booking',
-                'additionalfields');
+        $field = new xmldb_field(
+            'eventtype',
+            XMLDB_TYPE_CHAR,
+            '255',
+            null,
+            null,
+            null,
+            'Booking',
+            'additionalfields'
+        );
 
         // Launch change of default for field eventtype.
         $dbman->change_field_default($table, $field);
@@ -412,8 +657,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Changing type of field points on table booking to number.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('points', XMLDB_TYPE_NUMBER, '10, 2', null, null, null, null,
-                'duration');
+        $field = new xmldb_field(
+            'points',
+            XMLDB_TYPE_NUMBER,
+            '10, 2',
+            null,
+            null,
+            null,
+            null,
+            'duration'
+        );
 
         // Launch change of type for field points.
         $dbman->change_field_type($table, $field);
@@ -425,8 +678,16 @@ function xmldb_booking_upgrade($oldversion) {
     if ($oldversion < 2014091600) {
 
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('eventtype', XMLDB_TYPE_CHAR, '255', null, null, null, null,
-                'additionalfields');
+        $field = new xmldb_field(
+            'eventtype',
+            XMLDB_TYPE_CHAR,
+            '255',
+            null,
+            null,
+            null,
+            null,
+            'additionalfields'
+        );
 
         // Conditionally launch add field eventtype.
         if (!$dbman->field_exists($table, $field)) {
@@ -435,8 +696,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field notificationtext to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('notificationtext', XMLDB_TYPE_TEXT, null, null, null, null, null,
-                'eventtype');
+        $field = new xmldb_field(
+            'notificationtext',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'eventtype'
+        );
 
         // Conditionally launch add field notificationtext.
         if (!$dbman->field_exists($table, $field)) {
@@ -444,8 +713,16 @@ function xmldb_booking_upgrade($oldversion) {
         }
         // Define field completed to be added to booking_answers.
         $table = new xmldb_table('booking_answers');
-        $field = new xmldb_field('completed', XMLDB_TYPE_INTEGER, '1', null, null, null, '0',
-                'timemodified');
+        $field = new xmldb_field(
+            'completed',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            null,
+            null,
+            '0',
+            'timemodified'
+        );
 
         // Conditionally launch add field completed.
         if (!$dbman->field_exists($table, $field)) {
@@ -454,8 +731,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field userleave to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('userleave', XMLDB_TYPE_TEXT, null, null, null, null, null,
-                'notificationtext');
+        $field = new xmldb_field(
+            'userleave',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'notificationtext'
+        );
 
         // Conditionally launch add field userleave.
         if (!$dbman->field_exists($table, $field)) {
@@ -464,8 +749,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field enablecompletion to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('enablecompletion', XMLDB_TYPE_INTEGER, '1', null, null, null, '0',
-                'userleave');
+        $field = new xmldb_field(
+            'enablecompletion',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            null,
+            null,
+            '0',
+            'userleave'
+        );
 
         // Conditionally launch add field enablecompletion.
         if (!$dbman->field_exists($table, $field)) {
@@ -480,23 +773,47 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field pollurlteachers to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('pollurlteachers', XMLDB_TYPE_CHAR, '255', null, null, null, null,
-                'enablecompletion');
+        $field = new xmldb_field(
+            'pollurlteachers',
+            XMLDB_TYPE_CHAR,
+            '255',
+            null,
+            null,
+            null,
+            null,
+            'enablecompletion'
+        );
 
         // Conditionally launch add field pollurlteachers.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('pollurlteacherstext', XMLDB_TYPE_TEXT, null, null, null, null,
-                null, 'pollurlteachers');
+        $field = new xmldb_field(
+            'pollurlteacherstext',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'pollurlteachers'
+        );
         // Conditionally launch add field pollurlteacherstext.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('pollurlteachers', XMLDB_TYPE_CHAR, '255', null, null, null, null,
-                'address');
+        $field = new xmldb_field(
+            'pollurlteachers',
+            XMLDB_TYPE_CHAR,
+            '255',
+            null,
+            null,
+            null,
+            null,
+            'address'
+        );
         // Conditionally launch add field pollurlteachers.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
@@ -511,16 +828,32 @@ function xmldb_booking_upgrade($oldversion) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('institution', XMLDB_TYPE_CHAR, '255', null, null, null, null,
-                'location');
+        $field = new xmldb_field(
+            'institution',
+            XMLDB_TYPE_CHAR,
+            '255',
+            null,
+            null,
+            null,
+            null,
+            'location'
+        );
 
         // Conditionally launch add field institution.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('address', XMLDB_TYPE_CHAR, '255', null, null, null, null,
-                'institution');
+        $field = new xmldb_field(
+            'address',
+            XMLDB_TYPE_CHAR,
+            '255',
+            null,
+            null,
+            null,
+            null,
+            'institution'
+        );
 
         // Conditionally launch add field address.
         if (!$dbman->field_exists($table, $field)) {
@@ -535,8 +868,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field timecreated to be added to booking_answers.
         $table = new xmldb_table('booking_answers');
-        $field = new xmldb_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null,
-                '0', 'completed');
+        $field = new xmldb_field(
+            'timecreated',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'completed'
+        );
 
         // Conditionally launch add field timecreated.
         if (!$dbman->field_exists($table, $field)) {
@@ -574,8 +915,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field addtocalendar to be added to booking_options.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('sendmailtobooker', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL,
-                null, '0', 'maxperuser');
+        $field = new xmldb_field(
+            'sendmailtobooker',
+            XMLDB_TYPE_INTEGER,
+            '2',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'maxperuser'
+        );
 
         // Conditionally launch add field sendmailtobooker.
         if (!$dbman->field_exists($table, $field)) {
@@ -590,8 +939,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field waitinglist to be added to booking_answers.
         $table = new xmldb_table('booking_answers');
-        $field = new xmldb_field('waitinglist', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null,
-                '0', 'timecreated');
+        $field = new xmldb_field(
+            'waitinglist',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'timecreated'
+        );
 
         // Conditionally launch add field waitinglist.
         if (!$dbman->field_exists($table, $field)) {
@@ -606,8 +963,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field cancancelbook to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('cancancelbook', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null,
-                '0', 'pollurlteacherstext');
+        $field = new xmldb_field(
+            'cancancelbook',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'pollurlteacherstext'
+        );
 
         // Conditionally launch add field cancancelbook.
         if (!$dbman->field_exists($table, $field)) {
@@ -622,8 +987,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field conectedbooking to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('conectedbooking', XMLDB_TYPE_INTEGER, '10', null, null, null, '0',
-                'cancancelbook');
+        $field = new xmldb_field(
+            'conectedbooking',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            null,
+            null,
+            '0',
+            'cancancelbook'
+        );
 
         // Conditionally launch add field conectedbooking.
         if (!$dbman->field_exists($table, $field)) {
@@ -638,8 +1011,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field conectedoption to be added to booking_options.
         $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('conectedoption', XMLDB_TYPE_INTEGER, '10', null, null, null, '0',
-                'pollurlteachers');
+        $field = new xmldb_field(
+            'conectedoption',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            null,
+            null,
+            '0',
+            'pollurlteachers'
+        );
 
         // Conditionally launch add field conectedoption.
         if (!$dbman->field_exists($table, $field)) {
@@ -654,8 +1035,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field howmanyusers to be added to booking_options.
         $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('howmanyusers', XMLDB_TYPE_INTEGER, '10', null, null, null, '0',
-                'conectedoption');
+        $field = new xmldb_field(
+            'howmanyusers',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            null,
+            null,
+            '0',
+            'conectedoption'
+        );
 
         // Conditionally launch add field howmanyusers.
         if (!$dbman->field_exists($table, $field)) {
@@ -670,8 +1059,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field completed to be added to booking_teachers.
         $table = new xmldb_table('booking_teachers');
-        $field = new xmldb_field('completed', XMLDB_TYPE_INTEGER, '1', null, null, null, '0',
-                'optionid');
+        $field = new xmldb_field(
+            'completed',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            null,
+            null,
+            '0',
+            'optionid'
+        );
 
         // Conditionally launch add field completed.
         if (!$dbman->field_exists($table, $field)) {
@@ -686,8 +1083,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field showinapi to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('showinapi', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null,
-                '1', 'conectedbooking');
+        $field = new xmldb_field(
+            'showinapi',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '1',
+            'conectedbooking'
+        );
 
         // Conditionally launch add field showinapi.
         if (!$dbman->field_exists($table, $field)) {
@@ -702,8 +1107,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field pollsend to be added to booking_options.
         $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('pollsend', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0',
-                'howmanyusers');
+        $field = new xmldb_field(
+            'pollsend',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'howmanyusers'
+        );
 
         // Conditionally launch add field pollsend.
         if (!$dbman->field_exists($table, $field)) {
@@ -718,8 +1131,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field id to be added to booking_tags.
         $table = new xmldb_table('booking_tags');
-        $field = new xmldb_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE,
-                null, null);
+        $field = new xmldb_field(
+            'id',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            XMLDB_SEQUENCE,
+            null,
+            null
+        );
 
         // Conditionally launch add field id.
         if (!$dbman->field_exists($table, $field)) {
@@ -734,8 +1155,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field removeafterminutes to be added to booking_options.
         $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('removeafterminutes', XMLDB_TYPE_INTEGER, '5', null, XMLDB_NOTNULL,
-                null, '0', 'pollsend');
+        $field = new xmldb_field(
+            'removeafterminutes',
+            XMLDB_TYPE_INTEGER,
+            '5',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'pollsend'
+        );
 
         // Conditionally launch add field removeafterminutes.
         if (!$dbman->field_exists($table, $field)) {
@@ -750,8 +1179,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field btncacname to be added to booking_options.
         $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('btncacname', XMLDB_TYPE_CHAR, '128', null, XMLDB_NOTNULL, null,
-                null, 'removeafterminutes');
+        $field = new xmldb_field(
+            'btncacname',
+            XMLDB_TYPE_CHAR,
+            '128',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            null,
+            'removeafterminutes'
+        );
 
         // Conditionally launch add field btncacname.
         if (!$dbman->field_exists($table, $field)) {
@@ -766,16 +1203,32 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field lblteachname to be added to booking_options.
         $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('lblteachname', XMLDB_TYPE_CHAR, '128', null, XMLDB_NOTNULL, null,
-                null, 'btncacname');
+        $field = new xmldb_field(
+            'lblteachname',
+            XMLDB_TYPE_CHAR,
+            '128',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            null,
+            'btncacname'
+        );
 
         // Conditionally launch add field lblteachname.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('lblsputtname', XMLDB_TYPE_CHAR, '128', null, XMLDB_NOTNULL, null,
-                null, 'lblteachname');
+        $field = new xmldb_field(
+            'lblsputtname',
+            XMLDB_TYPE_CHAR,
+            '128',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            null,
+            'lblteachname'
+        );
 
         // Conditionally launch add field lblsputtname.
         if (!$dbman->field_exists($table, $field)) {
@@ -790,8 +1243,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field notificationtext to be added to booking_options.
         $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('notificationtext', XMLDB_TYPE_TEXT, null, null, null, null, null,
-                'lblsputtname');
+        $field = new xmldb_field(
+            'notificationtext',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'lblsputtname'
+        );
 
         // Conditionally launch add field notificationtext.
         if (!$dbman->field_exists($table, $field)) {
@@ -806,8 +1267,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field notificationtextformat to be added to booking_options.
         $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('notificationtextformat', XMLDB_TYPE_INTEGER, '2', null,
-                XMLDB_NOTNULL, null, '0', 'notificationtext');
+        $field = new xmldb_field(
+            'notificationtextformat',
+            XMLDB_TYPE_INTEGER,
+            '2',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'notificationtext'
+        );
 
         // Conditionally launch add field notificationtextformat.
         if (!$dbman->field_exists($table, $field)) {
@@ -822,16 +1291,32 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field btnbooknowname to be added to booking_options.
         $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('btnbooknowname', XMLDB_TYPE_CHAR, '128', null, XMLDB_NOTNULL, null,
-                null, 'notificationtextformat');
+        $field = new xmldb_field(
+            'btnbooknowname',
+            XMLDB_TYPE_CHAR,
+            '128',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            null,
+            'notificationtextformat'
+        );
 
         // Conditionally launch add field btnbooknowname.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('btncancelname', XMLDB_TYPE_CHAR, '128', null, XMLDB_NOTNULL, null,
-                null, 'btnbooknowname');
+        $field = new xmldb_field(
+            'btncancelname',
+            XMLDB_TYPE_CHAR,
+            '128',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            null,
+            'btnbooknowname'
+        );
 
         // Conditionally launch add field btncancelname.
         if (!$dbman->field_exists($table, $field)) {
@@ -868,8 +1353,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field disablebookingusers to be added to booking_options.
         $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('disablebookingusers', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL,
-                null, '0', 'btncancelname');
+        $field = new xmldb_field(
+            'disablebookingusers',
+            XMLDB_TYPE_INTEGER,
+            '2',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'btncancelname'
+        );
 
         // Conditionally launch add field disablebookingusers.
         if (!$dbman->field_exists($table, $field)) {
@@ -884,40 +1377,80 @@ function xmldb_booking_upgrade($oldversion) {
         // Define field lblbooking to be added to booking.
         $table = new xmldb_table('booking');
 
-        $field = new xmldb_field('lblbooking', XMLDB_TYPE_CHAR, '64', null, null, null, null,
-                'showinapi');
+        $field = new xmldb_field(
+            'lblbooking',
+            XMLDB_TYPE_CHAR,
+            '64',
+            null,
+            null,
+            null,
+            null,
+            'showinapi'
+        );
 
         // Conditionally launch add field lblbooking.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('lbllocation', XMLDB_TYPE_CHAR, '64', null, null, null, null,
-                'lblbooking');
+        $field = new xmldb_field(
+            'lbllocation',
+            XMLDB_TYPE_CHAR,
+            '64',
+            null,
+            null,
+            null,
+            null,
+            'lblbooking'
+        );
 
         // Conditionally launch add field lbllocation.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('lblinstitution', XMLDB_TYPE_CHAR, '64', null, null, null, null,
-                'lbllocation');
+        $field = new xmldb_field(
+            'lblinstitution',
+            XMLDB_TYPE_CHAR,
+            '64',
+            null,
+            null,
+            null,
+            null,
+            'lbllocation'
+        );
 
         // Conditionally launch add field lblinstitution.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('lblname', XMLDB_TYPE_CHAR, '64', null, null, null, null,
-                'lblinstitution');
+        $field = new xmldb_field(
+            'lblname',
+            XMLDB_TYPE_CHAR,
+            '64',
+            null,
+            null,
+            null,
+            null,
+            'lblinstitution'
+        );
 
         // Conditionally launch add field lblname.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('lblsurname', XMLDB_TYPE_CHAR, '64', null, null, null, null,
-                'lblname');
+        $field = new xmldb_field(
+            'lblsurname',
+            XMLDB_TYPE_CHAR,
+            '64',
+            null,
+            null,
+            null,
+            null,
+            'lblname'
+        );
 
         // Conditionally launch add field lblsurname.
         if (!$dbman->field_exists($table, $field)) {
@@ -960,32 +1493,72 @@ function xmldb_booking_upgrade($oldversion) {
 
         $table = new xmldb_table('booking');
 
-        $field = new xmldb_field('btncacname', XMLDB_TYPE_CHAR, '64', null, null, null, null,
-                'lblsurname');
+        $field = new xmldb_field(
+            'btncacname',
+            XMLDB_TYPE_CHAR,
+            '64',
+            null,
+            null,
+            null,
+            null,
+            'lblsurname'
+        );
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('lblteachname', XMLDB_TYPE_CHAR, '64', null, null, null, null,
-                'btncacname');
+        $field = new xmldb_field(
+            'lblteachname',
+            XMLDB_TYPE_CHAR,
+            '64',
+            null,
+            null,
+            null,
+            null,
+            'btncacname'
+        );
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('lblsputtname', XMLDB_TYPE_CHAR, '64', null, null, null, null,
-                'lblteachname');
+        $field = new xmldb_field(
+            'lblsputtname',
+            XMLDB_TYPE_CHAR,
+            '64',
+            null,
+            null,
+            null,
+            null,
+            'lblteachname'
+        );
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('btnbooknowname', XMLDB_TYPE_CHAR, '64', null, null, null, null,
-                'lblsputtname');
+        $field = new xmldb_field(
+            'btnbooknowname',
+            XMLDB_TYPE_CHAR,
+            '64',
+            null,
+            null,
+            null,
+            null,
+            'lblsputtname'
+        );
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('btncancelname', XMLDB_TYPE_CHAR, '64', null, null, null, null,
-                'btnbooknowname');
+        $field = new xmldb_field(
+            'btncancelname',
+            XMLDB_TYPE_CHAR,
+            '64',
+            null,
+            null,
+            null,
+            null,
+            'btnbooknowname'
+        );
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
@@ -1013,8 +1586,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field frombookingid to be added to booking_answers.
         $table = new xmldb_table('booking_answers');
-        $field = new xmldb_field('frombookingid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL,
-                null, '0', 'waitinglist');
+        $field = new xmldb_field(
+            'frombookingid',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'waitinglist'
+        );
 
         // Conditionally launch add field frombookingid.
         if (!$dbman->field_exists($table, $field)) {
@@ -1029,8 +1610,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field booktootherbooking to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('booktootherbooking', XMLDB_TYPE_CHAR, '64', null, null, null, null,
-                'btncancelname');
+        $field = new xmldb_field(
+            'booktootherbooking',
+            XMLDB_TYPE_CHAR,
+            '64',
+            null,
+            null,
+            null,
+            null,
+            'btncancelname'
+        );
 
         // Conditionally launch add field booktootherbooking.
         if (!$dbman->field_exists($table, $field)) {
@@ -1049,8 +1638,15 @@ function xmldb_booking_upgrade($oldversion) {
         // Adding fields to table booking_other.
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
         $table->add_field('optionid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
-        $table->add_field('otheroptionid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null,
-                null);
+        $table->add_field(
+            'otheroptionid',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            null
+        );
         $table->add_field('limit', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
 
         // Adding keys to table booking_other.
@@ -1084,8 +1680,15 @@ function xmldb_booking_upgrade($oldversion) {
         // Adding fields to table booking_other.
         $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
         $table->add_field('optionid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
-        $table->add_field('otheroptionid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null,
-                null);
+        $table->add_field(
+            'otheroptionid',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            null
+        );
         $table->add_field('userslimit', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
 
         // Adding keys to table booking_other.
@@ -1107,16 +1710,32 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field lblacceptingfrom to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('lblacceptingfrom', XMLDB_TYPE_CHAR, '64', null, null, null, null,
-                'booktootherbooking');
+        $field = new xmldb_field(
+            'lblacceptingfrom',
+            XMLDB_TYPE_CHAR,
+            '64',
+            null,
+            null,
+            null,
+            null,
+            'booktootherbooking'
+        );
 
         // Conditionally launch add field lblacceptingfrom.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('lblnumofusers', XMLDB_TYPE_CHAR, '64', null, null, null, null,
-                'lblacceptingfrom');
+        $field = new xmldb_field(
+            'lblnumofusers',
+            XMLDB_TYPE_CHAR,
+            '64',
+            null,
+            null,
+            null,
+            null,
+            'lblacceptingfrom'
+        );
 
         // Conditionally launch add field lblnumofusers.
         if (!$dbman->field_exists($table, $field)) {
@@ -1131,8 +1750,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field numgenerator to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('numgenerator', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null,
-                '0', 'lblnumofusers');
+        $field = new xmldb_field(
+            'numgenerator',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'lblnumofusers'
+        );
 
         // Conditionally launch add field numgenerator.
         if (!$dbman->field_exists($table, $field)) {
@@ -1147,8 +1774,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field numrec to be added to booking_answers.
         $table = new xmldb_table('booking_answers');
-        $field = new xmldb_field('numrec', XMLDB_TYPE_INTEGER, '11', null, XMLDB_NOTNULL, null, '0',
-                'frombookingid');
+        $field = new xmldb_field(
+            'numrec',
+            XMLDB_TYPE_INTEGER,
+            '11',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'frombookingid'
+        );
 
         // Conditionally launch add field numrec.
         if (!$dbman->field_exists($table, $field)) {
@@ -1163,8 +1798,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field paginationnum to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('paginationnum', XMLDB_TYPE_INTEGER, '5', null, XMLDB_NOTNULL, null,
-                '25', 'numgenerator');
+        $field = new xmldb_field(
+            'paginationnum',
+            XMLDB_TYPE_INTEGER,
+            '5',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '25',
+            'numgenerator'
+        );
 
         // Conditionally launch add field paginationnum.
         if (!$dbman->field_exists($table, $field)) {
@@ -1200,9 +1843,11 @@ function xmldb_booking_upgrade($oldversion) {
             // Delete all records made by now deleted users from booking_answers.
             $deletedusers = $DB->get_fieldset_select('user', 'id', " deleted = 1");
             list($insql, $params) = $DB->get_in_or_equal($deletedusers);
-            $DB->delete_records_select('booking_answers',
-                    " userid $insql AND bookingid IN ( SELECT id FROM {booking} WHERE course = $courseid)",
-                    $params);
+            $DB->delete_records_select(
+                'booking_answers',
+                " userid $insql AND bookingid IN ( SELECT id FROM {booking} WHERE course = $courseid)",
+                $params
+            );
 
             $guestenrol = false;
             $enrolmethods = enrol_get_instances($courseid, true);
@@ -1220,14 +1865,18 @@ function xmldb_booking_upgrade($oldversion) {
             $coursecontext = context_course::instance($courseid);
             list($enrolsql, $enrolparams) = get_enrolled_sql($coursecontext);
             $params = array_merge(array('course' => $courseid), $enrolparams);
-            $DB->delete_records_select('booking_answers',
-                    ' userid NOT IN (' . $enrolsql .
+            $DB->delete_records_select(
+                'booking_answers',
+                ' userid NOT IN (' . $enrolsql .
                     ') AND bookingid IN ( SELECT id FROM {booking} WHERE course = :course)',
-                    $params);
-            $DB->delete_records_select('booking_teachers',
-                    ' userid NOT IN (' . $enrolsql .
+                $params
+            );
+            $DB->delete_records_select(
+                'booking_teachers',
+                ' userid NOT IN (' . $enrolsql .
                     ') AND bookingid IN ( SELECT id FROM {booking} WHERE course = :course)',
-                    $params);
+                $params
+            );
         }
 
         upgrade_mod_savepoint(true, 2016051703, 'booking');
@@ -1237,8 +1886,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field banusernames to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('banusernames', XMLDB_TYPE_TEXT, null, null, null, null, null,
-                'paginationnum');
+        $field = new xmldb_field(
+            'banusernames',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'paginationnum'
+        );
 
         // Conditionally launch add field banusernames.
         if (!$dbman->field_exists($table, $field)) {
@@ -1253,8 +1910,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field showhelpfullnavigationlinks to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('showhelpfullnavigationlinks', XMLDB_TYPE_INTEGER, '1', null,
-                XMLDB_NOTNULL, null, '1', 'banusernames');
+        $field = new xmldb_field(
+            'showhelpfullnavigationlinks',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '1',
+            'banusernames'
+        );
 
         // Conditionally launch add field showhelpfullnavigationlinks.
         if (!$dbman->field_exists($table, $field)) {
@@ -1269,8 +1934,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field daystonotify to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('daystonotify', XMLDB_TYPE_INTEGER, '3', null, null, null, '0',
-                'showhelpfullnavigationlinks');
+        $field = new xmldb_field(
+            'daystonotify',
+            XMLDB_TYPE_INTEGER,
+            '3',
+            null,
+            null,
+            null,
+            '0',
+            'showhelpfullnavigationlinks'
+        );
 
         // Conditionally launch add field daystonotify.
         if (!$dbman->field_exists($table, $field)) {
@@ -1288,8 +1961,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field notifyemail to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('notifyemail', XMLDB_TYPE_TEXT, null, null, null, null, null,
-                'daystonotify');
+        $field = new xmldb_field(
+            'notifyemail',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'daystonotify'
+        );
 
         // Conditionally launch add field notifyemail.
         if (!$dbman->field_exists($table, $field)) {
@@ -1332,32 +2013,64 @@ function xmldb_booking_upgrade($oldversion) {
         // Define fields to be added to booking.
         $table = new xmldb_table('booking');
 
-        $field = new xmldb_field('assessed', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null,
-                '0', 'notifyemail');
+        $field = new xmldb_field(
+            'assessed',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'notifyemail'
+        );
 
         // Conditionally launch add field.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('assesstimestart', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL,
-                null, '0', 'assessed');
+        $field = new xmldb_field(
+            'assesstimestart',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'assessed'
+        );
 
         // Conditionally launch add field.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('assesstimefinish', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL,
-                null, '0', 'assesstimestart');
+        $field = new xmldb_field(
+            'assesstimefinish',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'assesstimestart'
+        );
 
         // Conditionally launch add field.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
-        $field = new xmldb_field('scale', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0',
-                'assesstimefinish');
+        $field = new xmldb_field(
+            'scale',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'assesstimefinish'
+        );
 
         // Conditionally launch add field.
         if (!$dbman->field_exists($table, $field)) {
@@ -1372,8 +2085,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field whichview to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('whichview', XMLDB_TYPE_CHAR, '32', null, XMLDB_NOTNULL, null,
-                'showactive', 'scale');
+        $field = new xmldb_field(
+            'whichview',
+            XMLDB_TYPE_CHAR,
+            '32',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            'showactive',
+            'scale'
+        );
 
         // Conditionally launch add field whichview.
         if (!$dbman->field_exists($table, $field)) {
@@ -1411,8 +2132,13 @@ function xmldb_booking_upgrade($oldversion) {
         // Adding keys to table booking_other.
         $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
         $table->add_key('bookingid', XMLDB_KEY_FOREIGN, array('bookingid'), 'booking', array('id'));
-        $table->add_key('optionid', XMLDB_KEY_FOREIGN, array('optionid'), 'booking_options',
-                array('id'));
+        $table->add_key(
+            'optionid',
+            XMLDB_KEY_FOREIGN,
+            array('optionid'),
+            'booking_options',
+            array('id')
+        );
 
         // Conditionally launch create table for booking_customfields.
         if (!$dbman->table_exists($table)) {
@@ -1426,8 +2152,16 @@ function xmldb_booking_upgrade($oldversion) {
     if ($oldversion < 2017081401) {
         // Define field daystonotify2 to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('daystonotify2', XMLDB_TYPE_INTEGER, '3', null, XMLDB_NOTNULL, null,
-                '0', 'whichview');
+        $field = new xmldb_field(
+            'daystonotify2',
+            XMLDB_TYPE_INTEGER,
+            '3',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'whichview'
+        );
 
         // Conditionally launch add field daystonotify2.
         if (!$dbman->field_exists($table, $field)) {
@@ -1436,8 +2170,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field sent2 to be added to booking_options.
         $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('sent2', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0',
-                'disablebookingusers');
+        $field = new xmldb_field(
+            'sent2',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'disablebookingusers'
+        );
 
         // Conditionally launch add field sent2.
         if (!$dbman->field_exists($table, $field)) {
@@ -1455,8 +2197,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field enablepresence to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('enablepresence', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL,
-                null, '0', 'daystonotify2');
+        $field = new xmldb_field(
+            'enablepresence',
+            XMLDB_TYPE_INTEGER,
+            '2',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'daystonotify2'
+        );
 
         // Conditionally launch add field enablepresence.
         if (!$dbman->field_exists($table, $field)) {
@@ -1465,8 +2215,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field completionmodule to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('completionmodule', XMLDB_TYPE_INTEGER, '20', null, null, null,
-                '-1', 'enablepresence');
+        $field = new xmldb_field(
+            'completionmodule',
+            XMLDB_TYPE_INTEGER,
+            '20',
+            null,
+            null,
+            null,
+            '-1',
+            'enablepresence'
+        );
 
         // Conditionally launch add field completionmodule.
         if (!$dbman->field_exists($table, $field)) {
@@ -1481,9 +2239,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Changing type of field responsesfields on table booking to char.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('responsesfields', XMLDB_TYPE_CHAR, '1333', null, null, null,
-                'completed,status,rating,numrec,fullname,timecreated,institution,waitinglist',
-                'completionmodule');
+        $field = new xmldb_field(
+            'responsesfields',
+            XMLDB_TYPE_CHAR,
+            '1333',
+            null,
+            null,
+            null,
+            'completed,status,rating,numrec,fullname,timecreated,institution,waitinglist',
+            'completionmodule'
+        );
 
         // Launch change of type for field responsesfields.
         $dbman->add_field($table, $field);
@@ -1496,9 +2261,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Changing type of field responsesfields on table booking to char.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('reportfields', XMLDB_TYPE_CHAR, '1333', null, null, null,
-                'booking,location,coursestarttime,courseendtime,firstname,lastname',
-                'responsesfields');
+        $field = new xmldb_field(
+            'reportfields',
+            XMLDB_TYPE_CHAR,
+            '1333',
+            null,
+            null,
+            null,
+            'booking,location,coursestarttime,courseendtime,firstname,lastname',
+            'responsesfields'
+        );
 
         // Launch change of type for field responsesfields.
         $dbman->add_field($table, $field);
@@ -1511,8 +2283,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field optionsfields to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('optionsfields', XMLDB_TYPE_CHAR, '1333', null, null, null,
-                'text,coursestarttime,maxanswers', 'reportfields');
+        $field = new xmldb_field(
+            'optionsfields',
+            XMLDB_TYPE_CHAR,
+            '1333',
+            null,
+            null,
+            null,
+            'text,coursestarttime,maxanswers',
+            'reportfields'
+        );
 
         // Conditionally launch add field optionsfields.
         if (!$dbman->field_exists($table, $field)) {
@@ -1527,8 +2307,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field beforebookedtext to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('beforebookedtext', XMLDB_TYPE_TEXT, null, null, null, null, null,
-                'optionsfields');
+        $field = new xmldb_field(
+            'beforebookedtext',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'optionsfields'
+        );
 
         // Conditionally launch add field beforebookedtext.
         if (!$dbman->field_exists($table, $field)) {
@@ -1537,8 +2325,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field beforecompletedtext to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('beforecompletedtext', XMLDB_TYPE_TEXT, null, null, null, null,
-                null, 'beforebookedtext');
+        $field = new xmldb_field(
+            'beforecompletedtext',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'beforebookedtext'
+        );
 
         // Conditionally launch add field beforecompletedtext.
         if (!$dbman->field_exists($table, $field)) {
@@ -1547,8 +2343,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field aftercompletedtext to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('aftercompletedtext', XMLDB_TYPE_TEXT, null, null, null, null, null,
-                'beforecompletedtext');
+        $field = new xmldb_field(
+            'aftercompletedtext',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'beforecompletedtext'
+        );
 
         // Conditionally launch add field aftercompletedtext.
         if (!$dbman->field_exists($table, $field)) {
@@ -1557,8 +2361,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field beforebookedtext to be added to booking_options.
         $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('beforebookedtext', XMLDB_TYPE_TEXT, null, null, null, null, null,
-                'sent2');
+        $field = new xmldb_field(
+            'beforebookedtext',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'sent2'
+        );
 
         // Conditionally launch add field beforebookedtext.
         if (!$dbman->field_exists($table, $field)) {
@@ -1567,8 +2379,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field beforecompletedtext to be added to booking_options.
         $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('beforecompletedtext', XMLDB_TYPE_TEXT, null, null, null, null,
-                null, 'beforebookedtext');
+        $field = new xmldb_field(
+            'beforecompletedtext',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'beforebookedtext'
+        );
 
         // Conditionally launch add field beforecompletedtext.
         if (!$dbman->field_exists($table, $field)) {
@@ -1577,8 +2397,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field aftercompletedtext to be added to booking_options.
         $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('aftercompletedtext', XMLDB_TYPE_TEXT, null, null, null, null, null,
-                'beforecompletedtext');
+        $field = new xmldb_field(
+            'aftercompletedtext',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'beforecompletedtext'
+        );
 
         // Conditionally launch add field aftercompletedtext.
         if (!$dbman->field_exists($table, $field)) {
@@ -1593,8 +2421,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field signinsheetfields to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('signinsheetfields', XMLDB_TYPE_CHAR, '1333', null, null, null,
-                'fullname,signature', 'aftercompletedtext');
+        $field = new xmldb_field(
+            'signinsheetfields',
+            XMLDB_TYPE_CHAR,
+            '1333',
+            null,
+            null,
+            null,
+            'fullname,signature',
+            'aftercompletedtext'
+        );
 
         // Conditionally launch add field signinsheetfields.
         if (!$dbman->field_exists($table, $field)) {
@@ -1609,8 +2445,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field shorturl to be added to booking_options.
         $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('shorturl', XMLDB_TYPE_CHAR, '1333', null, null, null, null,
-                'aftercompletedtext');
+        $field = new xmldb_field(
+            'shorturl',
+            XMLDB_TYPE_CHAR,
+            '1333',
+            null,
+            null,
+            null,
+            null,
+            'aftercompletedtext'
+        );
 
         // Conditionally launch add field shorturl.
         if (!$dbman->field_exists($table, $field)) {
@@ -1624,8 +2468,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field comments to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('comments', XMLDB_TYPE_INTEGER, '2', null, null, null, '0',
-                'signinsheetfields');
+        $field = new xmldb_field(
+            'comments',
+            XMLDB_TYPE_INTEGER,
+            '2',
+            null,
+            null,
+            null,
+            '0',
+            'signinsheetfields'
+        );
 
         // Conditionally launch add field comments.
         if (!$dbman->field_exists($table, $field)) {
@@ -1678,8 +2530,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field ratings to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('ratings', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0',
-                'comments');
+        $field = new xmldb_field(
+            'ratings',
+            XMLDB_TYPE_INTEGER,
+            '2',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'comments'
+        );
 
         // Conditionally launch add field ratings.
         if (!$dbman->field_exists($table, $field)) {
@@ -1754,8 +2614,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field additionalfields to be removed from booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('additionalfields', XMLDB_TYPE_TEXT, null, null, null, null, null,
-                'pollurltext');
+        $field = new xmldb_field(
+            'additionalfields',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'pollurltext'
+        );
         // Conditionally launch drop field.
         if ($dbman->field_exists($table, $field)) {
             $dbman->drop_field($table, $field);
@@ -1950,8 +2818,16 @@ function xmldb_booking_upgrade($oldversion) {
             $dbman->add_field($table, $field);
         }
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('showviews', XMLDB_TYPE_CHAR, '255', null, null, null,
-            'mybooking,myoptions,showall,showactive,myinstitution', 'defaultoptionsort');
+        $field = new xmldb_field(
+            'showviews',
+            XMLDB_TYPE_CHAR,
+            '255',
+            null,
+            null,
+            null,
+            'mybooking,myoptions,showall,showactive,myinstitution',
+            'defaultoptionsort'
+        );
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
@@ -1967,15 +2843,31 @@ function xmldb_booking_upgrade($oldversion) {
         if ($dbman->field_exists($table, $field)) {
             $dbman->change_field_type($table, $field);
         }
-        $field = new xmldb_field('signinsheetfields', XMLDB_TYPE_TEXT, 'small', null, null, null,
-            null, 'aftercompletedtext');
+        $field = new xmldb_field(
+            'signinsheetfields',
+            XMLDB_TYPE_TEXT,
+            'small',
+            null,
+            null,
+            null,
+            null,
+            'aftercompletedtext'
+        );
         if ($dbman->field_exists($table, $field)) {
             $dbman->change_field_type($table, $field);
         }
         // Add field for views to show in view.php.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('showviews', XMLDB_TYPE_CHAR, '255', null, null, null,
-            'mybooking,myoptions,showall,showactive,myinstitution', 'defaultoptionsort');
+        $field = new xmldb_field(
+            'showviews',
+            XMLDB_TYPE_CHAR,
+            '255',
+            null,
+            null,
+            null,
+            'mybooking,myoptions,showall,showactive,myinstitution',
+            'defaultoptionsort'
+        );
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
@@ -2004,7 +2896,7 @@ function xmldb_booking_upgrade($oldversion) {
             $dbman->add_field($table, $field);
         }
 
-         $field = new xmldb_field('autcrprofile', XMLDB_TYPE_CHAR, '264', null, null, null, null, 'autcractive');
+        $field = new xmldb_field('autcrprofile', XMLDB_TYPE_CHAR, '264', null, null, null, null, 'autcractive');
 
         // Conditionally launch add field autcrprofile.
         if (!$dbman->field_exists($table, $field)) {
@@ -2240,8 +3132,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field activitycompletiontext to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('activitycompletiontext', XMLDB_TYPE_TEXT, null, null, null, null, null,
-            'pollurlteacherstext');
+        $field = new xmldb_field(
+            'activitycompletiontext',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'pollurlteacherstext'
+        );
 
         // Conditionally launch add field activitycompletiontext.
         if (!$dbman->field_exists($table, $field)) {
@@ -2256,8 +3156,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field mailtemplatessource to be added to booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('mailtemplatessource', XMLDB_TYPE_INTEGER, '1', null,
-            null, null, '0', 'bookingmanager');
+        $field = new xmldb_field(
+            'mailtemplatessource',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            null,
+            null,
+            '0',
+            'bookingmanager'
+        );
 
         // Conditionally launch add field mailtemplatessource.
         if (!$dbman->field_exists($table, $field)) {
@@ -2274,15 +3182,31 @@ function xmldb_booking_upgrade($oldversion) {
         $table = new xmldb_table('booking');
 
         // Conditionally launch add field daystonotifyteachers.
-        $field1 = new xmldb_field('daystonotifyteachers', XMLDB_TYPE_INTEGER, '3', null,
-            null, null, '0', 'notifyemail');
+        $field1 = new xmldb_field(
+            'daystonotifyteachers',
+            XMLDB_TYPE_INTEGER,
+            '3',
+            null,
+            null,
+            null,
+            '0',
+            'notifyemail'
+        );
         if (!$dbman->field_exists($table, $field1)) {
             $dbman->add_field($table, $field1);
         }
 
         // Conditionally launch add field notifyemailteachers.
-        $field2 = new xmldb_field('notifyemailteachers', XMLDB_TYPE_TEXT, null, null,
-            null, null, null, 'daystonotifyteachers');
+        $field2 = new xmldb_field(
+            'notifyemailteachers',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'daystonotifyteachers'
+        );
         if (!$dbman->field_exists($table, $field2)) {
             $dbman->add_field($table, $field2);
         }
@@ -2296,8 +3220,16 @@ function xmldb_booking_upgrade($oldversion) {
         // Define field sentteachers to be added to booking_options.
         $table = new xmldb_table('booking_options');
 
-        $field = new xmldb_field('sentteachers', XMLDB_TYPE_INTEGER, '1', null,
-            XMLDB_NOTNULL, null, '0', 'sent2');
+        $field = new xmldb_field(
+            'sentteachers',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'sent2'
+        );
 
         // Conditionally launch add field sentteachers.
         if (!$dbman->field_exists($table, $field)) {
@@ -2418,8 +3350,16 @@ function xmldb_booking_upgrade($oldversion) {
         // Define field bookingimagescustomfield to be added to table booking.
         $table = new xmldb_table('booking');
 
-        $field = new xmldb_field('bookingimagescustomfield', XMLDB_TYPE_INTEGER, '10', null,
-            null, null, '0', 'coursepageshortinfo');
+        $field = new xmldb_field(
+            'bookingimagescustomfield',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            null,
+            null,
+            '0',
+            'coursepageshortinfo'
+        );
 
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
@@ -2518,8 +3458,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Define field annotation to be added to booking_options.
         $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('annotation', XMLDB_TYPE_TEXT, null, null, null, null, null,
-                'invisible');
+        $field = new xmldb_field(
+            'annotation',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'invisible'
+        );
 
         // Conditionally launch add field.
         if (!$dbman->field_exists($table, $field)) {
@@ -2557,8 +3505,16 @@ function xmldb_booking_upgrade($oldversion) {
             $dbman->add_field($table, $priceformulaadd);
         }
 
-        $priceformulamultiply = new xmldb_field('priceformulamultiply', XMLDB_TYPE_NUMBER, '10, 2', null, null, null, '1',
-            'priceformulaadd');
+        $priceformulamultiply = new xmldb_field(
+            'priceformulamultiply',
+            XMLDB_TYPE_NUMBER,
+            '10, 2',
+            null,
+            null,
+            null,
+            '1',
+            'priceformulaadd'
+        );
         if (!$dbman->field_exists($table, $priceformulamultiply)) {
             $dbman->add_field($table, $priceformulamultiply);
         }
@@ -2648,8 +3604,13 @@ function xmldb_booking_upgrade($oldversion) {
         $table = new xmldb_table('booking_holidays');
         $semesteridentifier = new xmldb_field('semesteridentifier');
         $name = new xmldb_field('name');
-        $key = new xmldb_key('fk_semesteridentifier', XMLDB_KEY_FOREIGN, ['semesteridentifier'],
-            'booking_semesters', ['identifier']);
+        $key = new xmldb_key(
+            'fk_semesteridentifier',
+            XMLDB_KEY_FOREIGN,
+            ['semesteridentifier'],
+            'booking_semesters',
+            ['identifier']
+        );
 
         // Launch drop key fk_semesteridentifier.
         $dbman->drop_key($table, $key);
@@ -2819,8 +3780,11 @@ function xmldb_booking_upgrade($oldversion) {
             $dbman->add_index($table, $index);
         }
         // Define index userid-bookingid-waitinglist-optionid (not unique) to be added to booking_answers.
-        $index = new xmldb_index('userid-bookingid-waitinglist-optionid',
-            XMLDB_INDEX_NOTUNIQUE, ['userid', 'bookingid', 'waitinglist', 'optionid']);
+        $index = new xmldb_index(
+            'userid-bookingid-waitinglist-optionid',
+            XMLDB_INDEX_NOTUNIQUE,
+            ['userid', 'bookingid', 'waitinglist', 'optionid']
+        );
 
         // Conditionally launch add index userid-bookingid-waitinglist-optionid.
         if (!$dbman->index_exists($table, $index)) {
@@ -3062,8 +4026,11 @@ function xmldb_booking_upgrade($oldversion) {
         }
 
         // Define index userid-bookingid-waitinglist-optionid (not unique) to be added to booking_answers.
-        $index = new xmldb_index('userid-bookingid-waitinglist-optionid', XMLDB_INDEX_NOTUNIQUE,
-            ['userid', 'bookingid', 'waitinglist', 'optionid']);
+        $index = new xmldb_index(
+            'userid-bookingid-waitinglist-optionid',
+            XMLDB_INDEX_NOTUNIQUE,
+            ['userid', 'bookingid', 'waitinglist', 'optionid']
+        );
 
         // Conditionally launch drop index userid-bookingid-waitinglist-optionid.
         if ($dbman->index_exists($table, $index)) {
@@ -3144,8 +4111,16 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Changing the default of field showviews on table booking to mybooking,myoptions,showall,showactive,myinstitution.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('showviews', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null,
-            'mybooking,myoptions,showall,showactive,myinstitution', 'defaultoptionsort');
+        $field = new xmldb_field(
+            'showviews',
+            XMLDB_TYPE_CHAR,
+            '255',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            'mybooking,myoptions,showall,showactive,myinstitution',
+            'defaultoptionsort'
+        );
 
         // Launch change of default for field showviews.
         $dbman->change_field_default($table, $field);
@@ -3380,8 +4355,16 @@ function xmldb_booking_upgrade($oldversion) {
     if ($oldversion < 2023022100) {
         // Add field optionsdownloadfields to table booking.
         $table = new xmldb_table('booking');
-        $field = new xmldb_field('optionsdownloadfields', XMLDB_TYPE_TEXT, 'small', null, null, null, null,
-            'optionsfields');
+        $field = new xmldb_field(
+            'optionsdownloadfields',
+            XMLDB_TYPE_TEXT,
+            'small',
+            null,
+            null,
+            null,
+            null,
+            'optionsfields'
+        );
 
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
@@ -3487,6 +4470,1197 @@ function xmldb_booking_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2023042000, 'booking');
     }
 
+    if ($oldversion < 2023042401) {
+        // Define field autcractive to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('customtemplateid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'showviews');
+
+        // Conditionally launch add field autcractive.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field autcractive to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('autcractive', XMLDB_TYPE_INTEGER, '1', null, null, null, '0', 'customtemplateid');
+
+        // Conditionally launch add field autcractive.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('autcrprofile', XMLDB_TYPE_CHAR, '264', null, null, null, null, 'autcractive');
+
+        // Conditionally launch add field autcrprofile.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('autcrvalue', XMLDB_TYPE_CHAR, '264', null, null, null, null, 'autcrprofile');
+
+        // Conditionally launch add field autcrvalue.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('autcrtemplate', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'autcrvalue');
+
+        // Conditionally launch add field autcrtemplate.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field optiondateid and its foreign key to be added to booking_customfields.
+        $table = new xmldb_table('booking_customfields');
+        $field = new xmldb_field('optiondateid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'optionid');
+        $key = new xmldb_key('optiondateid', XMLDB_KEY_FOREIGN, ['optiondateid'], 'booking_optiondates', ['id']);
+
+        // Conditionally launch add field optiondateid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+
+            // Launch add key optiondateid.
+            $dbman->add_key($table, $key);
+        }
+
+        // Define field eventid to be added to booking_optiondates.
+        $table = new xmldb_table('booking_optiondates');
+        $field = new xmldb_field('eventid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'optionid');
+        $key = new xmldb_key('fk_eventid', XMLDB_KEY_FOREIGN, ['eventid'], 'event', ['id']);
+
+        // Conditionally launch add field eventid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+
+            // Launch add key fk_eventid.
+            $dbman->add_key($table, $key);
+        }
+
+        // Define field bookingchangedtext to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('bookingchangedtext', XMLDB_TYPE_TEXT, null, null, null, null, null, 'deletedtext');
+
+        // Conditionally launch add field bookingchangedtext.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field showdescriptionmode to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('showdescriptionmode', XMLDB_TYPE_INTEGER, '1', null, null, null, '0', 'templateid');
+
+        // Conditionally launch add field showdescriptionmode.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field showlistoncoursepage to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('showlistoncoursepage', XMLDB_TYPE_INTEGER, '1', null, null, null, '1', 'showdescriptionmode');
+
+        // Conditionally launch add field showlistoncoursepage.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define table booking_category to be created.
+        $table = new xmldb_table('booking_icalsequence');
+
+        // Adding fields to table booking_category.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('optionid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('sequencevalue', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table booking_category.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+        // Conditionally launch create table for booking_category.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define table booking_optiondates to be created.
+        $table = new xmldb_table('booking_optiondates');
+
+        // Adding fields to table booking_optiondates.
+        $daystonotify = new xmldb_field('daystonotify', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'courseendtime');
+        $sent = new xmldb_field('sent', XMLDB_TYPE_INTEGER, '1', null, null, null, '0', 'daystonotify');
+
+        // Conditionally launch add field daystonotify.
+        if (!$dbman->field_exists($table, $daystonotify)) {
+            $dbman->add_field($table, $daystonotify);
+        }
+        // Conditionally launch add field sent.
+        if (!$dbman->field_exists($table, $sent)) {
+            $dbman->add_field($table, $sent);
+        }
+
+        // Define table booking_optiondates to be created.
+        $table = new xmldb_table('booking_userevents');
+
+        // Adding fields to table booking_category.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('optionid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('optiondateid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('eventid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+
+        // Adding keys to table booking_category.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+        // Conditionally launch create table for booking_category.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define field coursepageshortinfo to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('coursepageshortinfo', XMLDB_TYPE_TEXT, null, null, null, null, null, 'showlistoncoursepage');
+
+        // Conditionally launch add field coursepageshortinfo.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field activitycompletiontext to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field(
+            'activitycompletiontext',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'pollurlteacherstext'
+        );
+
+        // Conditionally launch add field activitycompletiontext.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field mailtemplatessource to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field(
+            'mailtemplatessource',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            null,
+            null,
+            '0',
+            'bookingmanager'
+        );
+
+        // Conditionally launch add field mailtemplatessource.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define fields daystonotifyteachers, notifyemailteachers to be added to booking.
+        $table = new xmldb_table('booking');
+
+        // Conditionally launch add field daystonotifyteachers.
+        $field1 = new xmldb_field(
+            'daystonotifyteachers',
+            XMLDB_TYPE_INTEGER,
+            '3',
+            null,
+            null,
+            null,
+            '0',
+            'notifyemail'
+        );
+        if (!$dbman->field_exists($table, $field1)) {
+            $dbman->add_field($table, $field1);
+        }
+
+        // Conditionally launch add field notifyemailteachers.
+        $field2 = new xmldb_field(
+            'notifyemailteachers',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'daystonotifyteachers'
+        );
+        if (!$dbman->field_exists($table, $field2)) {
+            $dbman->add_field($table, $field2);
+        }
+
+        // Define field sentteachers to be added to booking_options.
+        $table = new xmldb_table('booking_options');
+
+        $field = new xmldb_field(
+            'sentteachers',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'sent2'
+        );
+
+        // Conditionally launch add field sentteachers.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $table = new xmldb_table('booking_prices');
+
+        // Adding fields to table.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('optionid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'id');
+        $table->add_field('pricecategoryidentifier', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null, 'optionid');
+        $table->add_field('price', XMLDB_TYPE_NUMBER, '10, 2', null, null, null, '0', 'pricecategoryidentifier');
+        $table->add_field('currency', XMLDB_TYPE_CHAR, '10', null, null, null, '', 'price');
+
+        // Adding keys to table.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+        // Conditionally launch create table.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Add new table.
+        $table = new xmldb_table('booking_pricecategories');
+
+        // Adding fields to table.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null, null);
+        $table->add_field('ordernum', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0', 'id');
+        $table->add_field('identifier', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null, 'ordernum');
+        $table->add_field('name', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null, 'identifier');
+        $table->add_field('defaultvalue', XMLDB_TYPE_NUMBER, '10, 2', null, null, null, '0', 'name');
+        $table->add_field('disabled', XMLDB_TYPE_INTEGER, '1', null, null, null, '0', 'defaultvalue');
+
+        // Adding keys to table.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+        // Conditionally launch create table.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Add new table.
+        $table = new xmldb_table('booking_semesters');
+
+        // Adding fields to table.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null, null);
+        $table->add_field('identifier', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null, 'id');
+        $table->add_field('name', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null, 'identifier');
+        $table->add_field('startdate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'name');
+        $table->add_field('enddate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'startdate');
+
+        // Adding keys to table.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+        // Conditionally launch create table.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define fields to be added to booking_options.
+        $table = new xmldb_table('booking_options');
+
+        // Fix #190 - https://github.com/Wunderbyte-GmbH/moodle-mod_booking/issues/190.
+        $parentid = new xmldb_field('parentid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'duration');
+        if (!$dbman->field_exists($table, $parentid)) {
+            $dbman->add_field($table, $parentid);
+        }
+        $index = new xmldb_index('parentid', XMLDB_INDEX_NOTUNIQUE, ['parentid']);
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+        // End of fix #190.
+
+        $semesterid = new xmldb_field('semesterid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'parentid');
+        $dayofweektime = new xmldb_field('dayofweektime', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'semesterid');
+
+        // Conditionally launch add field semesterid.
+        if (!$dbman->field_exists($table, $semesterid)) {
+            $dbman->add_field($table, $semesterid);
+        }
+
+        // Conditionally launch add field dayofweektime.
+        if (!$dbman->field_exists($table, $dayofweektime)) {
+            $dbman->add_field($table, $dayofweektime);
+        }
+
+        // Define field bookingimagescustomfield to be added to table booking.
+        $table = new xmldb_table('booking');
+
+        $field = new xmldb_field(
+            'bookingimagescustomfield',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            null,
+            null,
+            '0',
+            'coursepageshortinfo'
+        );
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field invisible to be added to booking_options.
+        $table = new xmldb_table('booking_options');
+        $field = new xmldb_field('invisible', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'dayofweektime');
+
+        // Conditionally launch add field invisible.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define table booking_optiondates_teachers to be created.
+        $table = new xmldb_table('booking_optiondates_teachers');
+
+        // Adding fields to table booking_optiondates_teachers.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('optiondateid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table booking_optiondates_teachers.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('fk_optiondateid', XMLDB_KEY_FOREIGN, ['optiondateid'], 'booking_optiondates', ['id']);
+        $table->add_key('fk_userid', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+
+        // Conditionally launch create table for booking_optiondates_teachers.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Add new table.
+        $table = new xmldb_table('booking_holidays');
+
+        // Adding fields to table.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null, null);
+        $table->add_field('semesteridentifier', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null, 'id');
+        $table->add_field('name', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'semesteridentifier');
+        $table->add_field('startdate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'name');
+        $table->add_field('enddate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'startdate');
+
+        // Adding keys to table.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+        $table->add_key('fk_eventid', XMLDB_KEY_FOREIGN, ['semesteridentifier'], 'booking_semesters', ['identifier']);
+
+        // Conditionally launch create table.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define table booking_optionformconfig to be created.
+        $table = new xmldb_table('booking_optionformconfig');
+
+        // Adding fields to table booking_optionformconfig.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('elementname', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('active', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1');
+
+        // Adding keys to table booking_optionformconfig.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Conditionally launch create table for booking_optionformconfig.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define field annotation to be added to booking_options.
+        $table = new xmldb_table('booking_options');
+        $field = new xmldb_field(
+            'annotation',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'invisible'
+        );
+
+        // Conditionally launch add field.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field identifier to be added to booking_options.
+        $table = new xmldb_table('booking_options');
+        $identifier = new xmldb_field('identifier', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'annotation');
+        if (!$dbman->field_exists($table, $identifier)) {
+            $dbman->add_field($table, $identifier);
+        }
+
+        $titleprefix = new xmldb_field('titleprefix', XMLDB_TYPE_CHAR, '10', null, null, null, null, 'identifier');
+        if (!$dbman->field_exists($table, $titleprefix)) {
+            $dbman->add_field($table, $titleprefix);
+        }
+
+        $table = new xmldb_table('booking_options');
+
+        $priceformulaadd = new xmldb_field('priceformulaadd', XMLDB_TYPE_NUMBER, '10, 2', null, null, null, '0', 'titleprefix');
+        if (!$dbman->field_exists($table, $priceformulaadd)) {
+            $dbman->add_field($table, $priceformulaadd);
+        }
+
+        $priceformulamultiply = new xmldb_field(
+            'priceformulamultiply',
+            XMLDB_TYPE_NUMBER,
+            '10, 2',
+            null,
+            null,
+            null,
+            '1',
+            'priceformulaadd'
+        );
+        if (!$dbman->field_exists($table, $priceformulamultiply)) {
+            $dbman->add_field($table, $priceformulamultiply);
+        }
+
+        // Define field semesterid to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('semesterid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'autcrtemplate');
+
+        // Conditionally launch add field semesterid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field invisible to be added to booking_options.
+        $table = new xmldb_table('booking_options');
+        $field = new xmldb_field('dayofweek', XMLDB_TYPE_CHAR, '255', null, null, null, '', 'priceformulamultiply');
+
+        // Conditionally launch add field invisible.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field priceformulaoff to be added to booking_options.
+        $table = new xmldb_table('booking_options');
+        $field = new xmldb_field('priceformulaoff', XMLDB_TYPE_INTEGER, '1', null, null, null, '0', 'priceformulamultiply');
+
+        // Conditionally launch add field priceformulaoff.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field bookingopeningtime to be added to booking_options.
+        $table = new xmldb_table('booking_options');
+        $field = new xmldb_field('bookingopeningtime', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'maxoverbooking');
+
+        // Conditionally launch add field bookingopeningtime.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field availability to be added to booking_options.
+        $table = new xmldb_table('booking_options');
+        $field = new xmldb_field('availability', XMLDB_TYPE_TEXT, null, null, null, null, null, 'dayofweek');
+
+        // Conditionally launch add field availability.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field semesteridentifier to be dropped from booking_holidays.
+        $table = new xmldb_table('booking_holidays');
+        $semesteridentifier = new xmldb_field('semesteridentifier');
+        $name = new xmldb_field('name');
+        $key = new xmldb_key(
+            'fk_semesteridentifier',
+            XMLDB_KEY_FOREIGN,
+            ['semesteridentifier'],
+            'booking_semesters',
+            ['identifier']
+        );
+
+        // Launch drop key fk_semesteridentifier.
+        $dbman->drop_key($table, $key);
+
+        // Conditionally launch drop field semesteridentifier.
+        if ($dbman->field_exists($table, $semesteridentifier)) {
+            $dbman->drop_field($table, $semesteridentifier);
+        }
+
+        // Conditionally launch drop field name.
+        if ($dbman->field_exists($table, $name)) {
+            $dbman->drop_field($table, $name);
+        }
+
+        // Get rid of the old "unique option names" workaround.
+        // We use a separate "identifier" field now.
+        migrate_booking_option_identifiers_2022090802();
+
+        // Define field 'name' to be added to table booking_holidays.
+        $table = new xmldb_table('booking_holidays');
+        $field = new xmldb_field('name', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'enddate');
+
+        // Conditionally launch add field 'name'.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define table booking_rules to be created.
+        $table = new xmldb_table('booking_rules');
+
+        // Adding fields to table booking_rules.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('rulename', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        $table->add_field('rulejson', XMLDB_TYPE_TEXT, null, null, null, null, null);
+
+        // Adding keys to table booking_rules.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Conditionally launch create table for booking_rules.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define field availability to be added to booking_options.
+        $table = new xmldb_table('booking_options');
+        $field = new xmldb_field('availability', XMLDB_TYPE_TEXT, null, null, null, null, null, 'dayofweek');
+
+        // Conditionally launch add field availability.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field reason to be added to booking_optiondates.
+        $table = new xmldb_table('booking_optiondates');
+        $field = new xmldb_field('reason', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'sent');
+
+        // Conditionally launch add field reason.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field minanswers to be added to booking_options.
+        $table = new xmldb_table('booking_options');
+        $field = new xmldb_field('minanswers', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'maxoverbooking');
+
+        // Conditionally launch add field minanswers.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field bookingid to be added to booking_rules.
+        $table = new xmldb_table('booking_rules');
+        $field = new xmldb_field('bookingid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'id');
+
+        // Conditionally launch add field bookingid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field status to be added to booking_options.
+        $table = new xmldb_table('booking_options');
+        $field = new xmldb_field('status', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'availability');
+
+        // Conditionally launch add field bookingid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define index userid (not unique) to be added to booking_answers.
+        $table = new xmldb_table('booking_answers');
+        $index = new xmldb_index('userid', XMLDB_INDEX_NOTUNIQUE, ['userid']);
+
+        // Conditionally launch add index userid.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+        // Define index optionid-userid (not unique) to be added to booking_answers.
+        $index = new xmldb_index('optionid-userid', XMLDB_INDEX_NOTUNIQUE, ['optionid', 'userid']);
+        // Conditionally launch add index optionid-userid.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+        // Define index optionid-userid-bookingid (not unique) to be added to booking_answers.
+        $index = new xmldb_index('optionid-userid-bookingid', XMLDB_INDEX_NOTUNIQUE, ['optionid', 'userid', 'bookingid']);
+
+        // Conditionally launch add index optionid-userid-bookingid.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+        // Define index userid-bookingid-waitinglist (not unique) to be added to booking_answers.
+        $index = new xmldb_index('userid-bookingid-waitinglist', XMLDB_INDEX_NOTUNIQUE, ['userid', 'bookingid', 'waitinglist']);
+
+        // Conditionally launch add index userid-bookingid-waitinglist.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+        // Define index userid-bookingid-waitinglist-optionid (not unique) to be added to booking_answers.
+        $index = new xmldb_index(
+            'userid-bookingid-waitinglist-optionid',
+            XMLDB_INDEX_NOTUNIQUE,
+            ['userid', 'bookingid', 'waitinglist', 'optionid']
+        );
+
+        // Conditionally launch add index userid-bookingid-waitinglist-optionid.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+        // Define index timemodified (not unique) to be added to booking_answers.
+        $index = new xmldb_index('timemodified', XMLDB_INDEX_NOTUNIQUE, ['timemodified']);
+
+        // Conditionally launch add index timemodified.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+        // Define key course (foreign) to be added to booking_category.
+        $table = new xmldb_table('booking_category');
+        $key = new xmldb_key('course', XMLDB_KEY_FOREIGN, ['course'], 'course', ['id']);
+
+        // Launch add key course.
+        $dbman->add_key($table, $key);
+        // Define index userid-optionid (unique) to be added to booking_teachers.
+        $table = new xmldb_table('booking_teachers');
+        $index = new xmldb_index('userid-optionid', XMLDB_INDEX_NOTUNIQUE, ['userid', 'optionid']);
+
+        // Conditionally launch add index userid-optionid.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Define index course (not unique) to be added to booking_institutions.
+        $table = new xmldb_table('booking_institutions');
+        $index = new xmldb_index('course', XMLDB_INDEX_NOTUNIQUE, ['course']);
+
+        // Conditionally launch drop table for booking_institutions.
+        if ($dbman->table_exists($table)) {
+            if (!$dbman->index_exists($table, $index)) {
+                $dbman->add_index($table, $index);
+            }
+        }
+
+        // Define index id-optionid (not unique) to be added to booking_optiondates.
+        $table = new xmldb_table('booking_optiondates');
+        $index = new xmldb_index('id-optionid', XMLDB_INDEX_NOTUNIQUE, ['id', 'optionid']);
+
+        // Conditionally launch add index id-optionid.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Define index coursestarttime (not unique) to be added to booking_optiondates.
+        $table = new xmldb_table('booking_optiondates');
+        $index = new xmldb_index('coursestarttime', XMLDB_INDEX_NOTUNIQUE, ['coursestarttime']);
+
+        // Conditionally launch add index coursestarttime.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+        // Define index courseendtime (not unique) to be added to booking_optiondates.
+        $table = new xmldb_table('booking_optiondates');
+        $index = new xmldb_index('courseendtime', XMLDB_INDEX_NOTUNIQUE, ['courseendtime']);
+
+        // Conditionally launch add index courseendtime.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Define index optiondateid (not unique) to be added to booking_optiondates_teachers.
+        $table = new xmldb_table('booking_optiondates_teachers');
+        $index = new xmldb_index('optiondateid', XMLDB_INDEX_NOTUNIQUE, ['optiondateid']);
+
+        // Conditionally launch add index optiondateid.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Define index userid (not unique) to be added to booking_optiondates_teachers.
+        $table = new xmldb_table('booking_optiondates_teachers');
+        $index = new xmldb_index('userid', XMLDB_INDEX_NOTUNIQUE, ['userid']);
+
+        // Conditionally launch add index userid.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Define index optiondateid-userid (not unique) to be added to booking_optiondates_teachers.
+        $table = new xmldb_table('booking_optiondates_teachers');
+        $index = new xmldb_index('optiondateid-userid', XMLDB_INDEX_NOTUNIQUE, ['optiondateid', 'userid']);
+
+        // Conditionally launch add index optiondateid-userid.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+        // Define key bookingid (foreign) to be added to booking_rules.
+        $table = new xmldb_table('booking_rules');
+        $key = new xmldb_key('bookingid', XMLDB_KEY_FOREIGN, ['bookingid'], 'booking', ['id']);
+
+        // Launch add key bookingid.
+        $dbman->add_key($table, $key);
+
+        // Define index id-bookingid (not unique) to be added to booking_options.
+        $table = new xmldb_table('booking_options');
+        $index = new xmldb_index('id-bookingid', XMLDB_INDEX_NOTUNIQUE, ['id', 'bookingid']);
+
+        // Conditionally launch add index id-bookingid.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Define index id-invisible (not unique) to be added to booking_options.
+        $table = new xmldb_table('booking_options');
+        $index = new xmldb_index('id-invisible', XMLDB_INDEX_NOTUNIQUE, ['id', 'invisible']);
+
+        // Conditionally launch add index id-invisible.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+        // Define index invisible (not unique) to be added to booking_options.
+        $table = new xmldb_table('booking_options');
+        $index = new xmldb_index('invisible', XMLDB_INDEX_NOTUNIQUE, ['invisible']);
+
+        // Conditionally launch add index invisible.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Define table booking_subbooking_options to be created.
+        $table = new xmldb_table('booking_subbooking_options');
+
+        // Adding fields to table booking_subbooking_options.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('optionid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('name', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        $table->add_field('type', XMLDB_TYPE_CHAR, '255', null, null, null, null);
+        $table->add_field('json', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+
+        // Adding keys to table booking_subbooking_options.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Conditionally launch create table for booking_subbooking_options.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define table booking_subbooking_answers to be created.
+        $table = new xmldb_table('booking_subbooking_answers');
+
+        // Adding fields to table booking_subbooking_answers.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('sboptionid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('usermodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('json', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        $table->add_field('timestart', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('timeend', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+        $table->add_field('status', XMLDB_TYPE_INTEGER, '1', null, null, null, '0');
+        $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+        $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+        // Adding keys to table booking_subbooking_answers.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+        $table->add_key('usermodified', XMLDB_KEY_FOREIGN, ['usermodified'], 'user', ['id']);
+
+        // Conditionally launch create table for booking_subbooking_answers.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Define field block to be added to booking_subbooking_options.
+        $table = new xmldb_table('booking_subbooking_options');
+        $field = new xmldb_field('block', XMLDB_TYPE_INTEGER, '1', null, null, null, '0', 'json');
+
+        // Conditionally launch add field block.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Rename field optionid on table booking_prices to itemid.
+        $table = new xmldb_table('booking_prices');
+
+        $optionid = new xmldb_field('optionid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'id');
+
+        // This field is only needed to check if it has already been renamed.
+        $itemid = new xmldb_field('itemid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'id');
+
+        if (!$dbman->field_exists($table, $itemid)) {
+            $dbman->rename_field($table, $optionid, 'itemid');
+        }
+
+        $field = new xmldb_field('area', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'itemid');
+        // Conditionally launch add field area.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // We need to migrate optionids to itemids and set the area to 'option'.
+        migrate_optionids_for_prices_2022112901();
+
+        // Define index userid (not unique) to be added to booking_answers.
+        $table = new xmldb_table('booking_answers');
+        // Define index optionid-userid-bookingid (not unique) to be added to booking_answers.
+        $index = new xmldb_index('optionid-userid-bookingid', XMLDB_INDEX_NOTUNIQUE, ['optionid', 'userid', 'bookingid']);
+        // Conditionally launch drop index optionid-userid-bookingid.
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
+
+        // Define index userid-bookingid-waitinglist-optionid (not unique) to be added to booking_answers.
+        $index = new xmldb_index(
+            'userid-bookingid-waitinglist-optionid',
+            XMLDB_INDEX_NOTUNIQUE,
+            ['userid', 'bookingid', 'waitinglist', 'optionid']
+        );
+
+        // Conditionally launch drop index userid-bookingid-waitinglist-optionid.
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
+
+        // Define index timemodified (not unique) to be dropped from booking_answers.
+        $index = new xmldb_index('timemodified', XMLDB_INDEX_NOTUNIQUE, ['timemodified']);
+        // Conditionally launch add index timemodified.
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
+
+        // Define index id-optionid (not unique) to be dropped from booking_optiondates.
+        $table = new xmldb_table('booking_optiondates');
+        $index = new xmldb_index('id-optionid', XMLDB_INDEX_NOTUNIQUE, ['id', 'optionid']);
+
+        // Conditionally launch add index id-optionid.
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
+
+        // Define index id-bookingid (not unique) to be dropped from booking_options.
+        $table = new xmldb_table('booking_options');
+        $index = new xmldb_index('id-bookingid', XMLDB_INDEX_NOTUNIQUE, ['id', 'bookingid']);
+
+        // Conditionally launch add index id-bookingid.
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
+
+        // Define index id-invisible (not unique) to be dropped from booking_options.
+        $table = new xmldb_table('booking_options');
+        $index = new xmldb_index('id-invisible', XMLDB_INDEX_NOTUNIQUE, ['id', 'invisible']);
+
+        // Conditionally launch drop index id-invisible.
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
+
+        // Changing nullability of field sendmailtobooker on table booking to null.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('sendmailtobooker', XMLDB_TYPE_INTEGER, '2', null, null, null, '0', 'maxperuser');
+
+        // Launch change of nullability for field sendmailtobooker.
+        $dbman->change_field_notnull($table, $field);
+
+        // Define index templateid (not unique) to be dropped form booking.
+        $table = new xmldb_table('booking');
+        $index = new xmldb_index('templateid', XMLDB_INDEX_NOTUNIQUE, ['templateid']);
+
+        // Conditionally launch drop index templateid.
+        if ($dbman->index_exists($table, $index)) {
+            $dbman->drop_index($table, $index);
+        }
+
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('templateid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'allowupdatedays');
+
+        // Launch change of type for field templateid.
+        $dbman->change_field_type($table, $field);
+
+        // Define index templateid (not unique) to be added to booking.
+        $table = new xmldb_table('booking');
+        $index = new xmldb_index('templateid', XMLDB_INDEX_NOTUNIQUE, ['templateid']);
+
+        // Conditionally launch add index templateid.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Changing the default of field defaultoptionsort on table booking to text.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('defaultoptionsort', XMLDB_TYPE_CHAR, '255', null, null, null, 'text', 'bookingimagescustomfield');
+
+        // Launch change of default for field defaultoptionsort.
+        $dbman->change_field_default($table, $field);
+
+        // Changing the default of field showviews on table booking to mybooking,myoptions,showall,showactive,myinstitution.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field(
+            'showviews',
+            XMLDB_TYPE_CHAR,
+            '255',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            'mybooking,myoptions,showall,showactive,myinstitution',
+            'defaultoptionsort'
+        );
+
+        // Launch change of default for field showviews.
+        $dbman->change_field_default($table, $field);
+
+        // Define field textformat to be added to booking_tags.
+        $table = new xmldb_table('booking_tags');
+        $field = new xmldb_field('textformat', XMLDB_TYPE_INTEGER, '2', null, null, null, '0', 'text');
+
+        // Conditionally launch add field textformat.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define key bookingid (foreign) to be dropped form booking_customfields.
+        $table = new xmldb_table('booking_customfields');
+        $key = new xmldb_key('bookingid', XMLDB_KEY_FOREIGN, ['bookingid'], 'booking', ['id']);
+
+        // Launch drop key bookingid.
+        $dbman->drop_key($table, $key);
+
+        // Changing the default of field bookingid on table booking_customfields to 0.
+        $table = new xmldb_table('booking_customfields');
+        $field = new xmldb_field('bookingid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'id');
+
+        // Launch change of default for field bookingid.
+        $dbman->change_field_default($table, $field);
+
+        // Define key bookingid (foreign) to be added to booking_customfields.
+        $table = new xmldb_table('booking_customfields');
+        $key = new xmldb_key('bookingid', XMLDB_KEY_FOREIGN, ['bookingid'], 'booking', ['id']);
+
+        // Launch add key bookingid.
+        $dbman->add_key($table, $key);
+
+        // Define key optionid (foreign) to be dropped form booking_customfields.
+        $table = new xmldb_table('booking_customfields');
+        $key = new xmldb_key('optionid', XMLDB_KEY_FOREIGN, ['optionid'], 'booking_options', ['id']);
+
+        // Launch drop key optionid.
+        $dbman->drop_key($table, $key);
+
+        // Changing the default of field optionid on table booking_customfields to 0.
+        $table = new xmldb_table('booking_customfields');
+        $field = new xmldb_field('optionid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'bookingid');
+
+        // Launch change of default for field optionid.
+        try {
+            $dbman->change_field_default($table, $field);
+        } catch (\Throwable $th) {
+            //throw $th;
+        }
+
+        // Define key optionid (foreign) to be added to booking_customfields.
+        $table = new xmldb_table('booking_customfields');
+        $key = new xmldb_key('optionid', XMLDB_KEY_FOREIGN, ['optionid'], 'booking_options', ['id']);
+
+        // Launch add key optionid.
+        $dbman->add_key($table, $key);
+
+        // Changing nullability of field userid on table booking_icalsequence to not null.
+        $table = new xmldb_table('booking_icalsequence');
+        $field = new xmldb_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'id');
+
+        // Launch change of nullability for field userid.
+        $dbman->change_field_notnull($table, $field);
+
+        // Changing nullability of field optionid on table booking_icalsequence to not null.
+        $table = new xmldb_table('booking_icalsequence');
+        $field = new xmldb_field('optionid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'userid');
+
+        // Launch change of nullability for field optionid.
+        $dbman->change_field_notnull($table, $field);
+
+        // Changing nullability of field sequencevalue on table booking_icalsequence to not null.
+        $table = new xmldb_table('booking_icalsequence');
+        $field = new xmldb_field('sequencevalue', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'optionid');
+
+        // Launch change of nullability for field sequencevalue.
+        $dbman->change_field_notnull($table, $field);
+
+        // Changing type of field price on table booking_prices to number.
+        $table = new xmldb_table('booking_prices');
+        $field = new xmldb_field('price', XMLDB_TYPE_NUMBER, '10, 2', null, null, null, '0', 'pricecategoryidentifier');
+
+        // Launch change of type for field price.
+        $dbman->change_field_type($table, $field);
+
+        $table = new xmldb_table('booking_userevents');
+        $key = new xmldb_key('userid', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+        // Launch add key.
+        $dbman->add_key($table, $key);
+
+        $table = new xmldb_table('booking_userevents');
+        $key = new xmldb_key('optionid', XMLDB_KEY_FOREIGN, ['optionid'], 'booking_options', ['id']);
+        // Launch add key.
+        $dbman->add_key($table, $key);
+
+        $table = new xmldb_table('booking_userevents');
+        $index = new xmldb_index('optionid-optiondateid', XMLDB_INDEX_NOTUNIQUE, ['optionid, optiondateid']);
+        // Conditionally launch add index.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        $table = new xmldb_table('booking_userevents');
+        $index = new xmldb_index('userid-optionid', XMLDB_INDEX_NOTUNIQUE, ['userid, optionid']);
+        // Conditionally launch add index.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        $table = new xmldb_table('booking_userevents');
+        $index = new xmldb_index('userid-optionid-optiondateid', XMLDB_INDEX_NOTUNIQUE, ['userid, optionid, optiondateid']);
+        // Conditionally launch add index.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        $table = new xmldb_table('booking_customfields');
+        $index = new xmldb_index('optionid-optiondateid', XMLDB_INDEX_NOTUNIQUE, ['optionid, optiondateid']);
+        // Conditionally launch add index.
+        if (!$dbman->index_exists($table, $index)) {
+            $dbman->add_index($table, $index);
+        }
+
+        // Define field pricecatsortorder to be added to booking_pricecategories.
+        $table = new xmldb_table('booking_pricecategories');
+        $field = new xmldb_field('pricecatsortorder', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'defaultvalue');
+
+        // Conditionally launch add field pricecatsortorder.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define table booking_institutions to be dropped.
+        $table = new xmldb_table('booking_institutions');
+
+        // Conditionally launch drop table for booking_institutions.
+        if ($dbman->table_exists($table)) {
+            $dbman->drop_table($table);
+        }
+
+        // Define field showhelpfullnavigationlinks to be dropped from booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('showhelpfullnavigationlinks');
+
+        // Conditionally launch drop field showhelpfullnavigationlinks.
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        // Define field showdescriptionmode to be dropped from booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('showdescriptionmode');
+
+        // Conditionally launch drop field showdescriptionmode.
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->drop_field($table, $field);
+        }
+
+        // Define field itemid to be added to booking_subbooking_answers.
+        $table = new xmldb_table('booking_subbooking_answers');
+        $field = new xmldb_field('itemid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'id');
+
+        // Conditionally launch add field itemid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field optionid to be added to booking_subbooking_answers.
+        $table = new xmldb_table('booking_subbooking_answers');
+        $field = new xmldb_field('optionid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'itemid');
+
+        // Conditionally launch add field optionid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Add field defaultoptionsort in case it was dropped.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('defaultoptionsort', XMLDB_TYPE_CHAR, '255', null, null, null, 'text', 'bookingimagescustomfield');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Add field optionsdownloadfields to table booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field(
+            'optionsdownloadfields',
+            XMLDB_TYPE_TEXT,
+            'small',
+            null,
+            null,
+            null,
+            null,
+            'optionsfields'
+        );
+
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field json to be added to booking_answers.
+        $table = new xmldb_table('booking_answers');
+        $field = new xmldb_field('json', XMLDB_TYPE_TEXT, null, null, null, null, null, 'notes');
+
+        // Conditionally launch add field json.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // We need to migrate optionsfields for the new view.php.
+        migrate_optionsfields_2023022800();
+
+        // Changing precision of field allowupdatedays on table booking to (10).
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('allowupdatedays', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'teacherroleid');
+
+        // Launch change of precision for field allowupdatedays.
+        $dbman->change_field_precision($table, $field);
+
+        // Define field template to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('template', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'semesterid');
+
+        // Conditionally launch add field template.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field expires to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('expires', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'template');
+
+        // Conditionally launch add field expires.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field certificateid to be added to booking_answers.
+        $table = new xmldb_table('booking_answers');
+        $field = new xmldb_field('certificateid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'json');
+
+        // Conditionally launch add field certificateid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field maxcerts to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('maxcerts', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '1', 'expires');
+
+        // Conditionally launch add field maxcerts.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+    }
 
     return true;
 }
