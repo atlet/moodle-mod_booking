@@ -269,13 +269,329 @@ class all_userbookings extends \table_sql {
         }
     }
 
-
     /**
      *
      * {@inheritDoc}
      * @see \flexible_table::wrap_html_finish()
      */
     public function wrap_html_finish() {
+        global $DB, $OUTPUT;
+
+        $manageusersoptions = [];
+
+        echo '<input type="hidden" name="sesskey" value="' . sesskey() . '">';
+        if (!$this->bookingdata->booking->settings->autoenrol &&
+                 has_capability('mod/booking:communicate', \context_module::instance($this->cm->id)) &&
+                 $this->bookingdata->option->courseid > 0) {
+                    $manageusersoptions[] = [
+                        'value' => 'subscribetocourse',
+                        'label' => get_string('subscribetocourse', 'booking')
+                    ];
+        }
+
+        if (has_capability('mod/booking:deleteresponses', \context_module::instance($this->cm->id))) {
+            $manageusersoptions[] = [
+                'value' => 'deleteusers',
+                'label' => get_string('booking:deleteresponses', 'booking')
+            ];
+            if ($this->bookingdata->booking->settings->completionmodule > 0) {
+                $result = $DB->get_record_sql(
+                    'SELECT cm.id, cm.course, cm.module, cm.instance, m.name
+                FROM {course_modules} cm LEFT JOIN {modules} m ON m.id = cm.module WHERE cm.id = ?',
+                    array($this->bookingdata->booking->settings->completionmodule));
+                if ($result) {
+                    $dynamicactivitymodulesdata = $DB->get_record($result->name,
+                        array('id' => $result->instance));
+                        $manageusersoptions[] = [
+                            'value' => 'deleteusersactivitycompletion',
+                            'label' => get_string('deleteresponsesactivitycompletion', 'booking', $dynamicactivitymodulesdata->name)
+                        ];
+                }
+            }
+        }
+
+        if (has_capability('mod/booking:communicate', \context_module::instance($this->cm->id))) {
+            if (!empty(trim($this->bookingdata->option->pollurl))) {
+                $manageusersoptions[] = [
+                    'value' => 'sendpollurl',
+                    'label' => get_string('booking:sendpollurl', 'booking')
+                ];
+            }
+            $manageusersoptions[] = [
+                'value' => 'sendreminderemail',
+                'label' => get_string('sendreminderemail', 'booking')
+            ];
+            $manageusersoptions[] = [
+                'value' => 'sendcustommessage',
+                'label' => get_string('sendcustommessage', 'booking')
+            ];
+        }
+
+        if (booking_check_if_teacher($this->bookingdata->option) ||
+                 has_capability('mod/booking:updatebooking',
+                        \context_module::instance($this->cm->id))) {
+            if (strpos($this->bookingdata->booking->settings->responsesfields, 'completed') !== false) {
+                $manageusersoptions[] = [
+                    'value' => 'activitycompletion',
+                    'label' => (empty($this->bookingdata->booking->settings->btncacname) ? get_string('confirmoptioncompletion', 'booking') : $this->bookingdata->booking->settings->btncacname)
+                ];
+            }
+
+            /*
+             * Was removed from nev version of Booking...
+            $manageusersoptions[] = [
+                'value' => 'clearactivitycompletion',
+                'label' => get_string('clearactivitycompletion', 'booking')
+            ];
+            */
+
+            // Output rating button.
+            if (has_capability('moodle/rating:rate', \context_module::instance($this->cm->id)) &&
+                     $this->bookingdata->booking->settings->assessed != 0) {
+                $ratingbutton = '<div class="singlebutton">' . html_writer::start_tag('span', array('class' => "ratingsubmit"));
+                $attributes = array('type' => 'submit', 'class' => 'postratingmenusubmit btn btn-secondary',
+                    'id' => 'postratingsubmit', 'name' => 'postratingsubmit',
+                    'value' => s(get_string('rate', 'rating')));
+                $ratingbutton .= html_writer::empty_tag('input', $attributes);
+                $ratingbutton .= html_writer::end_span() . '</div>';
+                echo $ratingbutton;
+            }
+        }
+
+        $optgroups = [];
+
+        // Issue certificate
+        if (has_capability ( 'mod/booking:readresponses', \context_module::instance($this->cm->id) ) || booking_check_if_teacher ($option )) {
+            if (!empty($this->bookingdata->booking->settings->template)) {
+                $optgroups[] = [
+                    'label' => get_string('issuecertificate', 'booking'),
+                    'options' => [
+                        ['label' => get_string('issuecertificateall', 'booking'), 'value' => 'issuecertificateall'],
+                        ['label' => get_string('issuecertificateselected', 'booking'), 'value' => 'issuecertificateselected'],
+                        ['label' => get_string('issuecertificateconfirmed', 'booking'), 'value' => 'issuecertificateconfirmed']
+                    ]
+                ];
+            }
+        }
+
+        if ($this->bookingdata->booking->settings->numgenerator) {
+            $manageusersoptions[] = [
+                'value' => 'generaterecnum',
+                'label' => get_string('generaterecnum', 'booking')
+            ];
+        }
+
+        $availableoptions = '';
+        $transferto = '';
+        $presencestatus = '';
+        $connectedbookings = '';
+
+        if (booking_check_if_teacher($this->bookingdata->option) ||
+                 has_capability('mod/booking:updatebooking',
+                        \context_module::instance($this->cm->id))) {
+            // Output transfer users to other option.
+            if (has_capability('mod/booking:subscribeusers',
+                    \context_module::instance($this->cm->id)) || booking_check_if_teacher(
+                            $this->bookingdata->option)) {
+                if (has_capability('mod/booking:subscribeusers',
+                        \context_module::instance($this->cm->id))) {
+                            $optionids = \mod_booking\booking::get_all_optionids($this->bookingdata->booking->id);
+                } else {
+                    $optionids = \mod_booking\booking::get_all_optionids_of_teacher($this->bookingdata->booking->id);
+                }
+                $optionids = array_values(array_diff($optionids, array($this->optionid)));
+                if (!empty($optionids)) {
+                    list($insql, $inparams) = $DB->get_in_or_equal($optionids);
+                    $options = $DB->get_records_select('booking_options', "id {$insql}",
+                            $inparams, '', 'id,text,coursestarttime,location');
+                    $transferto = [];
+                    foreach ($options as $key => $value) {
+                        $string = array();
+                        $string[] = $value->text;
+                        if ($value->coursestarttime != 0) {
+                            $string[] = userdate($value->coursestarttime);
+                        }
+                        if ($value->location != '') {
+                            $string[] = $value->location;
+                        }
+                        $transferto[] = [
+                            'value' => $value->id,
+                            'label' => implode(', ', $string)
+                        ];
+                    }
+
+                    $manageusersoptions[] = [
+                        'value' => 'transferheading',
+                        'label' => get_string('transferheading', 'booking')
+                    ];
+
+                    array_unshift($transferto, ['value' => '', 'label' => '']);
+
+                    $data = array(
+                        'label' => '',
+                        'name' => 'transferoption',
+                        'options' => $transferto,
+                        'submit' => s(get_string('transfer', 'mod_booking')),
+                        'style' => 'display: none;'
+                    );
+
+                    $transferto = $OUTPUT->render_from_template('booking/dataformat_selector', $data);
+                }
+            }
+
+            $connectedbooking = $DB->get_record("booking",
+                    array('conectedbooking' => $this->bookingdata->booking->settings->id), 'id',
+                    IGNORE_MULTIPLE);
+
+            if ($connectedbooking) {
+                $nolimits = $DB->get_records_sql(
+                        "SELECT bo.*, b.text
+                        FROM {booking_other} bo
+                        LEFT JOIN {booking_options} b ON b.id = bo.optionid
+                        WHERE b.bookingid = ?",
+                        array($connectedbooking->id));
+
+                    $options = [];
+
+                if (!$nolimits) {
+                    $result = $DB->get_records_select("booking_options",
+                            "bookingid = {$connectedbooking->id} AND id <> {$this->optionid}", null,
+                            'text ASC', 'id, text');
+
+                    foreach ($result as $value) {
+                        $options[] = [
+                            'label' => $value->text,
+                            'value' => $value->id
+                        ];
+                    }
+                } else {
+                    $alllimits = $DB->get_records_sql(
+                            "SELECT bo.*, b.text
+                        FROM {booking_other} bo
+                        LEFT JOIN {booking_options} b ON b.id = bo.optionid
+                        WHERE b.bookingid = ? AND bo.otheroptionid = ?",
+                            array($connectedbooking->id, $this->optionid));
+
+                    if ($alllimits) {
+                        foreach ($alllimits as $value) {
+                            $options[] = [
+                                'label' => $value->text,
+                                'value' => $value->optionid
+                            ];
+                        }
+                    }
+                }
+
+                $label = (empty(
+                    $this->bookingdata->booking->settings->booktootherbooking) ? get_string(
+                    'booktootherbooking', 'booking') : $this->bookingdata->booking->settings->booktootherbooking);
+
+                if (!empty($options)) {
+                    array_unshift($options, ['value' => '', 'label' => '']);
+
+                    $data = array(
+                        'label' => '',
+                        'name' => 'booktootherbooking',
+                        'options' => $options,
+                        'submit' => s(get_string('transfer', 'mod_booking')),
+                        'style' => 'display: none;'
+                    );
+
+                    $connectedbookings = $OUTPUT->render_from_template('booking/dataformat_selector', $data);
+                    $manageusersoptions[] = [
+                        'value' => 'connectedbookings',
+                        'label' => $label
+                    ];
+                }
+            }
+
+            if ($this->bookingdata->booking->settings->enablepresence) {
+                $presences = [
+                    [
+                        'value' => 5,
+                        'label' => get_string('status_unknown', 'booking')
+                    ],
+                    [
+                        'value' => 6,
+                        'label' => get_string('status_attending', 'booking')
+                    ],
+                    [
+                        'value' => 1,
+                        'label' => get_string('status_complete', 'booking')
+                    ],
+                    [
+                        'value' => 2,
+                        'label' => get_string('status_incomplete', 'booking')
+                    ],
+                    [
+                        'value' => 3,
+                        'label' => get_string('status_noshow', 'booking')
+                    ],
+                    [
+                        'value' => 4,
+                        'label' => get_string('status_failed', 'booking')
+                    ]
+                ];
+
+                $manageusersoptions[] = [
+                    'value' => 'changepresencestatus',
+                    'label' => get_string('presence', 'booking')
+                ];
+
+                array_unshift($presences, ['value' => '', 'label' => '']);
+
+                $data = array(
+                    'label' => '',
+                    'name' => 'selectpresencestatus',
+                    'options' => $presences,
+                    'submit' => s(get_string('confirmpresence', 'booking')),
+                    'style' => 'display: none;'
+                );
+
+                $presencestatus = $OUTPUT->render_from_template('booking/dataformat_selector', $data);
+            }
+        }
+
+        if (!empty($manageusersoptions)) {
+            array_unshift($manageusersoptions, ['value' => '', 'label' => '']);
+            $data = array(
+                'label' => get_string('selectaction', 'mod_booking'),
+                'base' => '',
+                'name' => 'massactions',
+                'params' => [],
+                'options' => $manageusersoptions,
+                'optgroups' => $optgroups,
+                'submit' => s(get_string('submit')),
+            );
+
+            $availableoptions = $OUTPUT->render_from_template('booking/dataformat_selector', $data);
+        }
+
+        echo '<br>';
+        echo '<div class="container-fluid">';
+        echo '  <div class="row">';
+        echo '      <div class="col-6">';
+        echo            $availableoptions;
+        echo '      </div>';
+        echo '      <div class="col-6">';
+        echo            $transferto;
+        echo            $presencestatus;
+        echo            $connectedbookings;
+        echo '      </div>';
+        echo '  </div>';
+        echo '</div>';
+
+        echo '</form>';
+
+        echo '<hr>';
+    }
+
+    /**
+     *
+     * {@inheritDoc}
+     * @see \flexible_table::wrap_html_finish()
+     */
+    public function wrap_html_finish_old() {
         global $DB;
         echo '<input type="hidden" name="sesskey" value="' . sesskey() . '">';
         if (!$this->bookingdata->booking->settings->autoenrol &&
