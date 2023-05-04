@@ -5042,6 +5042,15 @@ function xmldb_booking_upgrade($oldversion) {
             $dbman->create_table($table);
         }
 
+        // Define field invisible to be added to booking_options.
+        $table = new xmldb_table('booking_options');
+        $field = new xmldb_field('dayofweek', XMLDB_TYPE_CHAR, '255', null, null, null, '', 'priceformulamultiply');
+
+        // Conditionally launch add field invisible.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
         // Define field annotation to be added to booking_options.
         $table = new xmldb_table('booking_options');
         $field = new xmldb_field(
@@ -5098,15 +5107,6 @@ function xmldb_booking_upgrade($oldversion) {
         $field = new xmldb_field('semesterid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'autcrtemplate');
 
         // Conditionally launch add field semesterid.
-        if (!$dbman->field_exists($table, $field)) {
-            $dbman->add_field($table, $field);
-        }
-
-        // Define field invisible to be added to booking_options.
-        $table = new xmldb_table('booking_options');
-        $field = new xmldb_field('dayofweek', XMLDB_TYPE_CHAR, '255', null, null, null, '', 'priceformulamultiply');
-
-        // Conditionally launch add field invisible.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
