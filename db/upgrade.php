@@ -3629,16 +3629,16 @@ function xmldb_booking_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2022082900, 'booking');
     }
 
-    if ($oldversion != 2022090600) { // Must be deletet once the upgrade ...
-        if ($oldversion < 2022090802) {
-            // Get rid of the old "unique option names" workaround.
-            // We use a separate "identifier" field now.
-            migrate_booking_option_identifiers_2022090802();
+    if ($oldversion < 2022090802) {
+        // Get rid of the old "unique option names" workaround.
+        // We use a separate "identifier" field now.
+        migrate_booking_option_identifiers_2022090802();
 
-            // Booking savepoint reached.
-            upgrade_mod_savepoint(true, 2022090802, 'booking');
-        }
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2022090802, 'booking');
+    }
 
+    if ($oldversion != 2022090802) { // Must be deletet once the upgrade ...
         if ($oldversion < 2022091901) {
 
             // Define field 'name' to be added to table booking_holidays.
@@ -4476,6 +4476,167 @@ function xmldb_booking_upgrade($oldversion) {
      * Must be deletet once the upgrade ...
      */
     if ($oldversion < 2023042401) {
+            // Add new table.
+            $table = new xmldb_table('booking_holidays');
+
+            // Adding fields to table.
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null, null);
+            $table->add_field('semesteridentifier', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null, 'id');
+            $table->add_field('name', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'semesteridentifier');
+            $table->add_field('startdate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'name');
+            $table->add_field('enddate', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'startdate');
+
+            // Adding keys to table.
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+            $table->add_key('fk_eventid', XMLDB_KEY_FOREIGN, ['semesteridentifier'], 'booking_semesters', ['identifier']);
+
+            // Conditionally launch create table.
+            if (!$dbman->table_exists($table)) {
+                $dbman->create_table($table);
+            }
+
+            // Define table booking_optionformconfig to be created.
+            $table = new xmldb_table('booking_optionformconfig');
+
+            // Adding fields to table booking_optionformconfig.
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('elementname', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null);
+            $table->add_field('active', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '1');
+
+            // Adding keys to table booking_optionformconfig.
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+            // Conditionally launch create table for booking_optionformconfig.
+            if (!$dbman->table_exists($table)) {
+                $dbman->create_table($table);
+            }
+
+            // Define field annotation to be added to booking_options.
+            $table = new xmldb_table('booking_options');
+            $field = new xmldb_field(
+                'annotation',
+                XMLDB_TYPE_TEXT,
+                null,
+                null,
+                null,
+                null,
+                null,
+                'invisible'
+            );
+
+            // Conditionally launch add field.
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+
+            // Define field identifier to be added to booking_options.
+            $table = new xmldb_table('booking_options');
+            $identifier = new xmldb_field('identifier', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'annotation');
+            if (!$dbman->field_exists($table, $identifier)) {
+                $dbman->add_field($table, $identifier);
+            }
+
+            $titleprefix = new xmldb_field('titleprefix', XMLDB_TYPE_CHAR, '10', null, null, null, null, 'identifier');
+            if (!$dbman->field_exists($table, $titleprefix)) {
+                $dbman->add_field($table, $titleprefix);
+            }
+
+            $table = new xmldb_table('booking_options');
+
+            $priceformulaadd = new xmldb_field('priceformulaadd', XMLDB_TYPE_NUMBER, '10, 2', null, null, null, '0', 'titleprefix');
+            if (!$dbman->field_exists($table, $priceformulaadd)) {
+                $dbman->add_field($table, $priceformulaadd);
+            }
+
+            $priceformulamultiply = new xmldb_field(
+                'priceformulamultiply',
+                XMLDB_TYPE_NUMBER,
+                '10, 2',
+                null,
+                null,
+                null,
+                '1',
+                'priceformulaadd'
+            );
+            if (!$dbman->field_exists($table, $priceformulamultiply)) {
+                $dbman->add_field($table, $priceformulamultiply);
+            }
+
+            // Define field semesterid to be added to booking.
+            $table = new xmldb_table('booking');
+            $field = new xmldb_field('semesterid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'autcrtemplate');
+
+            // Conditionally launch add field semesterid.
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+
+            // Define field invisible to be added to booking_options.
+            $table = new xmldb_table('booking_options');
+            $field = new xmldb_field('dayofweek', XMLDB_TYPE_CHAR, '255', null, null, null, '', 'priceformulamultiply');
+
+            // Conditionally launch add field invisible.
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+
+            // Define field priceformulaoff to be added to booking_options.
+            $table = new xmldb_table('booking_options');
+            $field = new xmldb_field('priceformulaoff', XMLDB_TYPE_INTEGER, '1', null, null, null, '0', 'priceformulamultiply');
+
+            // Conditionally launch add field priceformulaoff.
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+
+
+            // Define field bookingopeningtime to be added to booking_options.
+            $table = new xmldb_table('booking_options');
+            $field = new xmldb_field('bookingopeningtime', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'maxoverbooking');
+
+            // Conditionally launch add field bookingopeningtime.
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+
+            // Define field availability to be added to booking_options.
+            $table = new xmldb_table('booking_options');
+            $field = new xmldb_field('availability', XMLDB_TYPE_TEXT, null, null, null, null, null, 'dayofweek');
+
+            // Conditionally launch add field availability.
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+
+            // Define field semesteridentifier to be dropped from booking_holidays.
+            $table = new xmldb_table('booking_holidays');
+            $semesteridentifier = new xmldb_field('semesteridentifier');
+            $name = new xmldb_field('name');
+            $key = new xmldb_key(
+                'fk_semesteridentifier',
+                XMLDB_KEY_FOREIGN,
+                ['semesteridentifier'],
+                'booking_semesters',
+                ['identifier']
+            );
+
+            // Launch drop key fk_semesteridentifier.
+            $dbman->drop_key($table, $key);
+
+            // Conditionally launch drop field semesteridentifier.
+            if ($dbman->field_exists($table, $semesteridentifier)) {
+                $dbman->drop_field($table, $semesteridentifier);
+            }
+
+            // Conditionally launch drop field name.
+            if ($dbman->field_exists($table, $name)) {
+                $dbman->drop_field($table, $name);
+            }
+
+            // Get rid of the old "unique option names" workaround.
+            // We use a separate "identifier" field now.
+            migrate_booking_option_identifiers_2022090802();
+
         // Define field autcractive to be added to booking.
         $table = new xmldb_table('booking');
         $field = new xmldb_field('customtemplateid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'showviews');
