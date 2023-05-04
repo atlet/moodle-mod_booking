@@ -3613,15 +3613,17 @@ function xmldb_booking_upgrade($oldversion) {
         );
 
         // Launch drop key fk_semesteridentifier.
-        $dbman->drop_key($table, $key);
+        if ($dbman->table_exists($table) && $dbman->field_exists($table, $key)) {
+            $dbman->drop_key($table, $key);
+        }
 
         // Conditionally launch drop field semesteridentifier.
-        if ($dbman->field_exists($table, $semesteridentifier)) {
+        if ($dbman->table_exists($table) && $dbman->field_exists($table, $semesteridentifier)) {
             $dbman->drop_field($table, $semesteridentifier);
         }
 
         // Conditionally launch drop field name.
-        if ($dbman->field_exists($table, $name)) {
+        if ($dbman->table_exists($table) && $dbman->field_exists($table, $name)) {
             $dbman->drop_field($table, $name);
         }
 
@@ -4621,10 +4623,12 @@ function xmldb_booking_upgrade($oldversion) {
             );
 
             // Launch drop key fk_semesteridentifier.
-            $dbman->drop_key($table, $key);
+            if ($dbman->table_exists($table) && $dbman->field_exists($table, $key)) {
+                $dbman->drop_key($table, $key);
+            }
 
             // Conditionally launch drop field semesteridentifier.
-            if ($dbman->field_exists($table, $semesteridentifier)) {
+            if ($dbman->table_exists($table) && $dbman->field_exists($table, $semesteridentifier)) {
                 $dbman->drop_field($table, $semesteridentifier);
             }
 
@@ -5147,15 +5151,17 @@ function xmldb_booking_upgrade($oldversion) {
         );
 
         // Launch drop key fk_semesteridentifier.
-        $dbman->drop_key($table, $key);
+        if ($dbman->table_exists($table) && $dbman->field_exists($table, $key)) {
+            $dbman->drop_key($table, $key);
+        }
 
         // Conditionally launch drop field semesteridentifier.
-        if ($dbman->field_exists($table, $semesteridentifier)) {
+        if ($dbman->table_exists($table) && $dbman->field_exists($table, $semesteridentifier)) {
             $dbman->drop_field($table, $semesteridentifier);
         }
 
         // Conditionally launch drop field name.
-        if ($dbman->field_exists($table, $name)) {
+        if ($dbman->table_exists($table) && $dbman->field_exists($table, $name)) {
             $dbman->drop_field($table, $name);
         }
 
@@ -5168,7 +5174,7 @@ function xmldb_booking_upgrade($oldversion) {
         $field = new xmldb_field('name', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'enddate');
 
         // Conditionally launch add field 'name'.
-        if (!$dbman->field_exists($table, $field)) {
+        if ($dbman->table_exists($table) && !$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
