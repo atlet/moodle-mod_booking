@@ -4663,9 +4663,13 @@ function xmldb_booking_upgrade($oldversion) {
             $dbman->drop_key($table, $key);
         }
 
-        // Conditionally launch drop field semesteridentifier.
-        if ($dbman->table_exists($table) && $dbman->field_exists($table, $semesteridentifier)) {
-            $dbman->drop_field($table, $semesteridentifier);
+        try {
+            // Conditionally launch drop field semesteridentifier.
+            if ($dbman->table_exists($table) && $dbman->field_exists($table, $semesteridentifier)) {
+                $dbman->drop_field($table, $semesteridentifier);
+            }
+        } catch (\Throwable $th) {
+            //throw $th;
         }
 
         // Conditionally launch drop field name.
