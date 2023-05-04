@@ -3646,7 +3646,7 @@ function xmldb_booking_upgrade($oldversion) {
             $field = new xmldb_field('name', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'enddate');
 
             // Conditionally launch add field 'name'.
-            if (!$dbman->field_exists($table, $field)) {
+            if ($dbman->table_exists($table) && !$dbman->field_exists($table, $field)) {
                 $dbman->add_field($table, $field);
             }
 
