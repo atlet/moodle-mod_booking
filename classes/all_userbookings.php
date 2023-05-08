@@ -337,13 +337,10 @@ class all_userbookings extends \table_sql {
                 ];
             }
 
-            /*
-             * Was removed from nev version of Booking...
             $manageusersoptions[] = [
                 'value' => 'clearactivitycompletion',
                 'label' => get_string('clearactivitycompletion', 'booking')
             ];
-            */
 
             // Output rating button.
             if (has_capability('moodle/rating:rate', \context_module::instance($this->cm->id)) &&

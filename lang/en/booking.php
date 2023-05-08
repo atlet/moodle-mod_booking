@@ -2355,3 +2355,5 @@ $string['allcertificatesgeneratedselected'] = 'Certificates were issued to all s
 $string['selectaction'] = "Select action";
 $string['maxcertsperuser'] = "Max certs per user";
 $string['issuedcertificates'] = 'Issued certificates';
+$string['clearactivitycompletion'] = "Remove completion status from users that have alredy completed status in other options";
+$string['allclearactivitycompletion'] = "Removed completion statuses to users that have completion status in others options.";
