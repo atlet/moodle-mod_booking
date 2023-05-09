@@ -118,6 +118,13 @@ $functions = array(
         'capabilities' => '',
         'ajax' => true
     ),
+    'mod_booking_search_users' => array(
+        'classname' => 'mod_booking\external\mod_booking_search_users',
+        'description' => 'Search for users...',
+        'type' => 'read',
+        'capabilities' => '',
+        'ajax' => true
+    ),
 );
 
 $services = array(

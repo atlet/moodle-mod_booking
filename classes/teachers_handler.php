@@ -90,33 +90,20 @@ class teachers_handler {
 
         $options = [
             'tags' => false,
-            'multiple' => true
+            'multiple' => true,
+            'ajax' => 'mod_booking/users_datasource',
+            'data-courseid' => $COURSE->id,
+            'valuehtmlcallback' => function($value) {
+                global $DB, $OUTPUT;
+                $user = $DB->get_record('user', ['id' => (int)$value], '*', IGNORE_MISSING);
+
+                $details = user_get_user_details($user);
+                return $OUTPUT->render_from_template(
+                    'core_search/form-user-selector-suggestion', $details);
+            }
         ];
-        /**
-         * Andraž - I fixed this, so now it showns only enroled users. IT has no sense to show all users from Moodle...if you have a lot of users the settings page freezes.
-         * TODO: I suggest that we add settings to show only users enroled in course with speciffic role.
-         */
-        $userrecords = $DB->get_records_sql(
-            "SELECT
-            u.id,
-          u.firstname,
-          u.lastname,
-          u.email
-        FROM
-          {user_enrolments} ue
-          JOIN {enrol} e ON e.id = ue.enrolid
-          AND e.status = 0
-          JOIN {user} u ON u.id = ue.userid
-          AND u.deleted = 0
-          AND u.suspended = 0
-        WHERE
-          ue.status = 0
-          AND e.courseid = {$COURSE->id}"
-        );
+
         $allowedusers = [];
-        foreach ($userrecords as $userrecord) {
-            $allowedusers[$userrecord->id] = "$userrecord->firstname $userrecord->lastname ($userrecord->email)";
-        }
 
         $mform->addElement(
             'autocomplete',
