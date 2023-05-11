@@ -329,13 +329,7 @@ if (!$tableallbookings->is_downloading()) {
         }
 
         if (isset($_POST['massactions']) && !empty(trim($_POST['massactions']))) {
-
             if ($_POST['massactions'] == 'generaterecnum' && ($isteacher || has_capability('mod/booking:updatebooking', $context))) {
-                if (isset($_POST['user'])) {
-                    foreach ($_POST['user'] as $value) {
-                        $allselectedusers[] = array_keys($value)[0];
-                    }
-                }
                 booking_generatenewnumbers($bookingoption->booking->settings, $cm->id, $optionid, $allselectedusers);
                 redirect($url, get_string('generaterecnumnotification', 'booking'), 5);
             }
@@ -413,38 +407,7 @@ if (!$tableallbookings->is_downloading()) {
                 redirect($url, get_string('allcertificatesgenerated', 'booking'), 5);
             }
 
-            if (isset($_POST['user'])) {
-                foreach ($_POST['user'] as $value) {
-                    $allselectedusers[] = array_keys($value)[0];
-                }
-
-                // Check when separated groups are activated, all users are same group of current user.
-                if (
-                    groups_get_activity_groupmode($cm) == SEPARATEGROUPS &&
-                    !has_capability(
-                        'moodle/site:accessallgroups',
-                        \context_course::instance($course->id)
-                    )
-                ) {
-                    list($groupsql, $groupparams) = \mod_booking\booking::booking_get_groupmembers_sql(
-                        $course->id
-                    );
-                    $groupusers = $DB->get_fieldset_sql($groupsql, $groupparams);
-                    $allselectedusers = array_intersect($groupusers, $allselectedusers);
-                }
-
-                if (empty($allselectedusers)) {
-                    redirect(
-                        $url,
-                        get_string(
-                            'selectatleastoneuser',
-                            'booking',
-                            $bookingoption->option->howmanyusers
-                        ),
-                        5
-                    );
-                }
-            } else {
+            if (empty($allselectedusers)) {
                 redirect(
                     $url,
                     get_string(
@@ -515,18 +478,6 @@ if (!$tableallbookings->is_downloading()) {
 
             if ($_POST['massactions'] == 'issuecertificateselected' && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
                 $issuedata = $bookingoption->get_data_for_certificate();
-
-                $allselectedusers = [];
-
-                if (isset($_POST['user'])) {
-                    foreach ($_POST['user'] as $value) {
-                        $allselectedusers[] = array_keys($value)[0];
-                    }
-                }
-
-                if (empty($allselectedusers)) {
-                    redirect($url, get_string('selectatleastoneuser', 'booking', $bookingoption->option->howmanyusers), 5);
-                }
 
                 $allusers = $DB->get_records_sql("SELECT * FROM {booking_answers} WHERE certificateid IS null AND optionid = :optionid AND userid IN (" . implode(',', $allselectedusers) . ")", ['optionid' => $optionid]);
 

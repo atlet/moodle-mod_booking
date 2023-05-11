@@ -1875,6 +1875,7 @@ function booking_activitycompletion($selectedusers, $booking, $cmid, $optionid) 
                 $completion->update_state($cm, COMPLETION_COMPLETE, $selecteduser);
             }
         }
+
     }
 
     // After activity completion, we need to purge caches for the option.
