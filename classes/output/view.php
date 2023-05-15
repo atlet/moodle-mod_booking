@@ -536,6 +536,9 @@ class view implements renderable, templatable {
             if (in_array('teacher', $optionsfields)) {
                 $fulltextsearchcolumns[] = 'teacherobjects';
             }
+            if (in_array('user', $optionsfields)) {
+                $fulltextsearchcolumns[] = 'userobjects';
+            }
             $wbtable->define_fulltextsearchcolumns($fulltextsearchcolumns);
         }
 
@@ -544,6 +547,12 @@ class view implements renderable, templatable {
             if (in_array('teacher', $optionsfields)) {
                 $filtercolumns['teacherobjects'] = [
                     'localizedname' => get_string('teachers', 'mod_booking'),
+                    'jsonattribute' => 'name',
+                ];
+            }
+            if (in_array('user', $optionsfields)) {
+                $filtercolumns['userobjects'] = [
+                    'localizedname' => get_string('users', 'mod_booking'),
                     'jsonattribute' => 'name',
                 ];
             }

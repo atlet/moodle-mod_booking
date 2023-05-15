@@ -780,12 +780,15 @@ if (!$tableallbookings->is_downloading()) {
             ba.waitinglist,
             ba.notes,
             ba.certificateid,
+            c.code,
             \'\' otheroptions,
             ba.numrec' . $customfields;
     $from = ' {booking_answers} ba
             JOIN {user} u ON u.id = ba.userid
             JOIN {booking_options} bo ON bo.id = ba.optionid
-            LEFT JOIN {booking_options} otherbookingoption ON otherbookingoption.id = ba.frombookingid ';
+            LEFT JOIN {booking_options} otherbookingoption ON otherbookingoption.id = ba.frombookingid
+            LEFT JOIN {tool_certificate_issues} c ON c.id = ba.certificateid
+            ';
     $where = ' ba.optionid = :optionid
              AND ba.waitinglist < 2 ' . $addsqlwhere;
 

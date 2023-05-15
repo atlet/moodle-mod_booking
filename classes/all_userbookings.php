@@ -147,11 +147,12 @@ class all_userbookings extends \table_sql {
         if (!$this->is_downloading()) {
             $completed = '';
             if ($values->certificateid) {
-                $completed = '&#x2713;';
+                $completed = html_writer::link(
+                    new moodle_url('/admin/tool/certificate/view.php', array('code' => $values->code)), '<i class="icon fa fa-download fa-fw " title="View" role="img" aria-label="View" id="yui_3_17_2_1_1684158664307_21"></i>', array('target' => '_blank'));
             }
             return $completed;
         } else {
-            return $values->certificateid;
+            return $values->code;
         }
     }
 
