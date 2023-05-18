@@ -369,6 +369,11 @@ class all_userbookings extends \table_sql {
                         ['label' => get_string('issuecertificateconfirmed', 'booking'), 'value' => 'issuecertificateconfirmed']
                     ]
                 ];
+
+                $manageusersoptions[] = [
+                    'value' => 'deletecertificate',
+                    'label' => get_string('deletecertificate', 'booking')
+                ];
             }
         }
 
