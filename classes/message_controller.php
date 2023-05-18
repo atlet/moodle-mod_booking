@@ -247,10 +247,14 @@ class message_controller {
         $bookinganswer = singleton_service::get_instance_of_booking_answers($this->optionsettings);
         $params->status = $this->option->get_user_status_string($this->userid, $bookinganswer->user_status($this->userid));
 
-        $params->qr_id = '<img src="https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=' .
-            rawurlencode($this->userid) . '&choe=UTF-8" title="Link to Google.com" />';
-        $params->qr_username = '<img src="https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=' .
-            rawurlencode($this->user->username) . '&choe=UTF-8" title="Link to Google.com" />';
+        $dataid = file_get_contents('https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=' . rawurlencode($this->userid) . '&choe=UTF-8');
+        $base64id = 'data:image/png;base64,' . base64_encode($dataid);
+
+        $datausername = file_get_contents('https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=' . rawurlencode($this->user->username) . '&choe=UTF-8');
+        $base64username = 'data:image/png;base64,' . base64_encode($datausername);
+
+        $params->qr_id = '<img src="' . $base64id . '" title="Moodle user ID." />';
+        $params->qr_username = '<img src="' . $base64username . '" title="Moodle username." />';
         $params->participant = fullname($this->user);
         $params->email = $this->user->email;
         $params->title = format_string($this->optionsettings->get_title_with_prefix());
