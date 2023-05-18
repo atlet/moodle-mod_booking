@@ -71,6 +71,9 @@ $PAGE->set_url($url);
 $PAGE->set_title(get_string('modulename', 'booking'));
 $PAGE->set_heading($COURSE->fullname);
 
+// In Moodle 4.0+ we want to turn the instance description off on every page except view.php.
+$PAGE->activityheader->disable();
+
 echo $OUTPUT->header();
 echo $OUTPUT->heading("{$bookingoption->option->text}", 3, 'helptitle', 'uniqueid');
 
