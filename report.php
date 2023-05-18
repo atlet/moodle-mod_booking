@@ -357,6 +357,8 @@ if (!$tableallbookings->is_downloading()) {
                 $allusers = $DB->get_records('booking_answers', array('optionid' => $optionid, 'certificateid' => null));
                 $issuedata = $bookingoption->get_data_for_certificate();
 
+                $issuedcerts = 0;
+
                 if (!empty($bookingoption->booking->settings->template)) {
                     $template = \tool_certificate\template::instance($bookingoption->booking->settings->template);
 
@@ -373,17 +375,20 @@ if (!$tableallbookings->is_downloading()) {
                             );
 
                             $DB->execute("UPDATE {booking_answers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => $cid, 'optionid' => $optionid, 'userid' => $user->userid]);
+                            $issuedcerts++;
                         }
                     }
                 }
 
-                redirect($url, get_string('allcertificatesgeneratedall', 'booking'), 5);
+                redirect($url, get_string('allcertificatesgeneratedall', 'booking', $issuedcerts), 5);
             }
 
             if ($_POST['massactions'] == 'issuecertificateconfirmed' && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
                 $allusers = $DB->get_records('booking_answers', array('optionid' => $optionid, 'completed' => 1, 'certificateid' => null));
                 $issuedata = $bookingoption->get_data_for_certificate();
 
+                $issuedcerts = 0;
+
                 if (!empty($bookingoption->booking->settings->template)) {
                     $template = \tool_certificate\template::instance($bookingoption->booking->settings->template);
 
@@ -400,11 +405,13 @@ if (!$tableallbookings->is_downloading()) {
                             );
 
                             $DB->execute("UPDATE {booking_answers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => $cid, 'optionid' => $optionid, 'userid' => $user->userid]);
+
+                            $issuedcerts++;
                         }
                     }
                 }
 
-                redirect($url, get_string('allcertificatesgenerated', 'booking'), 5);
+                redirect($url, get_string('allcertificatesgenerated', 'booking', $issuedcerts), 5);
             }
 
             if (empty($allselectedusers)) {
@@ -481,6 +488,8 @@ if (!$tableallbookings->is_downloading()) {
 
                 $allusers = $DB->get_records_sql("SELECT * FROM {booking_answers} WHERE certificateid IS null AND optionid = :optionid AND userid IN (" . implode(',', $allselectedusers) . ")", ['optionid' => $optionid]);
 
+                $issuedcerts = 0;
+
                 if (!empty($bookingoption->booking->settings->template)) {
                     $template = \tool_certificate\template::instance($bookingoption->booking->settings->template);
 
@@ -497,10 +506,11 @@ if (!$tableallbookings->is_downloading()) {
                             );
 
                             $DB->execute("UPDATE {booking_answers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => $cid, 'optionid' => $optionid, 'userid' => $user->userid]);
+                            $issuedcerts++;
                         }
                     }
                 }
-                redirect($url, get_string('allcertificatesgeneratedselected', 'booking'), 5);
+                redirect($url, get_string('allcertificatesgeneratedselected', 'booking', $issuedcerts), 5);
             }
         }
 
