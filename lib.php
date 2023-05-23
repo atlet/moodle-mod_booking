@@ -1679,9 +1679,13 @@ function booking_extend_settings_navigation(settings_navigation $settings, navig
                 new moodle_url('/admin/tool/certificate/certificates.php',
                         array('templateid' => $booking->settings->template)),
                             navigation_node::TYPE_CUSTOM, null, 'nav_certificates');
+
+        $navref->add(get_string('issuedcertificatesteachers', 'mod_booking'),
+                new moodle_url('/admin/tool/certificate/certificates.php',
+                        array('templateid' => $booking->settings->ttemplate)),
+                            navigation_node::TYPE_CUSTOM, null, 'nav_teachercertificates');
     }
 }
-
 
 /**
  * Check if logged in user is in teachers db.

@@ -5878,5 +5878,65 @@ function xmldb_booking_upgrade($oldversion) {
         }
     }
 
+    if ($oldversion < 2023052300) {
+
+        // Define field ttemplate to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('ttemplate', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'maxcerts');
+
+        // Conditionally launch add field ttemplate.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('texpires', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'ttemplate');
+
+        // Conditionally launch add field texpires.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('tmaxcerts', XMLDB_TYPE_INTEGER, '10', null, null, null, '1', 'texpires');
+
+        // Conditionally launch add field tmaxcerts.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Define field certificateid to be added to booking_teachers.
+        $table = new xmldb_table('booking_teachers');
+        $field = new xmldb_field('certificateid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'calendarid');
+
+        // Conditionally launch add field certificateid.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2023052300, 'booking');
+    }
+
+    if ($oldversion < 2023052301) {
+
+        // Define field expirydatetype to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('expirydatetype', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'tmaxcerts');
+
+        // Conditionally launch add field expirydatetype.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('texpirydatetype', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'expirydatetype');
+
+        // Conditionally launch add field texpirydatetype.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2023052301, 'booking');
+    }
+
     return true;
 }

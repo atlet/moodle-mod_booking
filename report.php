@@ -353,6 +353,7 @@ if (!$tableallbookings->is_downloading()) {
                 redirect($url, get_string('delnotificationactivitycompletion', 'booking', $data), 5);
             }
 
+            // Issue certificate to all students
             if ($_POST['massactions'] == 'issuecertificateall' && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
                 $allusers = $DB->get_records('booking_answers', array('optionid' => $optionid, 'waitinglist' => 0));
                 $issuedata = $bookingoption->get_data_for_certificate();
@@ -381,11 +382,75 @@ if (!$tableallbookings->is_downloading()) {
                             } else {
                                 $notissued++;
                             }
+                        } else {
+                            $notissued++;
                         }
                     }
                 }
 
                 redirect($url, get_string('allcertificatesgeneratedall', 'booking', ['notissued' => $notissued, 'issuedcerts' => $issuedcerts]), 5);
+            }
+
+            // Issue certificate to all teachers
+            if ($_POST['massactions'] == 'issuecertificateallteachers' && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
+                $allusers = $DB->get_records('booking_teachers', array('optionid' => $optionid));
+                $issuedata = $bookingoption->get_data_for_certificate();
+
+                $issuedcerts = 0;
+                $notissued = 0;
+
+                if (!empty($bookingoption->booking->settings->ttemplate)) {
+                    $template = \tool_certificate\template::instance($bookingoption->booking->settings->ttemplate);
+
+                    foreach ($allusers as $user) {
+                        $rn = $DB->count_records_sql("SELECT COUNT(*) FROM  {booking_teachers} WHERE bookingid = :bookingid AND userid = :userid AND certificateid IS NOT null", ['bookingid' => $bookingoption->booking->id, 'userid' => $user->userid]);
+
+                        if ($rn < $bookingoption->booking->settings->tmaxcerts) {
+                            if (!is_numeric($user->certificateid)) {
+                                $cid = $template->issue_certificate(
+                                    $user->userid,
+                                    $bookingoption->booking->settings->texpires,
+                                    $issuedata,
+                                    'mod_booking',
+                                    $course->id
+                                );
+
+                                $DB->execute("UPDATE {booking_teachers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => $cid, 'optionid' => $optionid, 'userid' => $user->userid]);
+                                $issuedcerts++;
+                            } else {
+                                $notissued++;
+                            }
+                        } else {
+                            $notissued++;
+                        }
+                    }
+                }
+
+                redirect($url, get_string('allcertificatesgeneratedallteachers', 'booking', ['notissued' => $notissued, 'issuedcerts' => $issuedcerts]), 5);
+            }
+
+            // Delete all teachers certificates.
+            if ($_POST['massactions'] == 'deleteteachercertificate' && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
+                $allusers = $DB->get_records('booking_teachers', array('optionid' => $optionid));
+
+                $deleted = 0;
+                $notdeleted = 0;
+
+                if (!empty($bookingoption->booking->settings->ttemplate)) {
+                    $template = \tool_certificate\template::instance($bookingoption->booking->settings->ttemplate);
+
+                    foreach ($allusers as $user) {
+                        if (is_numeric($user->certificateid)) {
+                            $template->revoke_issue($user->certificateid);
+
+                            $DB->execute("UPDATE {booking_teachers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => null, 'optionid' => $optionid, 'userid' => $user->userid]);
+                            $deleted++;
+                        } else {
+                            $notdeleted++;
+                        }
+                    }
+                }
+                redirect($url, get_string('deletecertificatemessageteacher', 'booking', ['deleted' => $deleted, 'notdeleted' => $notdeleted]), 5);
             }
 
             if ($_POST['massactions'] == 'issuecertificateconfirmed' && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
@@ -416,6 +481,8 @@ if (!$tableallbookings->is_downloading()) {
                             } else {
                                 $notissued++;
                             }
+                        } else {
+                            $notissued++;
                         }
                     }
                 }
@@ -521,6 +588,8 @@ if (!$tableallbookings->is_downloading()) {
                             } else {
                                 $notissued++;
                             }
+                        } else {
+                            $notissued++;
                         }
                     }
                 }

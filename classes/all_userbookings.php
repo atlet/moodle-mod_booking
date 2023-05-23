@@ -366,13 +366,19 @@ class all_userbookings extends \table_sql {
                     'options' => [
                         ['label' => get_string('issuecertificateall', 'booking'), 'value' => 'issuecertificateall'],
                         ['label' => get_string('issuecertificateselected', 'booking'), 'value' => 'issuecertificateselected'],
-                        ['label' => get_string('issuecertificateconfirmed', 'booking'), 'value' => 'issuecertificateconfirmed']
+                        ['label' => get_string('issuecertificateconfirmed', 'booking'), 'value' => 'issuecertificateconfirmed'],
+                        ['label' => get_string('issuecertificateallteachers', 'booking'), 'value' => 'issuecertificateallteachers']
                     ]
                 ];
 
                 $manageusersoptions[] = [
                     'value' => 'deletecertificate',
                     'label' => get_string('deletecertificate', 'booking')
+                ];
+
+                $manageusersoptions[] = [
+                    'value' => 'deleteteachercertificate',
+                    'label' => get_string('deleteteachercertificate', 'booking')
                 ];
             }
         }

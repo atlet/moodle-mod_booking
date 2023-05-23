@@ -61,7 +61,8 @@ class backup_booking_activity_structure_step extends backup_activity_structure_s
                     'signinsheetfields', 'comments', 'ratings', 'removeuseronunenrol', 'teacherroleid', 'allowupdatedays',
                     'templateid', 'showlistoncoursepage', 'coursepageshortinfo', 'bookingimagescustomfield',
                     'defaultoptionsort', 'showviews', 'customtemplateid', 'autcractive', 'autcrprofile', 'autcrvalue',
-                    'autcrtemplate', 'semesterid', 'maxcerts', 'template', 'expires'));
+                    'autcrtemplate', 'semesterid', 'maxcerts', 'template', 'expires', 'ttemplate', 'texpires', 'tmaxcerts',
+                    'expirydatetype', 'texpirydatetype'));
 
         $options = new backup_nested_element('options');
         $option = new backup_nested_element('option', array('id'),
@@ -95,7 +96,7 @@ class backup_booking_activity_structure_step extends backup_activity_structure_s
 
         $teachers = new backup_nested_element('teachers');
         $teacher = new backup_nested_element('teacher', array('id'),
-                array('bookingid', 'optionid', 'userid', 'completed'));
+                array('bookingid', 'optionid', 'userid', 'completed', 'certificateid'));
 
         $tags = new backup_nested_element('tags');
         $tag = new backup_nested_element('tag', array('id'),
