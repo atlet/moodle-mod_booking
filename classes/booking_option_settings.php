@@ -965,6 +965,7 @@ class booking_option_settings {
             FROM {booking_answers} ba
             JOIN {user} ua
             ON ba.userid = ua.id
+            WHERE ba.waitinglist != ' . STATUSPARAM_DELETED . '
         ) ba1
         ON ba1.optionid = bo.id';
 

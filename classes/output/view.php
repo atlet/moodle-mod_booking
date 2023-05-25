@@ -408,6 +408,7 @@ class view implements renderable, templatable {
         if (in_array('teacher', $optionsfields)) {
             $columnsleftside[] = 'teacher';
         }
+
         if (in_array('statusdescription', $optionsfields)) {
             $columnsleftside[] = 'statusdescription';
         }
@@ -536,9 +537,9 @@ class view implements renderable, templatable {
             if (in_array('teacher', $optionsfields)) {
                 $fulltextsearchcolumns[] = 'teacherobjects';
             }
-            if (in_array('user', $optionsfields)) {
+            //if (in_array('user', $optionsfields)) {
                 $fulltextsearchcolumns[] = 'userobjects';
-            }
+            //}
             $wbtable->define_fulltextsearchcolumns($fulltextsearchcolumns);
         }
 
@@ -550,12 +551,12 @@ class view implements renderable, templatable {
                     'jsonattribute' => 'name',
                 ];
             }
-            if (in_array('user', $optionsfields)) {
+            //if (in_array('user', $optionsfields)) {
                 $filtercolumns['userobjects'] = [
                     'localizedname' => get_string('users', 'mod_booking'),
                     'jsonattribute' => 'name',
                 ];
-            }
+            //}
             if (in_array('location', $optionsfields)) {
                 $filtercolumns['location'] = [
                     'localizedname' => get_string('location', 'mod_booking'),
