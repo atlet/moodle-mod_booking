@@ -360,25 +360,31 @@ class all_userbookings extends \table_sql {
 
         // Issue certificate
         if (has_capability ( 'mod/booking:readresponses', \context_module::instance($this->cm->id) ) || booking_check_if_teacher ($option )) {
+            $certopitons = [];
             if (!empty($this->bookingdata->booking->settings->template)) {
-                $optgroups[] = [
-                    'label' => get_string('issuecertificate', 'booking'),
-                    'options' => [
-                        ['label' => get_string('issuecertificateall', 'booking'), 'value' => 'issuecertificateall'],
-                        ['label' => get_string('issuecertificateselected', 'booking'), 'value' => 'issuecertificateselected'],
-                        ['label' => get_string('issuecertificateconfirmed', 'booking'), 'value' => 'issuecertificateconfirmed'],
-                        ['label' => get_string('issuecertificateallteachers', 'booking'), 'value' => 'issuecertificateallteachers']
-                    ]
-                ];
+                $certopitons[] = ['label' => get_string('issuecertificateall', 'booking'), 'value' => 'issuecertificateall'];
+                $certopitons[] = ['label' => get_string('issuecertificateselected', 'booking'), 'value' => 'issuecertificateselected'];
+                $certopitons[] = ['label' => get_string('issuecertificateconfirmed', 'booking'), 'value' => 'issuecertificateconfirmed'];
 
                 $manageusersoptions[] = [
                     'value' => 'deletecertificate',
                     'label' => get_string('deletecertificate', 'booking')
                 ];
+            }
+
+            if (!empty($this->bookingdata->booking->settings->ttemplate)) {
+                $certopitons[] = ['label' => get_string('issuecertificateallteachers', 'booking'), 'value' => 'issuecertificateallteachers'];
 
                 $manageusersoptions[] = [
                     'value' => 'deleteteachercertificate',
                     'label' => get_string('deleteteachercertificate', 'booking')
+                ];
+            }
+
+            if (!empty($certopitons)) {
+                $optgroups[] = [
+                    'label' => get_string('issuecertificate', 'booking'),
+                    'options' => $certopitons
                 ];
             }
         }
