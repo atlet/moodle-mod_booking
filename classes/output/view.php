@@ -551,12 +551,6 @@ class view implements renderable, templatable {
                     'jsonattribute' => 'name',
                 ];
             }
-            //if (in_array('user', $optionsfields)) {
-                $filtercolumns['userobjects'] = [
-                    'localizedname' => get_string('users', 'mod_booking'),
-                    'jsonattribute' => 'name',
-                ];
-            //}
             if (in_array('location', $optionsfields)) {
                 $filtercolumns['location'] = [
                     'localizedname' => get_string('location', 'mod_booking'),
