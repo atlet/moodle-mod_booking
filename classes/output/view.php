@@ -537,9 +537,6 @@ class view implements renderable, templatable {
             if (in_array('teacher', $optionsfields)) {
                 $fulltextsearchcolumns[] = 'teacherobjects';
             }
-            //if (in_array('user', $optionsfields)) {
-                $fulltextsearchcolumns[] = 'userobjects';
-            //}
             $wbtable->define_fulltextsearchcolumns($fulltextsearchcolumns);
         }
 
