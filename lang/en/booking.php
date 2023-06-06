@@ -2366,3 +2366,4 @@ $string['issuedcertificatesteachers'] = 'Issued certificates to teachers';
 $string['clearactivitycompletion'] = "Remove completion status from users that have alredy completed status in other options";
 $string['allclearactivitycompletion'] = "Removed completion statuses to users that have completion status in others options.";
 $string['users'] = 'Users';
+$string['users_instance_report'] = "Users report";

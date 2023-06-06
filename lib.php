@@ -1557,6 +1557,9 @@ function booking_extend_settings_navigation(settings_navigation $settings, navig
         $navref->add(get_string('teachers_instance_report', 'mod_booking') . " ($bookingsettings->name)",
                 new moodle_url('/mod/booking/teachers_instance_report.php', ['cmid' => $cm->id]),
                 navigation_node::TYPE_CUSTOM, null, 'nav_teachers_instance_report');
+        $navref->add(get_string('users_instance_report', 'mod_booking') . " ($bookingsettings->name)",
+                new moodle_url('/mod/booking/users_instance_report.php', ['cmid' => $cm->id]),
+                navigation_node::TYPE_CUSTOM, null, 'nav_users_instance_report');
     }
 
     // We currently never show these entries as we are not sure if they work correctly.

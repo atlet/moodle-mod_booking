@@ -861,7 +861,6 @@ if (!$tableallbookings->is_downloading()) {
                 strtolower($profilefield->shortname);
         }
     }
-
     $strbooking = get_string("modulename", "booking");
     $strbookings = get_string("modulenameplural", "booking");
     $strresponses = get_string("responses", "booking");
