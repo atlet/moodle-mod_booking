@@ -88,4 +88,8 @@ class users_instance_report_table extends table_sql {
             return userdate($values->courseendtime, get_string('strftimedatetime', 'langconfig'));
         }
     }
+
+    function col_fullname($values) {
+        return "<a href=\"/user/profile.php?id={$values->uid}\">{$values->firstname} {$values->lastname}</a>";
+    }
 }

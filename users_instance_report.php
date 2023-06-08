@@ -97,7 +97,8 @@ if ($CFG->version >= 2021051700) {
     $mainuserfields = get_all_user_name_fields(true, 'u');
 }
 
-$fields = "ba.id, u.firstname AS firstname,
+$fields = "ba.id,
+ba.userid uid,
 {$mainuserfields}
 , u.institution, bo.id boid, bo.text botext, bo.coursestarttime, bo.courseendtime";
 $from = "{booking_answers} ba
