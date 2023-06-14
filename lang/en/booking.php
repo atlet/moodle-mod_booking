@@ -2367,3 +2367,11 @@ $string['clearactivitycompletion'] = "Remove completion status from users that h
 $string['allclearactivitycompletion'] = "Removed completion statuses to users that have completion status in others options.";
 $string['users'] = 'Users';
 $string['users_instance_report'] = "Users report";
+
+// Restricting access
+$string['restrictheader'] = 'Restrict booking to login auth';
+$string['restrictwhatitis'] = 'If not empty, only users with certain auth type can book.';
+$string['authnorestriction'] = 'No restrictions';
+$string['authrestrict'] = 'Restrict access';
+$string['wrongauth'] = 'You don\'t have permission to book as you registered with wrong service.';
+$string['bo_cond_auth_not_available'] = 'You don\'t have permission to book as you registered with wrong service.';

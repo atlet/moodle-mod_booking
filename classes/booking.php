@@ -371,6 +371,14 @@ class booking {
             }
         }
 
+        // Check, if can book based on login method.
+        if (!empty($this->settings->auth)) {
+            if ($this->settings->auth != $USER->auth) {
+                $warning = html_writer::tag('p', get_string('wrongauth', 'mod_booking'));
+                return $warning;
+            }
+        }
+
         if (!$this->settings->maxperuser) {
             return $warning; // No per-user limits.
         }
