@@ -640,11 +640,13 @@ class booking {
                     $bookingoption->text = '';
                     if (!empty($USER->institution)) {
                         $bookingoption->text .= "{$USER->institution} - ";
+                        $bookingoption->institution = $USER->institution;
                     } else {
                         $bookingoption->text .= "[AUTO] ";
                     }
                     $bookingoption->text .= "{$USER->firstname} {$USER->lastname}";
                     $bookingoption->bookingid = $this->id;
+                    $bookingoption->identifier = substr(str_shuffle(md5(microtime())), 0, 8);
                     $bookingoption->description = (empty($bookingoption->description) ? '' : $bookingoption->description);
                     unset($bookingoption->id);
 
