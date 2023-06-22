@@ -2807,4 +2807,20 @@ function booking_tool_certificate_fields() {
         true,
         get_string('courseendtime', 'mod_booking')
     );
+
+    $handler->ensure_field_exists(
+        'coursestartdate',
+        'text',
+        get_string('bookingoptionsmenu', 'mod_booking') . ': ' . get_string('coursestartdate', 'mod_booking'),
+        true,
+        get_string('coursestartdate', 'mod_booking')
+    );
+
+    $handler->ensure_field_exists(
+        'courseenddate',
+        'text',
+        get_string('bookingoptionsmenu', 'mod_booking') . ': ' . get_string('courseenddate', 'mod_booking'),
+        true,
+        get_string('courseenddate', 'mod_booking')
+    );
 }
