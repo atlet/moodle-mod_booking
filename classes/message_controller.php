@@ -187,7 +187,7 @@ class message_controller {
         }
 
         // Generate email params.
-        $this->params = $this->get_email_params();
+        $this->params = $this->get_email_params(($msgcontrparam == MSGCONTRPARAM_SEND_NOW ? true : false));
 
         // Generate the email body.
         $this->messagebody = $this->get_email_body();
@@ -204,7 +204,7 @@ class message_controller {
      * Prepares the email parameters.
      * @return stdClass data to be sent via mail
      */
-    private function get_email_params(): stdClass {
+    private function get_email_params($callapi = false): stdClass {
 
         global $CFG;
 
@@ -247,10 +247,15 @@ class message_controller {
         $bookinganswer = singleton_service::get_instance_of_booking_answers($this->optionsettings);
         $params->status = $this->option->get_user_status_string($this->userid, $bookinganswer->user_status($this->userid));
 
-        $dataid = file_get_contents('https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=' . rawurlencode($this->userid) . '&choe=UTF-8');
-        $base64id = 'data:image/png;base64,' . base64_encode($dataid);
+        if ($callapi) {
+            $dataid = file_get_contents('https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=' . rawurlencode($this->userid) . '&choe=UTF-8');
+            $datausername = file_get_contents('https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=' . rawurlencode($this->user->username) . '&choe=UTF-8');
+        } else {
+            $dataid = '';
+            $datausername = '';
+        }
 
-        $datausername = file_get_contents('https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=' . rawurlencode($this->user->username) . '&choe=UTF-8');
+        $base64id = 'data:image/png;base64,' . base64_encode($dataid);
         $base64username = 'data:image/png;base64,' . base64_encode($datausername);
 
         $params->qr_id = '<img src="' . $base64id . '" title="Moodle user ID." />';
