@@ -528,7 +528,7 @@ class view implements renderable, templatable {
             if (in_array('description', $optionsfields)) {
                 $fulltextsearchcolumns[] = 'description';
             }
-            /*if (in_array('location', $optionsfields)) {
+            if (in_array('location', $optionsfields)) {
                 $fulltextsearchcolumns[] = 'location';
             }
             if (in_array('institution', $optionsfields)) {
@@ -536,28 +536,28 @@ class view implements renderable, templatable {
             }
             if (in_array('teacher', $optionsfields)) {
                 $fulltextsearchcolumns[] = 'teacherobjects';
-            }*/
+            }
             $wbtable->define_fulltextsearchcolumns($fulltextsearchcolumns);
         }
 
         if ($filter) {
             $filtercolumns = [];
-            /*if (in_array('teacher', $optionsfields)) {
+            if (in_array('teacher', $optionsfields)) {
                 $filtercolumns['teacherobjects'] = [
                     'localizedname' => get_string('teachers', 'mod_booking'),
                     'jsonattribute' => 'name',
                 ];
-            }*/
-            /*if (in_array('location', $optionsfields)) {
+            }
+            if (in_array('location', $optionsfields)) {
                 $filtercolumns['location'] = [
                     'localizedname' => get_string('location', 'mod_booking'),
                 ];
-            }*/
-            /*if (in_array('institution', $optionsfields)) {
+            }
+            if (in_array('institution', $optionsfields)) {
                 $filtercolumns['institution'] = [
                     'localizedname' => get_string('institution', 'mod_booking'),
                 ];
-            }*/
+            }
             $wbtable->define_filtercolumns($filtercolumns);
         }
 
