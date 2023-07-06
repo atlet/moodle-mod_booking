@@ -26,13 +26,9 @@
 
  namespace mod_booking\bo_availability\conditions;
 
-use context_module;
 use mod_booking\bo_availability\bo_condition;
-use mod_booking\booking_option;
 use mod_booking\booking_option_settings;
-use mod_booking\output\bookit_price;
 use mod_booking\price;
-use mod_booking\singleton_service;
 use MoodleQuickForm;
 
 defined('MOODLE_INTERNAL') || die();
@@ -77,7 +73,7 @@ class isloggedinprice implements bo_condition {
      * @param bool $not Set true if we are inverting the condition
      * @return bool True if available
      */
-    public function is_available(booking_option_settings $settings, $userid, $not = false):bool {
+    public function is_available(booking_option_settings $settings, int $userid, bool $not = false): bool {
 
         global $DB;
 
@@ -165,10 +161,11 @@ class isloggedinprice implements bo_condition {
      * Not all bo_conditions need to take advantage of this. But eg a condition which requires...
      * ... the acceptance of a booking policy would render the policy with this function.
      *
-     * @param integer $optionid
+     * @param int $optionid
+     * @param int $userid optional user id
      * @return array
      */
-    public function render_page(int $optionid) {
+    public function render_page(int $optionid, int $userid = 0) {
         return [];
     }
 
@@ -194,10 +191,12 @@ class isloggedinprice implements bo_condition {
             $pricecategory = price::get_active_pricecategory_from_cache_or_db($priceitem->pricecategoryidentifier);
 
             $priceitemarray = (array)$priceitem;
-            $priceitemarray['pricecategoryname'] = $pricecategory->name;
 
-            // Actually not yet sorted.
-            $sortedpriceitems[$pricecategory->pricecatsortorder] = $priceitemarray;
+            if (!empty($pricecategory)) {
+                $priceitemarray['pricecategoryname'] = $pricecategory->name;
+                // Actually not yet sorted.
+                $sortedpriceitems[$pricecategory->pricecatsortorder] = $priceitemarray;
+            }
         }
 
         // Now we sort the array according to the sort order defined in price categories.

@@ -1,4 +1,4 @@
-@mod @mod_booking @booking_add_option
+@mod @mod_booking @booking_add_and_book_option
 Feature: In a booking instance create booking options
   As a teacher
   I need to add booking options and events to a booking instance
@@ -24,7 +24,7 @@ Feature: In a booking instance create booking options
       | booking  | C1     | My booking | My booking description | teacher1       | Webinar   |
 
   @javascript
-  Scenario: Create booking instance
+  Scenario: Create booking instance as teacher
     Given I log in as "teacher1"
     And I am on "Course 1" course homepage with editing mode on
     And I add a "Booking" to section "0"
@@ -40,7 +40,7 @@ Feature: In a booking instance create booking options
     And I log out
 
   @javascript
-  Scenario: Create booking option and see it on activity page
+  Scenario: Create booking option as a teacher, see it on activity page and book it as a student
     Given I am on the "Course 1" course page logged in as teacher1
     And I follow "My booking"
     And I follow "New booking option"
@@ -53,8 +53,8 @@ Feature: In a booking instance create booking options
       | coursestarttime[day]    | ## tomorrow ## %d ## |
       | coursestarttime[month]  | ## tomorrow ## %B ## |
       | coursestarttime[year]   | ## tomorrow ## %Y ## |
-      | coursestarttime[hour]   | 00                    |
-      | coursestarttime[minute] | 00                    |
+      | coursestarttime[hour]   | 00                   |
+      | coursestarttime[minute] | 00                   |
     And I set the following fields to these values:
       | courseendtime[day]    | ## + 1 year ## %d ## |
       | courseendtime[month]  | ## + 1 year ## %B ## |

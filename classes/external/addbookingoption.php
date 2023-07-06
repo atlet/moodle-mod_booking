@@ -58,6 +58,8 @@ class addbookingoption extends external_api {
         return new external_function_parameters([
             'name' => new external_value(PARAM_TEXT,
                 'Booking option name'),
+            'identifier' => new external_value(PARAM_RAW,
+                'Unique identifier for booking option', (bool) VALUE_DEFAULT, null),
             'titleprefix' => new external_value(PARAM_RAW,
                 'Optional prefix to be shown before title', (bool) VALUE_DEFAULT, null),
             'targetcourseid' => new external_value(PARAM_INT,
@@ -86,7 +88,7 @@ class addbookingoption extends external_api {
                 'Time until when booking is not yet possible.', (bool) VALUE_DEFAULT, null),
             'enrolmentstatus' => new external_value(PARAM_INT,
                 '0 enrol at coursestart; 1 enrolment done; 2 immediately enrol', (bool) VALUE_DEFAULT, null),
-            'description' => new external_value(PARAM_TEXT,
+            'description' => new external_value(PARAM_RAW,
                 'Description', (bool) VALUE_DEFAULT, ''),
             'descriptionformat' => new external_value(PARAM_INT,
                 'Description format', (bool) VALUE_DEFAULT, 0),
@@ -114,11 +116,11 @@ class addbookingoption extends external_api {
                 'Notification text format', (bool) VALUE_DEFAULT, null),
             'disablebookingusers' => new external_value(PARAM_INT,
                 'Set to 1 to disable booking, else 0.', (bool) VALUE_DEFAULT, 0),
-            'beforebookedtext' => new external_value(PARAM_INT,
-                'Max waintinglist', (bool) VALUE_DEFAULT, null),
-            'beforecompletedtext' => new external_value(PARAM_TEXT,
+            'beforebookedtext' => new external_value(PARAM_RAW,
+                'Before booked text', (bool) VALUE_DEFAULT, null),
+            'beforecompletedtext' => new external_value(PARAM_RAW,
                 'Text to show before completion.', (bool) VALUE_DEFAULT, null),
-            'aftercompletedtext' => new external_value(PARAM_TEXT,
+            'aftercompletedtext' => new external_value(PARAM_RAW,
                 'Text to show after completion.', (bool) VALUE_DEFAULT, null),
             'shorturl' => new external_value(PARAM_URL,
                 'Add short url for this option.', (bool) VALUE_DEFAULT, null),
@@ -136,6 +138,13 @@ class addbookingoption extends external_api {
                 'Time when booking option ends.', (bool) VALUE_DEFAULT, null),
             'invisible' => new external_value(PARAM_INT,
                 'Default is 0 and visible. 1 will make the option invisible to students.', (bool) VALUE_DEFAULT, 0),
+            'responsiblecontact' => new external_value(PARAM_RAW,
+                'Responsible contact as e-mail. Only one possible.', (bool) VALUE_DEFAULT, ''),
+            'boav_enrolledincourse' => new external_value(PARAM_RAW,
+                'Booking Condition enrolled courses with shortnames, comma separated', (bool) VALUE_DEFAULT, ''),
+            'recommendedin' => new external_value(PARAM_RAW,
+                'This is for the recommendedin-feature and takes the shortnames of the courses, separated by commas.',
+                (bool) VALUE_DEFAULT, ''),
             'mergeparam' => new external_value(PARAM_INT,
                 'To upload multisession in consecutive steps or to add teachers to option.
                 0 is no multisession, 1 is create ms, 2 is merge with previous, 3 is merge teacher to option',
@@ -151,6 +160,7 @@ class addbookingoption extends external_api {
      */
     public static function execute(
                         string $name,
+                        string $identifier,
                         string $titleprefix = null,
                         int $targetcourseid = null,
                         int $courseid = null,
@@ -190,12 +200,16 @@ class addbookingoption extends external_api {
                         string $coursestarttime = null,
                         string $courseendtime = null,
                         int $invisible = 0,
+                        string $responsiblecontact = null,
+                        string $boavenrolledincourse = null,
+                        string $recommendedin = null,
                         int $mergeparam = null
                     ): array {
 
         $params = self::validate_parameters(self::execute_parameters(),
                 array(
                         'name' => $name,
+                        'identifier' => $identifier,
                         'titleprefix' => $titleprefix, // Optional prefix to be shown before title.
                         'targetcourseid' => $targetcourseid, // Id of course where the booking option should be created.
                         'courseid' => $courseid, // Id of course where users should be inscribed when booked.
@@ -235,6 +249,9 @@ class addbookingoption extends external_api {
                         'coursestarttime' => $coursestarttime,
                         'courseendtime' => $courseendtime,
                         'invisible' => $invisible,
+                        'responsiblecontact' => $responsiblecontact,
+                        'boav_enrolledincourse' => $boavenrolledincourse,
+                        'recommendedin' => $recommendedin,
                         'mergeparam' => $mergeparam
                     ));
 

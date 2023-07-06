@@ -26,7 +26,26 @@ Feature: In a booking create booking option with multiple custom options
     And I create booking option "New option - duplication source" in "My booking"
 
   @javascript
-  Scenario: Duplicate session with multiple options
+  Scenario: Simple duplication of booking option
+    Given I log in as "teacher1"
+    When I am on "Course 1" course homepage
+    And I follow "My booking"
+    And I should see "New option - duplication source"
+    And I click on "Settings" "icon" in the "#allbookingoptionstable_r1" "css_element"
+    And I click on "Duplicate this booking option" "link" in the "#allbookingoptionstable_r1" "css_element"
+    And I set the following fields to these values:
+      | Booking option name | Test option - Copy1 |
+    And I press "Save and go back"
+    Then I should see "Test option - Copy1" in the "#allbookingoptionstable_r2" "css_element"
+    And I click on "Settings" "icon" in the "#allbookingoptionstable_r2" "css_element"
+    And I click on "Duplicate this booking option" "link" in the "#allbookingoptionstable_r2" "css_element"
+    And I set the following fields to these values:
+      | Booking option name | Test option - Copy2 |
+    And I press "Save and go back"
+    Then I should see "Test option - Copy2" in the "#allbookingoptionstable_r3" "css_element"
+
+  @javascript
+  Scenario: Duplicate booking option with multiple customized settings
     Given I log in as "admin"
     And I visit "/admin/category.php?category=modbookingfolder"
     And I follow "Booking: Price categories"
@@ -54,8 +73,8 @@ Feature: In a booking create booking option with multiple custom options
       | Booking option name | Topic: Statistics     |
       | Description         | Class om Statistics   |
       | Internal annotation | Statistics for medics |
-      | Add new location    | MI Departmant         |
-      | Add new institution | Morphology Institute  |
+      | Location    | MI Departmant         |
+      | Institution | Morphology Institute  |
       | Address             | Ternopil              |
     And I set the field "Limit the number of participants" to "checked"
     And I set the following fields to these values:
@@ -79,7 +98,7 @@ Feature: In a booking create booking option with multiple custom options
       | Teachers poll url       | https://google.com    |
       | reoccurringdatestring   | FR, 13:30 - 14:30     |
     And I set the field "Add to course calendar" to "Add to calendar (visible only to course participants)"
-    And I set the field "Assign teachers:" to "Teacher 1 (teacher1@example.com)"
+    And I set the field "Assign teachers:" to "Teacher 1"
     And I wait "1" seconds
     And I set the field "Only book with price" to "checked"
     And I set the following fields to these values:
@@ -113,7 +132,7 @@ Feature: In a booking create booking option with multiple custom options
       | Address             | Ternopil                   |
     And I should see "MI Departmant" in the "#fitem_id_location" "css_element"
     And I should see "Morphology Institute" in the "#fitem_id_institution" "css_element"
-    And I should see "Teacher 1 (teacher1@example.com)" in the "#id_bookingoptionteacherscontainer" "css_element"
+    And I should see "Teacher 1" in the "#id_bookingoptionteacherscontainer" "css_element"
     And the field "Limit the number of participants" matches value "checked"
     And the field "Start and end time of course are known" matches value "checked"
     And the following fields match these values:
@@ -134,8 +153,8 @@ Feature: In a booking create booking option with multiple custom options
       | courseendtime[minute]                 | 00                            |
       | Teachers poll url                     | https://google.com            |
       | reoccurringdatestring                 | FR, 13:30 - 14:30             |
-      | pricegroup_default[bookingprice_default]           | 75                            |
-      | pricegroup_specialprice[bookingprice_specialprice] | 65                            |
+      | pricegroup_default[bookingprice_default]           | 75               |
+      | pricegroup_specialprice[bookingprice_specialprice] | 65               |
       | Notification message                  | Advanced notification message |
       | Before booked                         | Before booked message         |
       | After booked                          | After booked message          |

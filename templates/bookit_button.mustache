@@ -28,50 +28,49 @@
         "itemid": 12,
         "area": "option",
         "userid": 1212,
-        "main": [
-            {
+        "dataaction": "myAction",
+        "nojs": false,
+        "js": true,
+        "main": {
                 "label": "mylabel",
                 "class": "myclass",
-                "role": "myrole"
-            }
-        ],
-        "top": [
-            {
+                "role": "button"
+        },
+        "top": {
                 "label": "mylabel",
                 "class": "myclass",
-                "role": "myrole"
-            }
-        ],
-        "sub": [
-            {
+                "role": "button"
+        },
+        "sub": {
                 "label": "mylabel",
                 "class": "myclass",
-                "role": "myrole"
-            }
-        ]
+                "role": "button"
+        }
     }
 }}
-<div class="booking-button-area noprice w-100
-    {{^fullwidth}} d-flex justify-content-center {{/fullwidth}}"
+<div class="booking-button-area noprice w-100"
     data-itemid="{{itemid}}"
     data-area="{{area}}"
     data-userid="{{userid}}"
-    data-action="{{dataaction}}"
-    {{#nojs}}
-        data-nojs="1"
-    {{/nojs}}>
+    {{#dataaction}}data-action="{{dataaction}}"{{/dataaction}}
+    {{#nojs}}data-nojs="1"{{/nojs}}>
+    {{#onlist}}
+        <div class="booking-button-notifyarea mb-3">
+            {{> mod_booking/button_notifyme }}
+        </div>
+    {{/onlist}}
     {{#top}}
-        <div class="booking-button-toparea {{class}}" role="{{role}}">
+        <div class="booking-button-toparea mb-2 {{class}}" role="{{role}}">
             {{{label}}}
         </div>
     {{/top}}
     {{#main}}
-        <div class="booking-button-mainarea {{class}}" role="{{role}}">
+        <div class="booking-button-mainarea mb-2 {{class}}" role="{{role}}">
             {{{label}}}
         </div>
     {{/main}}
     {{#sub}}
-        <div class="booking-button-subarea {{class}}" role="{{role}}">
+        <div class="booking-button-subarea mb-2 {{class}}" role="{{role}}">
             {{{label}}}
         </div>
     {{/sub}}

@@ -170,7 +170,7 @@ class booking_bookit {
             if (!$justmyalert && !empty($extrabuttoncondition)) {
                 $condition = new $extrabuttoncondition();
 
-                list($template, $data) = $condition->render_button($settings, $userid, $full);
+                list($template, $data) = $condition->render_button($settings, $userid, $full, false, true);
 
                 // This supports multiple templates as well.
                 $datas[] = new bookit_button($data);
@@ -180,16 +180,20 @@ class booking_bookit {
 
             $condition = new $buttoncondition();
 
-            list($template, $data) = $condition->render_button($settings, $userid, $full);
+            list($template, $data) = $condition->render_button($settings, $userid, $full, false, true);
 
             // If there is an extra button condition, we don't use two templates but one.
             // We just move the extra condition to a different area.
             if (!empty($extrabuttoncondition && !empty($datas) && isset($data['main']))) {
                 $extrabutton = reset($datas);
-                $extrabutton->data['top'] = $data['main'];
+                $extrabutton->data['top'] = $extrabutton->data["main"];
+                $extrabutton->data['main'] = $data['main'];
+                // Make sure that JS is turned on.
+                $extrabutton->data['nojs'] = false;
                 $datas = [$extrabutton];
                 $templates = [$template];
             } else {
+                $data['fullwidth'] = true;
                 $datas[] = new bookit_button($data);
                 $templates[] = $template;
             }
@@ -204,14 +208,16 @@ class booking_bookit {
      * @param string $area
      * @param integer $itemid
      * @param integer $userid
+     * @param string $data
      * @return array
      */
-    public static function bookit(string $area, int $itemid, int $userid = 0) {
+    public static function bookit(string $area, int $itemid, int $userid = 0, string $data = '') {
 
         global $USER;
 
         // Make sure the user has the right to book in principle.
         $context = context_system::instance();
+
         if (!empty($userid)
             && $userid != $USER->id
             && !has_capability('mod/booking:bookforothers', $context)) {
@@ -264,14 +270,82 @@ class booking_bookit {
             } else if ($id === BO_COND_CONFIRMCANCEL) {
 
                 // Here we are already one step further and only confirm the cancelation.
-                $response = self::answer_booking_option($area, $itemid, STATUSPARAM_DELETED, $userid);
+                self::answer_booking_option($area, $itemid, STATUSPARAM_DELETED, $userid);
 
                 // Make sure cache is not blocking anymore.
                 $cache = cache::make('mod_booking', 'confirmbooking');
                 $cachekey = $userid . "_" . $settings->id . '_cancel';
                 $cache->delete($cachekey);
 
-                return $response;
+                return [
+                    'status' => 1,
+                    'message' => 'cancelled',
+                ];
+            } else if ($id === BO_COND_ALREADYRESERVED) {
+
+                // We only react on this if we are in cancelation.
+                $booking = singleton_service::get_instance_of_booking_settings_by_cmid($settings->cmid);
+
+                if (!empty($booking->iselective)) {
+                    // Here we are already one step further and only confirm the cancelation.
+                    self::answer_booking_option($area, $itemid, STATUSPARAM_NOTBOOKED, $userid);
+
+                    $cmid = (int)$booking->cmid;
+                    $cache = cache::make('mod_booking', 'electivebookingorder');
+                    if ($cachearray = $cache->get($cmid)) {
+
+                        $list = [];
+                        foreach ($cachearray['arrayofoptions'] as $item) {
+                            if ($item == $itemid) {
+                                continue;
+                            }
+                            array_push($list, $item);
+                        }
+
+                        if (count($list) == 0) {
+                            $cachearray = false;
+                        } else {
+                            $cachearray['arrayofoptions'] = $list;
+                            $cachearray['expirationtime'] = strtotime('+ 3 days', time());
+                        }
+
+                        $cache->set($cmid, $cachearray);
+                    }
+
+                    return [
+                        'status' => 1,
+                        'message' => 'notbooked',
+                    ];
+                }
+
+            } else if ($id === BO_COND_ELECTIVEBOOKITBUTTON) {
+
+                // Here we are already one step further and only confirm the cancelation.
+                self::answer_booking_option($area, $itemid, STATUSPARAM_RESERVED, $userid);
+
+                // For the elective, we need to record the booking order.
+
+                $cache = cache::make('mod_booking', 'electivebookingorder');
+                $cmid = (int)$settings->cmid;
+                if ($cachearray = $cache->get($cmid)) {
+
+                    $list = $cachearray['arrayofoptions'];
+                    array_push($list, $itemid);
+                } else {
+                    $list = [$itemid];
+                }
+
+                $cachearray = [
+                    'expirationtime' => strtotime('+ 3 days', time()),
+                    'arrayofoptions' => $list,
+                ];
+
+                $cache->set($cmid, $cachearray);
+
+                return [
+                    'status' => 1,
+                    'message' => 'reserved',
+                ];
             }
 
             if (!$isavailable) {
@@ -288,6 +362,49 @@ class booking_bookit {
             // The syntax is "subbooking-1" for the subbooking id 1.
             return array_merge(self::answer_subbooking_option($area, $itemid, STATUSPARAM_BOOKED, $userid),
                                 ['status' => 1, 'message' => 'booked']);
+        } else if ($area === 'elective') {
+            $jsonobject = json_decode($data);
+
+            $list = $jsonobject->list ?? null;
+
+            $cache = cache::make('mod_booking', 'electivebookingorder');
+
+            // If there is no list, we just book in the currently saved order.
+            $booking = singleton_service::get_instance_of_booking_settings_by_cmid($itemid);
+
+            if (!empty($booking->enforceteacherorder)) {
+
+                $arrayofoptions = elective::return_sorted_array_of_options_from_cache($itemid);
+            } else if (!$list) {
+
+                // We use itemid as cmid.
+                $cachearray = $cache->get($itemid);
+                $arrayofoptions = $cachearray['arrayofoptions'];
+
+            } else {
+
+                $list = json_decode($list);
+
+                $arrayofoptions = $list;
+            }
+
+            foreach ($arrayofoptions as $item) {
+
+                // We need to delete the previous entry.
+                self::answer_booking_option('option', $item, STATUSPARAM_NOTBOOKED, $userid);
+
+                // Book it again.
+                self::answer_booking_option('option', $item, STATUSPARAM_BOOKED, $userid);
+
+            }
+
+            $cache->set($itemid, null);
+
+            return [
+                'status' => 0,
+                'message' => 'novalidarea',
+            ];
+
         } else {
             return [
                 'status' => 0,
@@ -373,8 +490,11 @@ class booking_bookit {
         $user = singleton_service::get_instance_of_user($userid);
         $booking = singleton_service::get_instance_of_booking_by_optionid($itemid);
 
-        if (!isset($PAGE->context)) {
-            $PAGE->set_context(context_module::instance($booking->cmid));
+        // With shortcodes & webservice we might not have a valid context object.
+        if (!isset($PAGE->context) || !$context = $PAGE->context ?? null) {
+            if (empty($context)) {
+                $PAGE->set_context(context_module::instance($booking->cmid));
+            }
         }
 
         $output = $PAGE->get_renderer('mod_booking');

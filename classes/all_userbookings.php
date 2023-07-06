@@ -636,7 +636,11 @@ class all_userbookings extends \table_sql {
         }
 
         if (has_capability('mod/booking:communicate', \context_module::instance($this->cm->id))) {
-            $pollurl = trim($this->bookingdata->option->pollurl);
+            // PHP 8.1 compatibility with extra safety if poolurl has changed outside option form.
+            $pollurl = '';
+            if (!empty($this->bookingdata->option->pollurl)) {
+                $pollurl = trim($this->bookingdata->option->pollurl);
+            }
             if (!empty($pollurl)) {
                 echo '<div class="singlebutton"><input type="submit" class="btn btn-secondary" name="sendpollurl" value="' .
                          get_string('booking:sendpollurl', 'booking') . '" /></div>';
@@ -671,9 +675,9 @@ class all_userbookings extends \table_sql {
             }
 
             // Output transfer users to other option.
-            if (has_capability('mod/booking:subscribeusers',
-                    \context_module::instance($this->cm->id)) || booking_check_if_teacher(
-                            $this->bookingdata->option)) {
+            if (has_capability('mod/booking:bookforothers', \context_module::instance($this->cm->id)) &&
+                (has_capability('mod/booking:subscribeusers', \context_module::instance($this->cm->id)) ||
+                booking_check_if_teacher($this->bookingdata->option))) {
                 if (has_capability('mod/booking:subscribeusers',
                         \context_module::instance($this->cm->id))) {
                             $optionids = \mod_booking\booking::get_all_optionids($this->bookingdata->booking->id);

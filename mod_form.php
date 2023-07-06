@@ -22,6 +22,7 @@
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use mod_booking\elective;
 use mod_booking\semester;
 use mod_booking\utils\wb_payment;
 
@@ -98,7 +99,11 @@ class mod_booking_mod_form extends moodleform_mod {
     public function definition() {
         global $CFG, $DB, $COURSE, $USER, $PAGE, $OUTPUT;
 
-        $context = context_system::instance();
+        $systemcontext = context_system::instance();
+        $coursecontext = context_course::instance($COURSE->id);
+        // phpcs:ignore
+        // $modulecontext = context_module::instance($this->_cm->id);
+
         $mform = &$this->_form;
         $hasissues = $this->has_issues();
         $thasissues = $this->has_issues(TRUE);
@@ -185,8 +190,6 @@ class mod_booking_mod_form extends moodleform_mod {
         $mform->addElement('text', 'points', get_string('bookingpoints', 'booking'), 0);
         $mform->setType('points', PARAM_FLOAT);
 
-        $coursecontext = context_course::instance($COURSE->id);
-
         $teachers = get_enrolled_users($coursecontext, 'mod/booking:addinstance');
 
         $teachersstring = [];
@@ -235,8 +238,9 @@ class mod_booking_mod_form extends moodleform_mod {
             'myoptions' => get_string('optionsiteach', 'mod_booking'),
             'showall' => get_string('showallbookingoptions', 'mod_booking'),
             'showactive' => get_string('activebookingoptions', 'mod_booking'),
-            'myinstitution' => get_string('myinstitution', 'mod_booking')
-        );
+            'myinstitution' => get_string('myinstitution', 'mod_booking'),
+            'showvisible' => get_string('visibleoptions', 'mod_booking'),
+            'showinvisible' => get_string('invisibleoptions', 'mod_booking'));
 
         // View selections to show on booking options overview.
         $options = array(
@@ -369,6 +373,7 @@ class mod_booking_mod_form extends moodleform_mod {
             'description' => get_string('description', 'mod_booking'),
             'statusdescription' => get_string('textdependingonstatus', 'mod_booking'),
             'teacher' => get_string('teachers', 'mod_booking'),
+            'responsiblecontact' => get_string('responsiblecontact', 'mod_booking'),
             'showdates' => get_string('dates', 'mod_booking'),
             'dayofweektime' => get_string('dayofweektime', 'mod_booking'),
             'location' => get_string('location', 'mod_booking'),
@@ -382,6 +387,7 @@ class mod_booking_mod_form extends moodleform_mod {
             'text' => get_string('bookingoption', 'mod_booking'),
             'description' => get_string('description', 'mod_booking'),
             'teacher' => get_string('teachers', 'mod_booking'),
+            'responsiblecontact' => get_string('responsiblecontact', 'mod_booking'),
             'showdates' => get_string('dates', 'mod_booking'),
             'dayofweektime' => get_string('dayofweektime', 'mod_booking'),
             'location' => get_string('location', 'mod_booking'),
@@ -649,10 +655,8 @@ class mod_booking_mod_form extends moodleform_mod {
         $mform->setType('mailtemplatessource', PARAM_INT);
 
         // Add the fields to allow editing of the default text.
-        $editoroptions = array(
-            'subdirs' => false, 'maxfiles' => 0, 'maxbytes' => 0,
-            'trusttext' => false, 'context' => $context
-        );
+        $editoroptions = array('subdirs' => false, 'maxfiles' => 0, 'maxbytes' => 0,
+            'trusttext' => false, 'context' => $systemcontext);
 
         $fieldmapping = (object) array(
             'status' => '{status}', 'participant' => '{participant}',
@@ -898,7 +902,7 @@ class mod_booking_mod_form extends moodleform_mod {
         $mform->addElement('selectyesno', 'numgenerator', get_string("numgenerator", "booking"));
 
         $mform->addElement('text', 'paginationnum', get_string('paginationnum', 'booking'), 0);
-        $mform->setDefault('paginationnum', 25);
+        $mform->setDefault('paginationnum', PAGINATIONDEF);
         $mform->setType('paginationnum', PARAM_INT);
 
         $mform->addElement('text', 'banusernames', get_string('banusernames', 'booking'), 0);
@@ -1066,6 +1070,11 @@ class mod_booking_mod_form extends moodleform_mod {
             $customreporttemplates[$value->id] = $value->name;
         }
         $mform->addElement('select', 'customtemplateid', get_string('customreporttemplate', 'booking'), $customreporttemplates);
+
+        if (wb_payment::pro_version_is_activated()) {
+            $electivehandler = new elective();
+            $electivehandler->instance_form_definition($mform);
+        }
 
         // Category.
         $mform->addElement('header', 'categoryheader', get_string('categoryheader', 'booking'));

@@ -51,6 +51,9 @@ class previouslybooked implements bo_condition {
     /** @var int $id Id is set via json during construction */
     public $id = BO_COND_JSON_PREVIOUSLYBOOKED;
 
+    /** @var bool $overridable Indicates if the condition can be overriden. */
+    public $overridable = true;
+
     /** @var stdClass $customsettings an stdclass coming from the json which passes custom settings */
     public $customsettings = null;
 
@@ -91,7 +94,7 @@ class previouslybooked implements bo_condition {
      * @param bool $not Set true if we are inverting the condition
      * @return bool True if available
      */
-    public function is_available(booking_option_settings $settings, $userid, $not = false):bool {
+    public function is_available(booking_option_settings $settings, int $userid, bool $not = false): bool {
 
         // This is the return value. Not available to begin with.
         $isavailable = false;
@@ -216,15 +219,15 @@ class previouslybooked implements bo_condition {
             $mform->hideIf('bo_cond_previouslybooked_overrideconditioncheckbox', 'restrictwithpreviouslybooked', 'notchecked');
 
             $overrideoperators = [
+                'OR' => get_string('overrideoperator:or', 'mod_booking'),
                 'AND' => get_string('overrideoperator:and', 'mod_booking'),
-                'OR' => get_string('overrideoperator:or', 'mod_booking')
             ];
             $mform->addElement('select', 'bo_cond_previouslybooked_overrideoperator',
                 get_string('overrideoperator', 'mod_booking'), $overrideoperators);
             $mform->hideIf('bo_cond_previouslybooked_overrideoperator',
                 'bo_cond_previouslybooked_overrideconditioncheckbox', 'notchecked');
 
-            $overrideconditions = bo_info::get_conditions(CONDPARAM_MFORM_ONLY);
+            $overrideconditions = bo_info::get_conditions(CONDPARAM_CANBEOVERRIDDEN);
             $overrideconditionsarray = [];
             foreach ($overrideconditions as $overridecondition) {
                 // We do not combine conditions with each other.
@@ -259,8 +262,13 @@ class previouslybooked implements bo_condition {
                 }
             }
 
-            $mform->addElement('select', 'bo_cond_previouslybooked_overridecondition',
-                get_string('overridecondition', 'mod_booking'), $overrideconditionsarray);
+            $options = array(
+                'noselectionstring' => get_string('choose...', 'mod_booking'),
+                'tags' => false,
+                'multiple' => true,
+            );
+            $mform->addElement('autocomplete', 'bo_cond_previouslybooked_overridecondition',
+                get_string('overridecondition', 'mod_booking'), $overrideconditionsarray, $options);
             $mform->hideIf('bo_cond_previouslybooked_overridecondition',
                 'bo_cond_previouslybooked_overrideconditioncheckbox',
                 'notchecked');
@@ -338,10 +346,11 @@ class previouslybooked implements bo_condition {
      * Not all bo_conditions need to take advantage of this. But eg a condition which requires...
      * ... the acceptance of a booking policy would render the policy with this function.
      *
-     * @param integer $optionid
+     * @param int $optionid
+     * @param int $userid optional user id
      * @return array
      */
-    public function render_page(int $optionid) {
+    public function render_page(int $optionid, int $userid = 0) {
         return [];
     }
 

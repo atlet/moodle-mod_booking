@@ -23,8 +23,6 @@
  */
 
 use mod_booking\booking_rules\booking_rules;
-use mod_booking\booking_rules\rules_info;
-use mod_booking\form\rulesform;
 use mod_booking\utils\wb_payment;
 
 require_once(__DIR__ . '/../../config.php');
@@ -38,10 +36,11 @@ require_login(0, false);
 
 admin_externalpage_setup('modbookingeditrules');
 
-$settingsurl = new moodle_url('/admin/category.php', ['category' => 'modbookingfolder']);
-
 $url = new moodle_url('/mod/booking/edit_rules.php');
 $PAGE->set_url($url);
+
+// In Moodle 4.0+ we want to turn the instance description off on every page except view.php.
+$PAGE->activityheader->disable();
 
 $PAGE->set_pagelayout('admin');
 $PAGE->add_body_class('limitedwidth');
@@ -51,10 +50,6 @@ $PAGE->set_title(
     format_string($SITE->shortname) . ': ' . get_string('bookingrules', 'mod_booking')
 );
 
-if ($CFG->version >= 2022041900) {
-    $PAGE->activityheader->disable();
-}
-
 $output = $PAGE->get_renderer('booking');
 
 echo $output->header();
@@ -62,8 +57,7 @@ echo $output->heading(get_string('bookingrules', 'mod_booking'));
 
 // Check if PRO version is active.
 if (wb_payment::pro_version_is_activated()) {
-    $borules = new booking_rules();
-    echo $borules->return_rendered_list_of_saved_rules();
+    echo booking_rules::return_rendered_list_of_saved_rules();
 
 } else {
     echo html_writer::div(get_string('infotext:prolicensenecessary', 'mod_booking'), 'alert alert-warning');

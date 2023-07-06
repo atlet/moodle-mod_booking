@@ -1,3 +1,129 @@
+
+## Version 8.0.20 (2023062600)
+**Improvements:**
+* Improvement: Some more funcationalities for webservice importer
+
+## Version 8.0.19 (2023062200)
+**Improvements:**
+* Improvement: Fix deprecation warnings for PHP 8.1.
+* Improvement: Moodle 4.2 has been added to the github workflow.
+* Improvement: New PRO feature to turn off Wunderbyte logo and link.
+
+**Bugfixes:**
+* Bugfix: Fix for Moodle 4.2 compatibility - set userid in the event.
+* Bugfix: Fix for Moodle 4.2 compatibility - legacy methods removed from event classes.
+* Bugfix: When limiting to 0 participants sync_waiting_list() deleted answers.
+* Bugfix: Notify list also needs to be an overridable condition.
+
+## Version 8.0.18 (2023061600)
+**Improvements:**
+* Improvement: Code quality for elective.
+
+**Bugfixes:**
+* Bugfix: Missing check if instance is elective.
+* Bugfix: Elective fix for DB: add necessary fields to install.xml
+* Bugfix: If user is on notification list, we always need to show unsubscribe toggle bell.
+* Bugfix: Fix error when not an elective.
+* Bugfix: Fix missing $PAGE->context error.
+* Bugfix: If an option gets deleted, we want option settings to return null - no debug message.
+* Bugfix: Fixes for Github actions.
+* Bugfix: elective modal - if cache expires, we need to reset it.
+
+## Version 8.0.17 (2023061201)
+**Bugfixes:**
+* Bugfix: Fix elective combinations.
+
+## Version 8.0.16 (2023061200)
+**New features:**
+* New feature: Elective functionality implemented
+
+## Version 8.0.15 (2023060901)
+**Bugfixes:**
+* Bugfix: Context in booking_bookit was set incorrectly!
+
+## Version 8.0.14 (2023060900)
+**Improvements:**
+* Improvement: Code quality, and new timespan filter on view.php
+
+## Version 8.0.13 (2023060500)
+**Improvements:**
+* Improvement: Code quality, behat tests, mustache linting, PHPunit fixes and more.
+
+## Version 8.0.12 (2023052400)
+**Bugfixes:**
+* Bugfix: Add require_once to avoid warning from campaign_info with shortcodes use.
+
+## Version 8.0.11 (2023052200)
+**Improvements:**
+* Improvmenet: Add failed booking event when using shopping cart
+
+## Version 8.0.10 (2023051700)
+**Improvements:**
+* Improvement: Adjustment of capabilities for better finetuning
+
+## Version 8.0.9 (2023051200)
+**New features:**
+* New feature: Recommandation feature via shortcodes, to 'push' booking options in selected Moodle courses.
+
+## Version 8.0.8 (2023042400)
+**New features:**
+* New feature: Booking campaings - Reduce booking prices and increase booking limit for a specified time period for specific booking options.
+
+**Improvements:**
+* Improvement: Mustache linting for github actions.
+* Improvement: New tabs for visible/invisible booking options. (Tabs will only be shown to users with 'canseeinvisibleoptions' capability.)
+* Improvement: Added duplication and backup of subbooking options.
+
+**Bugfixes:**
+* Bugfix: Small SQL fixes for teachers instance report.
+* Bugfix: Fix several bugs with subbookings and prepage modals.
+* Bugfix: Fix broken entity backup.
+* Bugfix: Fix bugs with continue button and prepage modals.
+
+## Version 8.0.7 (2023040602)
+**New features:**
+* New feature: Additional person subbooking (still an experimental feature).
+* New feature: New possibility to react on changes on teachers report via booking rules (e.g. to send e-mails).
+* New feature: Introduce new {journal} placeholder to directly link to "substitutions / cancelled dates" (training journal).
+* New feature: New config setting to force prices to be always turned on. Also added price validation.
+* New feature: New possibility to review changes teachers report (substitutions / missing hours) via checkbox.
+  Introduced new capability 'mod/booking:canreviewsubstitutions'.
+
+**Improvements:**
+* Improvement: Add help button for select users condition.
+* Improvement: Added get_renderer function to singleton_service for improved performance.
+* Improvement: Lots of little improvements to additional person subbooking.
+* Improvement: Use new way to instantiate table from wunderbyte_table.
+* Improvement: Migrated teachers report from table_sql to wunderbyte_table.
+* Improvement: New behat tests.
+
+**Bugfixes:**
+* Bugfix: Lots of little bugfixes to additional person subbooking.
+* Bugfix: Fixed an exception that occurred on self-cancellation of students.
+* Bugfix: Undefined status for "confirm cancel" condition.
+* Bugfix: Fix error in delete_item_task if no subbooking is found.
+* Bugfix: German and English strings were mixed up for 'allowoverbooking'.
+
+## Version 8.0.6 (2023032700)
+**New features:**
+* New feature: New "select users" availability condition.
+* New feature: New possibilities for override conditions (e.g.: "fullybooked" can now be overriden if combined with "OR").
+* New feature: Introduced a new setting to allow overbooking of booking options if a user has the "mod/booking:canoverbook" capability.
+
+**Improvements:**
+* Improvement: Define default pagination setting and use it.
+* Improvement: Remove intro description from business card. It's now part of the new activity header.
+* Improvement: Usability improvements for price formula and make price formula a PRO feature.
+* Improvement: Added a helper function to check if a user is allowed to overbook an option.
+
+**Bugfixes:**
+* Bugfix: Fix 2 behat navigations' tests to use aria-label="Page" string obtained from Moodle core.
+* Bugfix: Add default string to transform_msgparam function if msgparam is not found.
+* Bugfix: MSGPARAM constants were not found in message_sent.php because of missing lib.php inclusion - closes #265
+* Bugfix: Support both two-letter (German) and three-letter (English) abbreviations for date strings (date series).
+* Bugfix: JS was lost on extra button conditions.
+* Bugfix: Make sure import via CSV works.
+
 ## Version 8.0.5 (2023032100)
 **Improvements:**
 * Improvement: Differentiate between checkout and booking complete confirmation in header.
@@ -63,7 +189,7 @@
 * New feature: Show text depending on status description right in new booking overview.
 * New feature: Finished download for new view.php.
 * New feature: Add possibility to configure fields for booking options download.
-* New feature: Booking now supports prepagemodals with booking policy, a confirmation page and support for the "Book now" and "Add to cart" buttons. 
+* New feature: Booking now supports prepagemodals with booking policy, a confirmation page and support for the "Book now" and "Add to cart" buttons.
 * New feature: Re-implemented ratings, attachments and tag functionality for new view.php.
 * New feature: Intelligent differntiation between price and no-price booking options.
 * New feature: Implemented new "cancel myself" condition and settings.

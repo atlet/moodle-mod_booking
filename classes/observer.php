@@ -24,6 +24,7 @@
 use mod_booking\booking_option;
 use mod_booking\booking_rules\rules_info;
 use mod_booking\calendar;
+use mod_booking\elective;
 use mod_booking\singleton_service;
 
 /**
@@ -70,6 +71,7 @@ class mod_booking_observer {
         $DB->delete_records_select('booking_answers', 'userid = :userid', $params);
         $DB->delete_records_select('booking_teachers', 'userid = :userid', $params);
         $DB->delete_records_select('booking_optiondates_teachers', 'userid = :userid', $params);
+        cache_helper::purge_by_event('setbackcachedteachersjournal');
         $DB->delete_records_select('booking_userevents', 'userid = :userid', $params);
         $DB->delete_records_select('booking_icalsequence', 'userid = :userid', $params);
     }
@@ -248,7 +250,6 @@ class mod_booking_observer {
         }
     }
 
-
     /**
      * When a booking option is completed, we send a mail to the user (as long as sendmail is activated).
      *
@@ -403,6 +404,32 @@ class mod_booking_observer {
                     $rule->execute($optionid, 0);
                 }
             }
+        }
+    }
+
+    /**
+     * When a course is completed, check if the user needs to be enrolled in the next course.
+     *
+     * @param \core\event\course_completed $event
+     * @throws coding_exception
+     * @throws dml_exception
+     * @throws moodle_exception
+     */
+    public static function course_completed(\core\event\course_completed $event) {
+        global $DB;
+
+        // Check if there is an associated booking_answer with status 'booked' for the userid and courseid.
+        $sql = 'SELECT ba.userid, bo.courseid
+                FROM {booking_answers} ba
+                JOIN {booking_options} bo
+                ON ba.optionid = bo.id
+                WHERE ba.userid = :userid AND ba.waitinglist = 0 AND bo.courseid = :courseid';
+        $params = ['userid' => $event->relateduserid, 'courseid' => $event->courseid];
+
+        // Only execute if there are associated booking_answers.
+        if ($bookedanswers = $DB->get_records_sql($sql, $params)) {
+            // Call the enrolment function.
+            elective::enrol_booked_users_to_course();
         }
     }
 }

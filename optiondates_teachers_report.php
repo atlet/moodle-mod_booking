@@ -33,7 +33,7 @@ $optionid = required_param('optionid', PARAM_INT);
 $download = optional_param('download', '', PARAM_ALPHA);
 
 list($course, $cm) = get_course_and_cm_from_cmid($cmid);
-require_course_login($course, false, $cm);
+require_course_login($course, true, $cm);
 
 $urlparams = [
     'id' => $cmid,
@@ -46,7 +46,13 @@ $PAGE->set_context($context);
 $baseurl = new moodle_url('/mod/booking/optiondates_teachers_report.php', $urlparams);
 $PAGE->set_url($baseurl);
 
-if ((has_capability('mod/booking:updatebooking', $context) || has_capability('mod/booking:addeditownoption', $context)) == false) {
+// In Moodle 4.0+ we want to turn the instance description off on every page except view.php.
+$PAGE->activityheader->disable();
+
+if ((has_capability('mod/booking:updatebooking', $context)
+    || has_capability('mod/booking:addeditownoption', $context)
+    || has_capability('mod/booking:viewreports', $context)
+    || has_capability('mod/booking:limitededitownoption', $context)) == false) {
     echo $OUTPUT->header();
     echo $OUTPUT->heading(get_string('accessdenied', 'mod_booking'), 4);
     echo get_string('nopermissiontoaccesspage', 'mod_booking');
@@ -72,126 +78,92 @@ $optiondatesteacherstable->sortable(false);
 
 $optiondatesteacherstable->show_download_buttons_at(array(TABLE_P_BOTTOM));
 
-if (!$optiondatesteacherstable->is_downloading()) {
+// Table will be shown normally.
+echo $OUTPUT->header();
+echo $OUTPUT->heading(get_string('optiondatesteachersreport', 'mod_booking'));
 
-    // Table will be shown normally.
-    echo $OUTPUT->header();
-    echo $OUTPUT->heading(get_string('optiondatesteachersreport', 'mod_booking'));
+$instancereportsurl = new moodle_url('/mod/booking/teachers_instance_report.php', ['cmid' => $cmid]);
 
-    $instancereportsurl = new moodle_url('/mod/booking/teachers_instance_report.php', ['cmid' => $cmid]);
+// Dismissible alert containing the description of the report.
+echo '<div class="alert alert-secondary alert-dismissible fade show" role="alert">' .
+    get_string('optiondatesteachersreport_desc', 'mod_booking') .
+    '<button type="button" class="close" data-dismiss="alert" aria-label="Close">
+    <span aria-hidden="true">&times;</span>
+    </button>
+</div>';
 
-    // Dismissible alert containing the description of the report.
-    echo '<div class="alert alert-secondary alert-dismissible fade show" role="alert">' .
-        get_string('optiondatesteachersreport_desc', 'mod_booking') .
-        '<button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-        </button>
-    </div>';
+echo get_string('linktoteachersinstancereport', 'mod_booking', $instancereportsurl->out());
 
-    echo get_string('linktoteachersinstancereport', 'mod_booking', $instancereportsurl->out());
-
-    // Show header with booking option name (and prefix if present).
-    if (!empty($settings->titleprefix)) {
-        $bookingoptionname = $settings->titleprefix . " - " . $bookingoptionname;
-    }
-    echo "<h2 class='mt-5'>$bookingoptionname</h2>";
-
-    // Header.
-    $optiondatesteacherstable->define_headers([
-        get_string('optiondate', 'mod_booking'),
-        get_string('teacher', 'mod_booking'),
-        get_string('reason', 'mod_booking'),
-        get_string('edit')
-    ]);
-
-    // Columns.
-    $optiondatesteacherstable->define_columns([
-        'optiondate',
-        'teacher',
-        'reason',
-        'edit'
-    ]);
-
-    // Header column.
-    $optiondatesteacherstable->define_header_column('optiondate');
-
-    // SQL query. The subselect will fix the "Did you remember to make the first column something...
-    // ...unique in your call to get_records?" bug.
-    $fields = "s.optiondateid, s.optionid, s.coursestarttime, s.courseendtime, s.reason, s.teachers";
-    $from = "(
-        SELECT bod.id optiondateid, bod.optionid, bod.coursestarttime, bod.courseendtime, bod.reason, " .
-        $DB->sql_group_concat('u.id', ',', 'u.id') . " teachers
-        FROM {booking_optiondates} bod
-        LEFT JOIN {booking_optiondates_teachers} bodt
-        ON bodt.optiondateid = bod.id
-        LEFT JOIN {booking_options} bo
-        ON bo.id = bod.optionid
-        LEFT JOIN {user} u
-        ON u.id = bodt.userid
-        WHERE bod.optionid = :optionid
-        GROUP BY bod.id, bod.optionid, bod.coursestarttime, bod.courseendtime
-        ORDER BY bod.coursestarttime ASC
-        ) s";
-    $where = "1=1";
-    $params = ['optionid' => $optionid];
-
-    // We only have 3 columns, so no need to collapse anything.
-    $optiondatesteacherstable->collapsible(false);
-
-    // Now build the table.
-    $optiondatesteacherstable->set_sql($fields, $from, $where, $params);
-    $optiondatesteacherstable->out(TABLE_SHOW_ALL_PAGE_SIZE, false);
-
-    // Require JS.
-    $PAGE->requires->js_call_amd(
-        'mod_booking/editteachersforoptiondate_form',
-        'initbuttons'
-    );
-
-    echo $OUTPUT->footer();
-
-} else {
-    // The table is being downloaded.
-
-    // Header.
-    $optiondatesteacherstable->define_headers([
-        get_string('name'),
-        get_string('optiondate', 'mod_booking'),
-        get_string('reason', 'mod_booking'),
-        get_string('teacher', 'mod_booking')
-    ]);
-    // Columns.
-    $optiondatesteacherstable->define_columns([
-        'optionname',
-        'optiondate',
-        'reason',
-        'teacher'
-    ]);
-
-    // SQL query. The subselect will fix the "Did you remember to make the first column something...
-    // ...unique in your call to get_records?" bug.
-    $fields = "s.optiondateid, s.text, s.optionid, s.coursestarttime, s.courseendtime, s.reason, s.teachers";
-    $from = "(
-        SELECT bod.id optiondateid, bo.text, bod.optionid, bod.coursestarttime, bod.courseendtime, bod.reason, " .
-        $DB->sql_group_concat('u.id', ',', 'u.id') . " teachers
-        FROM {booking_optiondates} bod
-        LEFT JOIN {booking_optiondates_teachers} bodt
-        ON bodt.optiondateid = bod.id
-        LEFT JOIN {booking_options} bo
-        ON bo.id = bod.optionid
-        LEFT JOIN {user} u
-        ON u.id = bodt.userid
-        WHERE bod.optionid = :optionid
-        GROUP BY bod.id, bod.optionid, bod.coursestarttime, bod.courseendtime
-        ORDER BY bod.coursestarttime ASC
-        ) s";
-    $where = "1=1";
-    $params = ['optionid' => $optionid];
-
-    // Now build the table.
-    $optiondatesteacherstable->set_sql($fields, $from, $where, $params);
-    $optiondatesteacherstable->setup();
-    $optiondatesteacherstable->query_db(TABLE_SHOW_ALL_PAGE_SIZE);
-    $optiondatesteacherstable->build_table();
-    $optiondatesteacherstable->finish_output();
+// Show header with booking option name (and prefix if present).
+if (!empty($settings->titleprefix)) {
+    $bookingoptionname = $settings->titleprefix . " - " . $bookingoptionname;
 }
+echo "<h2 class='mt-5'>$bookingoptionname</h2>";
+
+$columns = [
+    'optiondate' => get_string('optiondate', 'mod_booking'),
+    'teacher' => get_string('teacher', 'mod_booking'),
+    'reason' => get_string('reason', 'mod_booking'),
+    'reviewed' => get_string('reviewed', 'mod_booking'),
+];
+
+// phpcs:disable
+/* if (has_capability('mod/booking:updatebooking', $context)
+    || has_capability('mod/booking:addeditownoption', $context)) {
+    $columns['edit'] = get_string('edit');
+}
+ */
+// phpcs:enable
+
+$columns['edit'] = get_string('edit');
+
+// Header.
+$optiondatesteacherstable->define_headers(array_values($columns));
+
+// Columns.
+$optiondatesteacherstable->define_columns(array_keys($columns));
+
+// Header column.
+$optiondatesteacherstable->define_header_column('optiondate');
+
+// Table cache.
+$optiondatesteacherstable->define_cache('mod_booking', 'cachedteachersjournal');
+
+$downloadbaseurl = new moodle_url('/mod/booking/download_optiondates_teachers_report.php');
+$optiondatesteacherstable->define_baseurl($downloadbaseurl);
+$optiondatesteacherstable->showdownloadbutton = true;
+
+// SQL query. The subselect will fix the "Did you remember to make the first column something...
+// ...unique in your call to get_records?" bug.
+$fields = "s.optiondateid, s.text, s.optionid, s.coursestarttime, s.courseendtime, s.reason, s.reviewed, s.teachers";
+$from = "(
+    SELECT bod.id optiondateid, bo.text, bod.optionid, bod.coursestarttime, bod.courseendtime, bod.reason, bod.reviewed, " .
+    $DB->sql_group_concat('u.id', ',', 'u.id') . " teachers
+    FROM {booking_optiondates} bod
+    LEFT JOIN {booking_optiondates_teachers} bodt
+    ON bodt.optiondateid = bod.id
+    LEFT JOIN {booking_options} bo
+    ON bo.id = bod.optionid
+    LEFT JOIN {user} u
+    ON u.id = bodt.userid
+    WHERE bod.optionid = :optionid
+    GROUP BY bod.id, bo.text, bod.optionid, bod.coursestarttime, bod.courseendtime
+    ORDER BY bod.coursestarttime ASC
+    ) s";
+$where = "1=1";
+$params = ['optionid' => $optionid];
+
+// We only have 3 columns, so no need to collapse anything.
+$optiondatesteacherstable->collapsible(false);
+
+// Now build the table.
+$optiondatesteacherstable->set_sql($fields, $from, $where, $params);
+$optiondatesteacherstable->out(TABLE_SHOW_ALL_PAGE_SIZE, false);
+
+// Require JS.
+$PAGE->requires->js_call_amd(
+    'mod_booking/editteachersforoptiondate_form',
+    'initbuttons'
+);
+
+echo $OUTPUT->footer();

@@ -26,6 +26,7 @@
 
 namespace mod_booking\bo_availability\conditions;
 
+use context_system;
 use mod_booking\bo_availability\bo_condition;
 use mod_booking\booking_option_settings;
 use mod_booking\output\button_notifyme;
@@ -51,6 +52,9 @@ class notifymelist implements bo_condition {
     /** @var int $id Standard Conditions have hardcoded ids. */
     public $id = BO_COND_NOTIFYMELIST;
 
+    /** @var bool $overridable Indicates if the condition can be overriden. */
+    public $overridable = true;
+
     /**
      * Needed to see if class can take JSON.
      * @return bool
@@ -75,9 +79,9 @@ class notifymelist implements bo_condition {
      * @param bool $not Set true if we are inverting the condition
      * @return bool True if available
      */
-    public function is_available(booking_option_settings $settings, $userid, $not = false):bool {
+    public function is_available(booking_option_settings $settings, int $userid, bool $not = false): bool {
 
-        global $DB;
+        global $USER;
 
         // This is the return value. Not available to begin with.
         $isavailable = false;
@@ -86,7 +90,14 @@ class notifymelist implements bo_condition {
         $shownotificationlist = get_config('booking', 'usenotificationlist');
 
         // If not, this is always true.
-        if (!$shownotificationlist) {
+        if (!$shownotificationlist ||
+            // It's also true, if we have the cashier capability...
+            // ...as the cashier always needs to be able to book for other users...
+            // ...even if the booking option is fully booked.
+            (class_exists('local_shopping_cart\shopping_cart') &&
+                has_capability('local/shopping_cart:cashier', context_system::instance()) &&
+                $userid != $USER->id)
+        ) {
             $isavailable = true;
         } else {
             // See if this is already fully booked.
@@ -171,10 +182,11 @@ class notifymelist implements bo_condition {
      * Not all bo_conditions need to take advantage of this. But eg a condition which requires...
      * ... the acceptance of a booking policy would render the policy with this function.
      *
-     * @param integer $optionid
+     * @param int $optionid
+     * @param int $userid optional user id
      * @return array
      */
-    public function render_page(int $optionid) {
+    public function render_page(int $optionid, int $userid = 0) {
         return [];
     }
 

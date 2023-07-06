@@ -94,6 +94,11 @@ $ADMIN->add(
     )
 );
 
+$ADMIN->add('modbookingfolder',
+new admin_externalpage('modbookingeditcampaigns',
+        get_string('bookingcampaigns', 'mod_booking'),
+        new moodle_url('/mod/booking/edit_campaigns.php')));
+
 $ADMIN->add('modbookingfolder', $settings);
 
 if ($ADMIN->fulltree) {
@@ -139,8 +144,66 @@ if ($ADMIN->fulltree) {
         )
     );
 
+    // PRO feature: Appearance settings.
+    if ($proversion) {
+
+        $settings->add(
+            new admin_setting_heading('appearancesettings',
+                get_string('appearancesettings', 'mod_booking'),
+                get_string('appearancesettings_desc', 'mod_booking')));
+
+        // Turn off wunderbyte branding.
+        $settings->add(
+            new admin_setting_configcheckbox('booking/turnoffwunderbytelogo',
+                    get_string('turnoffwunderbytelogo', 'mod_booking'),
+                    get_string('turnoffwunderbytelogo_desc', 'mod_booking'), 0));
+
+    } else {
+        $settings->add(
+            new admin_setting_heading('appearancesettings',
+                get_string('appearancesettings', 'mod_booking'),
+                get_string('infotext:prolicensenecessary', 'mod_booking')));
+    }
+
+    // PRO feature: Teacher settings.
+    if ($proversion) {
+
+        $settings->add(
+            new admin_setting_heading('teachersettings',
+                get_string('teachersettings', 'mod_booking'),
+                get_string('teachersettings_desc', 'mod_booking')));
+
+        $settings->add(
+            new admin_setting_configcheckbox('booking/teachersnologinrequired',
+                    get_string('teachersnologinrequired', 'mod_booking'),
+                    get_string('teachersnologinrequired_desc', 'mod_booking'), 0));
+
+        $settings->add(
+            new admin_setting_configcheckbox('booking/teachersshowemails',
+                    get_string('teachersshowemails', 'mod_booking'),
+                    get_string('teachersshowemails_desc', 'mod_booking'), 0));
+    } else {
+        $settings->add(
+            new admin_setting_heading('teachersettings',
+                get_string('teachersettings', 'mod_booking'),
+                get_string('infotext:prolicensenecessary', 'mod_booking')));
+    }
+
     // PRO feature.
     if ($proversion) {
+
+        // Global setting to allow overbooking.
+        $settings->add(
+            new admin_setting_heading('allowoverbookingheader',
+                get_string('allowoverbookingheader', 'mod_booking'),
+                get_string('allowoverbookingheader_desc', 'mod_booking')));
+
+        $settings->add(
+            new admin_setting_configcheckbox('booking/allowoverbooking',
+                    get_string('allowoverbooking', 'mod_booking'), '', 0));
+
+        /* Booking option custom field to be used as course category
+        for automatically created courses. */
         $settings->add(
             new admin_setting_heading(
                 'newcoursecategorycfieldheading',
@@ -149,8 +212,6 @@ if ($ADMIN->fulltree) {
             )
         );
 
-        /* Booking option custom field to be used as course category
-        for automatically created courses. */
         $sql = "SELECT cff.shortname FROM {customfield_category} cfc
         LEFT JOIN {customfield_field} cff ON cfc.id = cff.categoryid
         WHERE cfc.component = 'mod_booking'";
@@ -191,13 +252,13 @@ if ($ADMIN->fulltree) {
     );
 
     $settings->add(
-        new admin_setting_configcheckbox(
-            'booking/turnoffwaitinglistaftercoursestart',
-            get_string('turnoffwaitinglistaftercoursestart', 'mod_booking'),
-            '',
-            0
-        )
-    );
+        new admin_setting_configcheckbox('booking/turnoffwaitinglist',
+                get_string('turnoffwaitinglist', 'mod_booking'),
+                get_string('turnoffwaitinglist_desc', 'mod_booking'), 0));
+
+    $settings->add(
+        new admin_setting_configcheckbox('booking/turnoffwaitinglistaftercoursestart',
+                get_string('turnoffwaitinglistaftercoursestart', 'mod_booking'), '', 0));
 
     // Notification list settings.
     $settings->add(
@@ -250,6 +311,11 @@ if ($ADMIN->fulltree) {
         )
     );
 
+    $settings->add(
+        new admin_setting_configcheckbox('booking/priceisalwayson',
+                get_string('priceisalwayson', 'mod_booking'),
+                get_string('priceisalwayson_desc', 'mod_booking'), 0));
+
     // Choose the user profile field which is used to store each user's price category.
     $userprofilefields = $DB->get_records('user_info_field', null, '', 'id, name, shortname');
     if (!empty($userprofilefields)) {
@@ -292,35 +358,33 @@ if ($ADMIN->fulltree) {
         )
     );
 
-    $settings->add(
-        new admin_setting_configcheckbox(
-            'booking/applyunitfactor',
-            get_string('applyunitfactor', 'mod_booking'),
-            get_string('applyunitfactor_desc', 'mod_booking'),
-            1
-        )
-    );
+    // PRO feature: Progress bars.
+    if ($proversion) {
+        $settings->add(
+            new admin_setting_heading('priceformulaheader',
+                get_string('priceformulaheader', 'mod_booking'),
+                get_string('priceformulaheader_desc', 'mod_booking')));
 
-    $settings->add(
-        new admin_setting_configcheckbox(
-            'booking/roundpricesafterformula',
-            get_string('roundpricesafterformula', 'mod_booking'),
-            get_string('roundpricesafterformula_desc', 'mod_booking'),
-            1
-        )
-    );
+        $settings->add(
+            new admin_setting_configtextarea('booking/defaultpriceformula',
+                get_string('defaultpriceformula', 'booking'),
+                get_string('defaultpriceformuladesc', 'booking'), '', PARAM_TEXT, 60, 10));
 
-    $settings->add(
-        new admin_setting_configtextarea(
-            'booking/defaultpriceformula',
-            get_string('defaultpriceformula', 'booking'),
-            get_string('defaultpriceformuladesc', 'booking'),
-            '',
-            PARAM_TEXT,
-            60,
-            10
-        )
-    );
+        $settings->add(
+            new admin_setting_configcheckbox('booking/applyunitfactor',
+                    get_string('applyunitfactor', 'mod_booking'),
+                    get_string('applyunitfactor_desc', 'mod_booking'), 1));
+
+        $settings->add(
+            new admin_setting_configcheckbox('booking/roundpricesafterformula',
+                    get_string('roundpricesafterformula', 'mod_booking'),
+                    get_string('roundpricesafterformula_desc', 'mod_booking'), 1));
+    } else {
+        $settings->add(
+            new admin_setting_heading('priceformulaheader',
+                get_string('priceformulaheader', 'mod_booking'),
+                get_string('infotext:prolicensenecessary', 'mod_booking')));
+    }
 
     $settings->add(
         new admin_setting_heading(
@@ -356,6 +420,12 @@ if ($ADMIN->fulltree) {
             1
         )
     );
+
+    if (wb_payment::pro_version_is_activated()) {
+        $settings->add(
+            new admin_setting_configcheckbox('booking/duplicationrestoresubbookings',
+                    get_string('duplicationrestoresubbookings', 'mod_booking'), '', 1));
+    }
 
     $settings->add(
         new admin_setting_heading(

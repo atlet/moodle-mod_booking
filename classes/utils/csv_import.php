@@ -24,6 +24,7 @@
 
 namespace mod_booking\utils;
 
+use cache_helper;
 use csv_import_reader;
 use mod_booking\booking;
 use stdClass;
@@ -223,6 +224,11 @@ class csv_import {
                 $bookingoption->id = $optionid;
                 // Unset all option fields in order to skip validation as existing data is used.
                 foreach ($this->columns as $columname => $column) {
+
+                    if ($columname == 'text') {
+                        continue;
+                    }
+
                     if (isset($csvrecord[$columname])) {
                         unset($csvrecord[$columname]);
                     }
@@ -267,13 +273,29 @@ class csv_import {
 
                     // Now we check if we have an entity to which we can match the value.
                     if (class_exists('local_entities\entitiesrelation_handler')) {
-                        $erhandler = new entitiesrelation_handler('mod_booking', 'option');
 
-                        $entities = $erhandler->get_entities_by_name($bookingoption->location);
+                        $eroptionhandler = new entitiesrelation_handler('mod_booking', 'option');
+
+                        $entities = $eroptionhandler->get_entities_by_name($bookingoption->location);
                         // If we have exactly one entiity, we create the entities entry.
                         if (count($entities) === 1) {
                             $entity = reset($entities);
-                            $erhandler->save_entity_relation($optionid, $entity->id);
+
+                            // If there are no booking options, we just save as normal.
+                            $eroptionhandler->save_entity_relation($optionid, $entity->id);
+
+                            // We also need to save the entity relation to the single sessions.
+                            $settings = singleton_service::get_instance_of_booking_option_settings($optionid);
+
+                            if (count($settings->sessions) > 0) {
+                                // If there are booking option dates, we need to run through them.
+                                // We need a new instance from the entities handler with a different area.
+                                $eroptiondatehandler = new entitiesrelation_handler('mod_booking', 'optiondate');
+
+                                foreach ($settings->sessions as $session) {
+                                    $eroptiondatehandler->save_entity_relation($session->id, $entity->id);
+                                }
+                            }
                         }
                     }
                 }
@@ -298,7 +320,7 @@ class csv_import {
 
                             // When inserting a new teacher, we also need to insert the teacher for each optiondate.
                             teachers_handler::subscribe_teacher_to_all_optiondates($optionid, $teacher->id);
-                        } else {
+                        } else if ($teacherexists === false ) {
                             $this->add_csverror(get_string('noteacherfound', 'booking', $i), $i);
                         }
                     } else {
@@ -334,7 +356,7 @@ class csv_import {
                         }
 
                         $option = singleton_service::get_instance_of_booking_option($this->booking->cm->id, $optionid);
-                        if ($option->user_submit_response($user) === false) {
+                        if ($option->user_submit_response($user, 0, 0, false, VERIFIED) === false) {
                             $this->add_csverror("The user with username {$user->username} and e-mail {$user->email} was
                             not subscribed to the booking option", $i);
                         }
@@ -349,7 +371,7 @@ class csv_import {
                         'username' => $userdata['user_username']), 'id', IGNORE_MULTIPLE);
                     if ($user !== false) {
                         $option = singleton_service::get_instance_of_booking_option($this->booking->cm->id, $optionid);
-                        $option->user_submit_response($user);
+                        $option->user_submit_response($user, 0, 0, false, VERIFIED);
                     }
                 }
             }
@@ -357,6 +379,10 @@ class csv_import {
         }
         $cir->cleanup(true);
         $cir->close();
+
+        // We need to purge all caches to be sure display works correctly.
+        cache_helper::purge_by_event('setbackoptionstable');
+
         return true;
     }
 

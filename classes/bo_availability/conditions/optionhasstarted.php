@@ -49,6 +49,9 @@ class optionhasstarted implements bo_condition {
     /** @var int $id Standard Conditions have hardcoded ids. */
     public $id = BO_COND_OPTIONHASSTARTED;
 
+    /** @var bool $overridable Indicates if the condition can be overriden. */
+    public $overridable = true;
+
     /**
      * Needed to see if class can take JSON.
      * @return bool
@@ -73,7 +76,7 @@ class optionhasstarted implements bo_condition {
      * @param bool $not Set true if we are inverting the condition
      * @return bool True if available
      */
-    public function is_available(booking_option_settings $settings, $userid, $not = false):bool {
+    public function is_available(booking_option_settings $settings, int $userid, bool $not = false): bool {
 
         // Settings of the booking instance.
         $bookingsettings = singleton_service::get_instance_of_booking_settings_by_cmid($settings->cmid);
@@ -141,7 +144,7 @@ class optionhasstarted implements bo_condition {
 
         $description = $this->get_description_string($isavailable, $full);
 
-        return [$isavailable, $description, BO_PREPAGE_NONE, BO_BUTTON_JUSTMYALERT];
+        return [$isavailable, $description, BO_PREPAGE_NONE, BO_BUTTON_MYALERT];
     }
 
     /**
@@ -160,10 +163,11 @@ class optionhasstarted implements bo_condition {
      * Not all bo_conditions need to take advantage of this. But eg a condition which requires...
      * ... the acceptance of a booking policy would render the policy with this function.
      *
-     * @param integer $optionid
+     * @param int $optionid
+     * @param int $userid optional user id
      * @return array
      */
-    public function render_page(int $optionid) {
+    public function render_page(int $optionid, int $userid = 0) {
         return [];
     }
 

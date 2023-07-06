@@ -29,6 +29,7 @@ use context_module;
 use context_system;
 use local_wunderbyte_table\wunderbyte_table;
 use mod_booking\booking;
+use mod_booking\elective;
 use mod_booking\singleton_service;
 use mod_booking\table\bookingoptions_wbtable;
 use moodle_exception;
@@ -72,6 +73,12 @@ class view implements renderable, templatable {
     /** @var string $renderedmyinstitutiontable the rendered table of all options of a specific institution */
     private $renderedmyinstitutiontable = null;
 
+    /** @var string $renderedvisibleoptionstable the rendered table of all options which are visible */
+    private $renderedvisibleoptionstable = null;
+
+    /** @var string $renderedinvisibleoptionstable the rendered table of all options which are invisible */
+    private $renderedinvisibleoptionstable = null;
+
     /** @var string $myinstitutionname */
     private $myinstitutionname = null;
 
@@ -93,6 +100,18 @@ class view implements renderable, templatable {
     /** @var string $showonlyone */
     private $showonlyone = null; // We kept this name for backwards compatibility!
 
+    /** @var string $showvisible */
+    private $showvisible = null;
+
+    /** @var string $showinvisible */
+    private $showinvisible = null;
+
+    /** @var string $elective */
+    private $renderelectivetable = null;
+
+    /** @var array $elective */
+    private $electivemodal = null;
+
     /**
      * Constructor
      *
@@ -101,10 +120,11 @@ class view implements renderable, templatable {
      * @param int $optionid
      */
     public function __construct(int $cmid, string $whichview = '', int $optionid = 0) {
-        global $USER;
+        global $USER, $PAGE;
 
         $this->cmid = $cmid;
 
+        $context = context_system::instance();
         $bookingsettings = singleton_service::get_instance_of_booking_settings_by_cmid($cmid);
 
         // Default sort order from booking settings.
@@ -142,11 +162,42 @@ class view implements renderable, templatable {
             case 'myinstitution':
                 $this->myinstitution = true;
                 break;
+            case 'showvisible':
+                // Tab will only be shown to users with the 'canseeinvisibleoptions' capability.
+                // For participants we use the "showall" table as they will only see visible options anyway.
+                if (has_capability('mod/booking:canseeinvisibleoptions', $context)) {
+                    $this->showvisible = true;
+                }
+                break;
+            case 'showinvisible':
+                // Tab will only be shown to users with the 'canseeinvisibleoptions' capability.
+                if (has_capability('mod/booking:canseeinvisibleoptions', $context)) {
+                    $this->showinvisible = true;
+                }
+                break;
             case 'showall':
             default:
                 $this->showall = true;
                 break;
-                // TODO: We need to change the default to the view set in instance settings later.
+        }
+
+        if (!empty($bookingsettings->iselective)) {
+            list($tablestring, $rawdata) = $this->get_rendered_elective_table();
+
+            $this->renderelectivetable = $tablestring;
+            $modal = new elective_modal($bookingsettings, $rawdata);
+            $this->electivemodal = $modal->return_as_array();
+
+            // Get booking settings.
+            $booking = singleton_service::get_instance_of_booking_settings_by_cmid($bookingsettings->cmid);
+
+            $this->electivemodal['maxcredits'] = $booking->maxcredits;
+            $this->electivemodal['creditsleft'] = elective::return_credits_left($booking);
+            $this->electivemodal['isteacherorderforced'] = empty($booking->enforceteacherorder) ? false : true;
+
+            $PAGE->requires->js_call_amd('mod_booking/elective-sorting', 'electiveSorting');
+
+            return;
         }
 
         // Active options.
@@ -174,13 +225,50 @@ class view implements renderable, templatable {
             $this->myinstitutionname = $USER->institution;
             $this->renderedmyinstitutiontable = $this->get_rendered_myinstitution_table($USER->institution);
         }
+
+        // Only show visible options.
+        if (in_array('showvisible', $showviews) && has_capability('mod/booking:canseeinvisibleoptions', $context)) {
+            $this->renderedvisibleoptionstable = $this->get_rendered_visible_options_table();
+        }
+
+        // Only show invisible options.
+        if (in_array('showinvisible', $showviews) && has_capability('mod/booking:canseeinvisibleoptions', $context)) {
+            $this->renderedinvisibleoptionstable = $this->get_rendered_invisible_options_table();
+        }
+    }
+
+
+    /**
+     * Render table for elective.
+     * @return array the rendered table
+     */
+    public function get_rendered_elective_table():array {
+        $cmid = $this->cmid;
+
+        $booking = singleton_service::get_instance_of_booking_by_cmid($cmid);
+
+        // Create the table.
+        $allbookingoptionstable = new bookingoptions_wbtable('allbookingoptionstable', $booking);
+
+        $wherearray = ['bookingid' => (int)$booking->id];
+        list($fields, $from, $where, $params, $filter) =
+                booking::get_options_filter_sql(0, 0, '', null, $booking->context, [], $wherearray);
+        $allbookingoptionstable->set_filter_sql($fields, $from, $where, $filter, $params);
+
+        // Initialize the default columnes, headers, settings and layout for the table.
+        // In the future, we can parametrize this function so we can use it on many different places.
+        $this->wbtable_initialize_list_layout($allbookingoptionstable, true, true, true);
+
+        $out = $allbookingoptionstable->outhtml($booking->get_pagination_setting(), true);
+
+        return [$out, $allbookingoptionstable->rawdata];
     }
 
     /**
      * Render table for all booking options.
      * @return string the rendered table
      */
-    public function get_rendered_all_options_table() {
+    public function get_rendered_all_options_table():string {
         $cmid = $this->cmid;
 
         $booking = singleton_service::get_instance_of_booking_by_cmid($cmid);
@@ -354,6 +442,64 @@ class view implements renderable, templatable {
     }
 
     /**
+     * Render table for all options which are visible.
+     * @return string the rendered table
+     */
+    public function get_rendered_visible_options_table() {
+        $cmid = $this->cmid;
+
+        $booking = singleton_service::get_instance_of_booking_by_cmid($cmid);
+
+        // Create the table.
+        $visibleoptionstable = new bookingoptions_wbtable('visibleoptionstable', $booking);
+
+        $wherearray = [
+            'bookingid' => (int) $booking->id,
+            'invisible' => 0,
+        ];
+        list($fields, $from, $where, $params, $filter) =
+            booking::get_options_filter_sql(0, 0, '', null, $booking->context, [], $wherearray);
+        $visibleoptionstable->set_filter_sql($fields, $from, $where, $filter, $params);
+
+        // Initialize the default columnes, headers, settings and layout for the table.
+        // In the future, we can parametrize this function so we can use it on many different places.
+        $this->wbtable_initialize_list_layout($visibleoptionstable, true, true, true);
+
+        $out = $visibleoptionstable->outhtml($booking->get_pagination_setting(), true);
+
+        return $out;
+    }
+
+    /**
+     * Render table for all options which are invisible.
+     * @return string the rendered table
+     */
+    public function get_rendered_invisible_options_table() {
+        $cmid = $this->cmid;
+
+        $booking = singleton_service::get_instance_of_booking_by_cmid($cmid);
+
+        // Create the table.
+        $invisibleoptionstable = new bookingoptions_wbtable('invisibleoptionstable', $booking);
+
+        $wherearray = [
+            'bookingid' => (int) $booking->id,
+            'invisible' => 1,
+        ];
+        list($fields, $from, $where, $params, $filter) =
+            booking::get_options_filter_sql(0, 0, '', null, $booking->context, [], $wherearray);
+        $invisibleoptionstable->set_filter_sql($fields, $from, $where, $filter, $params);
+
+        // Initialize the default columnes, headers, settings and layout for the table.
+        // In the future, we can parametrize this function so we can use it on many different places.
+        $this->wbtable_initialize_list_layout($invisibleoptionstable, true, true, true);
+
+        $out = $invisibleoptionstable->outhtml($booking->get_pagination_setting(), true);
+
+        return $out;
+    }
+
+    /**
      * Helper function to set the default layout for the table (list view).
      * @param wunderbyte_table $wbtable reference to the table class that should be initialized
      * @param bool $filter
@@ -395,6 +541,19 @@ class view implements renderable, templatable {
                 break;
         }
 
+        // Only admins can download.
+        if (has_capability('mod/booking:updatebooking', context_module::instance($this->cmid))) {
+            $baseurl = new moodle_url('/mod/booking/download.php');
+            $wbtable->define_baseurl($baseurl);
+            $wbtable->showdownloadbutton = true;
+        }
+
+        self::apply_standard_params_for_bookingtable($wbtable, $optionsfields, $filter, $search, $sort);
+    }
+
+
+    public static function apply_standard_params_for_bookingtable(wunderbyte_table &$wbtable,
+        $optionsfields = [], bool $filter = true, bool $search = true, bool $sort = true) {
         // Activate sorting.
         $wbtable->cardsort = true;
 
@@ -432,6 +591,9 @@ class view implements renderable, templatable {
         if (in_array('institution', $optionsfields)) {
             $columnsfooter[] = 'institution';
         }
+        if (in_array('responsiblecontact', $optionsfields)) {
+            $columnsfooter[] = 'responsiblecontact';
+        }
         if (in_array('showdates', $optionsfields)) {
             $columnsfooter[] = 'showdates';
         }
@@ -457,6 +619,12 @@ class view implements renderable, templatable {
                 ['dayofweektime']);
             $wbtable->add_classes_to_subcolumns('footer', ['columniclassbefore' => 'fa fa-clock-o fa-fw text-gray
                 font-size-sm'], ['dayofweektime']);
+        }
+        if (in_array('responsiblecontact', $optionsfields)) {
+            $wbtable->add_classes_to_subcolumns('footer', ['columnclass' => 'text-left pr-2 text-gray font-size-sm'],
+                ['responsiblecontact']);
+            $wbtable->add_classes_to_subcolumns('footer', ['columniclassbefore' => 'fa fa-user fa-fw text-gray
+                font-size-sm'], ['responsiblecontact']);
         }
         if (in_array('showdates', $optionsfields)) {
             $wbtable->add_classes_to_subcolumns('footer', ['columnclass' => 'text-left pr-2 text-gray font-size-sm'],
@@ -501,8 +669,8 @@ class view implements renderable, templatable {
             ['keystring' => get_string('tableheader_teacher', 'booking')],
             ['teacher']
         );
-        // phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-        /* $wbtable->is_downloading('', 'List of booking options'); */
+        // phpcs:ignore
+        // $wbtable->is_downloading('', 'List of booking options');
 
         // Header column.
         $wbtable->define_header_column('text');
@@ -511,13 +679,6 @@ class view implements renderable, templatable {
         $wbtable->stickyheader = true;
         $wbtable->showcountlabel = false;
         $wbtable->showreloadbutton = false;
-
-        // Only admins can download.
-        if (has_capability('mod/booking:updatebooking', context_module::instance($this->cmid))) {
-            $baseurl = new moodle_url('/mod/booking/download.php');
-            $wbtable->define_baseurl($baseurl);
-            $wbtable->showdownloadbutton = true;
-        }
 
         $wbtable->define_cache('mod_booking', 'bookingoptionstable');
 
@@ -558,6 +719,22 @@ class view implements renderable, templatable {
                     'localizedname' => get_string('institution', 'mod_booking'),
                 ];
             }
+
+            $filtercolumns['coursestarttime'] = [
+                'localizedname' => get_string('timespan', 'local_wunderbyte_table'),
+                'datepicker' => [
+                    'In between' => [
+                        'possibleoperations' => ['within', 'before', 'after'],
+                        'columntimestart' => 'coursestarttime',
+                        'columntimeend' => 'courseendtime',
+                        'labelstartvalue' => get_string('coursestarttime', 'mod_booking'),
+                        'defaultvaluestart' => 'now', // Can also be Unix timestamp or string "now".
+                        'labelendvalue' => get_string('courseendtime', 'mod_booking'),
+                        'defaultvalueend' => strtotime('+ 1 year', time()), // Can also be Unix timestamp or string "now".
+                        'checkboxlabel' => get_string('apply_filter', 'local_wunderbyte_table'),
+                    ]
+                ]
+            ];
             $wbtable->define_filtercolumns($filtercolumns);
         }
 
@@ -584,6 +761,7 @@ class view implements renderable, templatable {
      * @return array
      */
     public function export_for_template(renderer_base $output) {
+
         return [
             'alloptionstable' => $this->renderedalloptionstable,
             'activeoptionstable' => $this->renderedactiveoptionstable,
@@ -591,6 +769,9 @@ class view implements renderable, templatable {
             'optionsiteachtable' => $this->renderedoptionsiteachtable,
             'showonlyonetable' => $this->renderedshowonlyonetable,
             'myinstitutiontable' => $this->renderedmyinstitutiontable,
+            'visibleoptionstable' => $this->renderedvisibleoptionstable,
+            'invisibleoptionstable' => $this->renderedinvisibleoptionstable,
+            'electivetable' => $this->renderelectivetable,
             'showonlyone' => $this->showonlyone,
             'showactive' => $this->showactive,
             'showall' => $this->showall,
@@ -598,6 +779,9 @@ class view implements renderable, templatable {
             'myoptions' => $this->myoptions, // Options I teach. We kept the name for backward compatibility.
             'myinstitution' => $this->myinstitution,
             'myinstitutionname' => $this->myinstitutionname,
+            'showvisible' => $this->showvisible,
+            'showinvisible' => $this->showinvisible,
+            'elective' => empty($this->renderelectivetable) ? false : $this->electivemodal,
         ];
     }
 }
