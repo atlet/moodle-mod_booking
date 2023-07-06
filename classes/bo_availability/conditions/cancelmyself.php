@@ -75,7 +75,7 @@ class cancelmyself implements bo_condition {
      * @param bool $not Set true if we are inverting the condition
      * @return bool True if available
      */
-    public function is_available(booking_option_settings $settings, $userid, $not = false):bool {
+    public function is_available(booking_option_settings $settings, int $userid, bool $not = false): bool {
 
         global $DB;
 
@@ -97,7 +97,10 @@ class cancelmyself implements bo_condition {
             $isavailable = true; // True means, it won't be shown.
         } else {
             // If the user is not allowed to cancel we never show cancel button.
-            if ($bosettings->cancancelbook != 1 || isset($bookinginformation['notbooked'])) {
+
+            if (!empty($bosettings->iselective) && isset($bookinginformation['iamreserved'])) {
+                $isavailable = false;
+            } else if ($bosettings->cancancelbook != 1 || isset($bookinginformation['notbooked'])) {
                 $isavailable = true; // True means cancel button is not shown.
             } else if (isset($bookinginformation['onwaitinglist']) || isset($bookinginformation['iambooked'])) {
                 // If the user is allowed to cancel, we first check if the user is already booked or on the waiting list.
@@ -179,10 +182,11 @@ class cancelmyself implements bo_condition {
      * Not all bo_conditions need to take advantage of this. But eg a condition which requires...
      * ... the acceptance of a booking policy would render the policy with this function.
      *
-     * @param integer $optionid
+     * @param int $optionid
+     * @param int $userid optional user id
      * @return array
      */
-    public function render_page(int $optionid) {
+    public function render_page(int $optionid, int $userid = 0) {
         return [];
     }
 
@@ -205,10 +209,11 @@ class cancelmyself implements bo_condition {
         if ($userid === null) {
             $userid = $USER->id;
         }
-        $label = $this->get_description_string(false, $full);
+        $label = $this->get_description_string(false);
 
-        return bo_info::render_button($settings, $userid, $label, 'btn btn-secondary w-auto ml-1', false, $fullwidth,
-            'button', 'option', false);
+        return bo_info::render_button($settings, $userid, $label,
+            'btn btn-light btn-sm',
+            false, $fullwidth, 'button', 'option', false);
     }
 
     /**
@@ -218,7 +223,8 @@ class cancelmyself implements bo_condition {
      * @param bool $full
      * @return string
      */
-    private function get_description_string($isavailable, $full) {
-        return get_string('cancel', 'mod_booking');
+    private function get_description_string($isavailable) {
+        return get_string('cancelsign', 'mod_booking') . "&nbsp;" .
+            get_string('cancelmyself', 'mod_booking');
     }
 }

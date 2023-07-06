@@ -25,6 +25,11 @@
 
 namespace mod_booking\event;
 
+defined('MOODLE_INTERNAL') || die();
+
+global $CFG;
+require_once($CFG->dirroot . '/mod/booking/lib.php');
+
 /**
  * The message_sent event class.
  *
@@ -87,6 +92,8 @@ class message_sent extends \core\event\base {
                 return 'Reminder sent from report';
             case MSGPARAM_CUSTOM_MESSAGE:
                 return 'Custom message';
+            default:
+                return 'Unknown message type';
         }
     }
 }

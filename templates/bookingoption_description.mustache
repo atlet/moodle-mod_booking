@@ -34,7 +34,7 @@
         "userid": "2",
         "description": "Flow Yoga Multistyle MindestteilnehmerInnen: 6",
         "statusdescription": "v",
-        "imageurl": "http://localhost:58000/pluginfile.php/22/mod_booking/bookingimages/1/Aerial yoga.png",
+        "imageurl": "http://localhost:58000/pluginfile.php/22/mod_booking/bookingimages/1/Aerialyoga.png",
         "location": "1",
         "address": "1090 Wien Tendlergasse 11",
         "institution": "TENDLERGASSE",
@@ -59,6 +59,7 @@
         "currency": "EUR",
         "pricecategoryname": "Price",
         "dayofweektime": "FR, 10:30 - 11:45",
+        "sport": "Aerial Yoga",
         "customfields": {
             "sport": [
             "AERIAL YOGA"
@@ -146,7 +147,7 @@
 {{#invisible}}
 <div class="booking-option-info-invisible">{{#str}} invisibleoption, mod_booking {{/str}}</div>
 {{/invisible}}
-{{#imageurl}}<p><img src="{{{.}}}" class="img-fluid"/></p>{{/imageurl}}
+{{#imageurl}}<p><img src="{{{.}}}" class="img-fluid" alt="{{title}}"/></p>{{/imageurl}}
 {{#dayofweektime}}
     <div class="bo_dayofweektime">
         {{#str}}dayofweektime, mod_booking{{/str}}: {{.}}

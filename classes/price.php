@@ -24,6 +24,7 @@ use lang_string;
 use local_shopping_cart\shopping_cart;
 use mod_booking\booking_option_settings;
 use local_entities\entitiesrelation_handler;
+use mod_booking\booking_campaigns\campaigns_info;
 use User;
 
 /**
@@ -60,10 +61,11 @@ class price {
     /**
      * Add form fields to passed on mform.
      *
-     * @param MoodleQuickForm $mform
+     * @param MoodleQuickForm $mform reference to the Moodle form
+     * @param bool $noformula can be used to turn price formula off (e.g. for subbookings)
      * @return void
      */
-    public function add_price_to_mform(MoodleQuickForm &$mform) {
+    public function add_price_to_mform(MoodleQuickForm &$mform, bool $noformula=false) {
 
         global $DB;
 
@@ -92,8 +94,14 @@ class price {
         $mform->addElement('advcheckbox', 'useprice', get_string('useprice', 'mod_booking'),
             null, null, [0, 1]);
 
+        if (get_config('booking', 'priceisalwayson')) {
+            $mform->setDefault('useprice', 1);
+            $mform->hardFreeze('useprice');
+        } else {
+            $useprice = false;
+        }
+
         $defaultexists = false;
-        $useprice = false;
         foreach ($this->pricecategories as $pricecategory) {
             $formgroup = array();
 
@@ -124,15 +132,18 @@ class price {
             }
         }
 
-        if ($useprice) {
-            $mform->setDefault('useprice', 1);
-        } else {
-            $mform->setDefault('useprice', 0);
+        // We only need this, if price is not always on by default.
+        if (!get_config('booking', 'priceisalwayson')) {
+            if ($useprice) {
+                $mform->setDefault('useprice', 1);
+            } else {
+                $mform->setDefault('useprice', 0);
+            }
         }
 
         // Only when there is an actual price formula, we do apply it.
         $priceformula = get_config('booking', 'defaultpriceformula');
-        if (!empty($priceformula) && is_json($priceformula)) {
+        if (!$noformula && !empty($priceformula) && is_json($priceformula)) {
 
             $mform->addElement('advcheckbox', 'priceformulaisactive', get_string('priceformulaisactive', 'mod_booking'),
             null, null, [0, 1]);
@@ -214,7 +225,7 @@ class price {
                 return 0;
             }
 
-            $key = key($formulacomponent);
+            $key = key((array) $formulacomponent); // For the PHP 8.1 compatibility.
             $value = $formulacomponent->$key;
 
             switch ($key) {
@@ -517,7 +528,7 @@ class price {
                 }
             }
 
-            // If we don't want to use prices, we just set price to 0.
+            // If we don't want to use prices, we just set price to empty string.
             if (empty($fromform->useprice)) {
                 $price = '';
             }
@@ -707,6 +718,23 @@ class price {
                 return [];
             }
 
+            // Currently, we only have campaigns for booking options.
+            if ($area === 'option') {
+                // Check if there are active campaigns.
+                // If yes, we need to apply the price factor.
+                $campaigns = campaigns_info::get_all_campaigns();
+                foreach ($campaigns as $camp) {
+                    /** @var booking_campaign $campaign */
+                    $campaign = $camp;
+                    if ($campaign->campaign_is_active($itemid)) {
+                        foreach ($prices as &$price) {
+                            $price->price = $campaign->get_campaign_price($price->price);
+                            // Campaign price factor has been applied.
+                        }
+                    }
+                }
+            }
+
             $data = json_encode($prices);
             $cache->set($area . $itemid, $data);
         } else if ($cachedprices === true) {
@@ -788,9 +816,24 @@ class price {
      */
     public static function is_in_time_scope(array $dayinfo, object $rangeinfo) {
 
+        // Get the localized day name.
+        $dayname = new lang_string($dayinfo['day'], 'mod_booking', null, current_language());
+
+        // For German, we have two letter abbreviations (Mo, Di, Mi...).
+        // For English, we have three letter abbrevitions (Mon, Tue, Wed,...).
+        switch(current_language()) {
+            case 'de':
+                $wdlength = 2;
+                break;
+            case 'en':
+            default:
+                $wdlength = 3;
+                break;
+        }
+
         // Only if a weekday is specified in the range, we check for it.
         if (isset($rangeinfo->weekdays)) {
-            $needle = substr($dayinfo['day'], 0, 2);
+            $needle = substr($dayname, 0, $wdlength);
             $needle = strtolower($needle);
             $weekdays = strtolower($rangeinfo->weekdays);
             $haystack = explode(',', strtolower($weekdays));

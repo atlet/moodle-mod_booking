@@ -259,10 +259,13 @@ class bookingoption_description implements renderable, templatable {
         }
 
         // Description from booking option settings formatted as HTML.
-        // When we call this via webservice, we don't have a context, this throws an error.
-        // It's no use passing the context object either.
-        if (!isset($PAGE->context)) {
-            $PAGE->set_context(context_module::instance($cmid));
+        // With shortcodes & webservice we might not have a valid context object.
+        if (!isset($PAGE->context) || !$context = $PAGE->context ?? null) {
+            if (empty($context)) {
+                $PAGE->set_context(context_module::instance($cmid));
+            } else {
+                $PAGE->set_context($context);
+            }
         }
         $this->description = format_text($settings->description, FORMAT_HTML);
 

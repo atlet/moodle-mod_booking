@@ -27,6 +27,7 @@ namespace mod_booking\bo_availability;
 use context_module;
 use html_writer;
 use mod_booking\booking_option_settings;
+use mod_booking\output\bookingoption_description;
 use mod_booking\output\button_notifyme;
 use mod_booking\output\col_price;
 use mod_booking\output\prepagemodal;
@@ -176,8 +177,14 @@ class bo_info {
 
         $resultsarray = [];
 
-        // Run through all the individual conditions to make sure they are fullfilled.
-        foreach ($conditions as $condition) {
+        $overrideconditions = [];
+
+        /* Run through all the individual conditions to make sure they are fullfilled.
+        Hardcoded conditions are in instantiated classes whereas JSON conditions are in stdclasses.
+        They come from the field 'availability' field of the booking options table. */
+        while (count($conditions) > 0) {
+
+            $condition = array_shift($conditions);
 
             $classname = get_class($condition);
 
@@ -214,11 +221,12 @@ class bo_info {
                     // Should never happen, but just go on in case of.
                     continue;
                 }
-                // Then pass the availability-parameters.
+                /* The get description function returns availability, description,
+                insertpage (int param for prepagemodal provided) and the button. */
                 list($isavailable, $description, $insertpage, $button) = $instance->get_description($settings, $userid, $full);
 
                 if (!$isavailable && $onlyhardblock) {
-                    // If we only want hard blocks, we turn the is_avaialbe function.
+                    // If we only want hard blocks, we might want to override the result of the is_available function.
                     // False will only stay false, if hardblock returns true.
                     $isavailable = !$instance->hard_block($settings, $userid);
                 }
@@ -232,48 +240,59 @@ class bo_info {
                 ];
             }
 
-            // Now we might need to override the result of a previous condition which has been resolved as false before.
-            if (!empty($condition->overrides)
-            && isset($resultsarray[$condition->overrides])) {
+            // We collect all conditions that have override conditions set.
+            if (!empty($condition->overrides)) {
+                $overrideconditions[] = $condition;
+            }
+        }
 
-                // We know we have a result to override. It depends now on the operator what to do.
-                // If the operator is or, we change the previous result from false to true, if this result is true.
-                // OR we change this result to true, if the previous was true.
-
-                switch ($condition->overrideoperator) {
-                    case 'OR':
-                        // If one of the two results is true, both are true.
-                        if ($resultsarray[$condition->overrides]['isavailable']
-                            || $resultsarray[$condition->id]['isavailable']) {
-                                $resultsarray[$condition->overrides]['isavailable'] = true;
-                                $resultsarray[$condition->id]['isavailable'] = true;
-                        };
-                        break;
-                    case 'AND':
-                        // We need to return the right description which actually failed.
-                        // If both fail, we want to return both descriptions.
-
-                        $description = '';
-                        if (!$resultsarray[$condition->overrides]['isavailable']) {
-                            $description = $resultsarray[$condition->overrides]['description'];
-                        }
-                        if (!$resultsarray[$condition->id]['isavailable']) {
-                            if (empty($description)) {
-                                $description = $resultsarray[$condition->id]['description'];
-                            } else {
-                                $description .= '<br>' . $resultsarray[$condition->id]['description'];
+        // Now we might need to override the result of a previous condition which has been resolved as false before.
+        foreach ($overrideconditions as $condition) {
+            // Foreach override condition id (ocid).
+            foreach ($condition->overrides as $ocid) {
+                if (isset($resultsarray[$ocid])) {
+                    // We know we have a result to override. It depends now on the operator what to do.
+                    // If the operator is or, we change the previous result from false to true, if this result is true.
+                    // OR we change this result to true, if the previous was true.
+                    switch ($condition->overrideoperator) {
+                        case 'OR':
+                            // If one of the two results is true, both are true.
+                            if (isset($resultsarray[$ocid])) {
+                                // If the original condition availability is true...
+                                // ...then we also can set the override condition to true.
+                                if ($resultsarray[$condition->id]['isavailable']) {
+                                    $resultsarray[$ocid]['isavailable'] = true;
+                                }
                             }
-                        }
-                        // Only now: If NOT both are true, we set both to false.
-                        if (!($resultsarray[$condition->overrides]['isavailable']
-                            && $resultsarray[$condition->id]['isavailable'])) {
-                                $resultsarray[$condition->overrides]['isavailable'] = false;
-                                $resultsarray[$condition->id]['isavailable'] = false;
-                                // Both get the same descripiton.
-                                // if one of them bubbles up as the blocking one, we see the right description.
-                                $resultsarray[$condition->overrides]['description'] = $description;
-                                $resultsarray[$condition->id]['description'] = $description;
-                        };
+                            break;
+                        case 'AND':
+                            // We need to return the right description which actually failed.
+                            // If both fail, we want to return both descriptions.
+
+                            $description = '';
+                            if (!$resultsarray[$ocid]['isavailable']) {
+                                $description = $resultsarray[$ocid]['description'];
+                            }
+                            if (!$resultsarray[$condition->id]['isavailable']) {
+                                if (empty($description)) {
+                                    $description = $resultsarray[$condition->id]['description'];
+                                } else {
+                                    $description .= '<br>' . $resultsarray[$condition->id]['description'];
+                                }
+                            }
+                            // Only now: If NOT both are true, we set both to false.
+                            if (!($resultsarray[$ocid]['isavailable']
+                                && $resultsarray[$condition->id]['isavailable'])) {
+                                    $resultsarray[$condition->id]['isavailable'] = false;
+                                    // Both get the same descripiton.
+                                    // if one of them bubbles up as the blocking one, we see the right description.
+                                    $resultsarray[$ocid]['description'] = $description;
+                                    $resultsarray[$condition->id]['description'] = $description;
+                            };
+                            break;
+                    }
+                } else {
+                    array_push($conditions, $condition);
                 }
             }
         }
@@ -413,7 +432,7 @@ class bo_info {
         // We just want filenames, as they are also the classnames.
         foreach ($filelist as $filepath) {
             $path = pathinfo($filepath);
-            $filename = 'mod_booking\bo_availability\conditions\\' . $path['filename'];
+            $filename = 'mod_booking\\bo_availability\\conditions\\' . $path['filename'];
 
             // We instantiate all the classes, because we need some information.
             if (class_exists($filename)) {
@@ -435,6 +454,11 @@ class bo_info {
                             $conditions[] = $instance;
                         }
                         break;
+                    case CONDPARAM_CANBEOVERRIDDEN:
+                        if (isset($instance->overridable) && $instance->overridable === true) {
+                            $conditions[] = $instance;
+                        }
+                        break;
                     case CONDPARAM_ALL:
                     default:
                         $conditions[] = $instance;
@@ -453,7 +477,7 @@ class bo_info {
      * @return null|object
      */
     private static function get_condition($conditionname) {
-        $filename = 'mod_booking\bo_availability\conditions\\' . $conditionname . '.php';
+        $filename = 'mod_booking\\bo_availability\\conditions\\' . $conditionname . '.php';
 
         if (class_exists($filename)) {
             return new $filename();
@@ -494,7 +518,7 @@ class bo_info {
 
         // We get the condition for the right page.
         $condition = new $condition();
-        $object = $condition->render_page($optionid);
+        $object = $condition->render_page($optionid, $userid ?? 0);
 
         // Now we introduce the header at the first place.
         $object['template'] = $template . ',' . $object['template'];
@@ -510,7 +534,7 @@ class bo_info {
         ];
 
         // Depending on the circumstances, keys are added to the array.
-        self::add_continue_button($footerdata, $conditions, $results, $pagenumber, count($conditions));
+        self::add_continue_button($footerdata, $conditions, $results, $pagenumber, count($conditions), $optionid, $userid);
         self::add_back_button($footerdata, $conditions, $results, $pagenumber, count($conditions));
 
         $object['template'] = $object['template'] . ',' .  $template;
@@ -620,12 +644,10 @@ class bo_info {
             $user = null;
         }
 
+        // Needed for normal bookit button.
         if ($fullwidth) {
             // For view.php and default rendering.
-            $fullwidthclasses = 'w-100 mt-0 mb-0 pl-1 pr-1 pt-2 pb-2';
-        } else {
-            // For prepage modals we want to render the button different than on view.php.
-            $fullwidthclasses = 'pl-3 pr-3 pb-2 pt-2 m-3';
+            $fullwidthclasses = 'w-100';
         }
 
         $data = [
@@ -641,6 +663,12 @@ class bo_info {
             ]
         ];
 
+        // Needed for bookit_price button.
+        if ($fullwidth) {
+            // For view.php and default rendering.
+            $data['fullwidth'] = true;
+        }
+
         if ($includeprice) {
             if ($price = price::get_price('option', $settings->id, $user)) {
                 $data['price'] = [
@@ -648,6 +676,14 @@ class bo_info {
                     'currency' => $price['currency'],
                 ];
             }
+        }
+
+        // If user is on notification list, we need to show unsubscribe toggle bell.
+        $bookinganswer = singleton_service::get_instance_of_booking_answers($settings);
+        $bookinginformation = $bookinganswer->return_all_booking_information($userid);
+        if (isset($bookinginformation['notbooked']) && ($bookinginformation['notbooked']['onnotifylist']) ||
+            (isset($bookinginformation['iambooked']) && $bookinginformation['iambooked']['onnotifylist'])) {
+            $data['onlist'] = true;
         }
 
         // The reason for this structure is that we can have a number of comma separated templates.
@@ -812,8 +848,10 @@ class bo_info {
      * @param array $footerdata
      * @param array $conditions
      * @param array $results
-     * @param integer $pagenumber
-     * @param integer $totalpages
+     * @param int $pagenumber
+     * @param int $totalpages
+     * @param int $optionid
+     * @param int $userid
      * @return void
      */
     private static function add_continue_button(
@@ -821,7 +859,9 @@ class bo_info {
             array $conditions,
             array $results,
             int $pagenumber,
-            int $totalpages) {
+            int $totalpages,
+            int $optionid,
+            int $userid) {
 
         // Standardvalues.
 
@@ -830,27 +870,25 @@ class bo_info {
         $continuelabel = get_string('continue');
         $continuelink = '#';
 
-        // If we are on the booking or priceissetpage, we don't want to show the continue button.
-        // The Thank you page only comes automatically.
-
-        if ($conditions[$pagenumber]['id'] === BO_COND_BOOKITBUTTON
-            || $conditions[$pagenumber]['id'] === BO_COND_PRICEISSET) {
-
-            // But we want to show the continue button when we are not at the last but one page.
-            // E.G. when there are subbookings later on.
-            if ($totalpages - $pagenumber <= 2) {
-                $continuebutton = false;
-            }
-        }
-
         if ($conditions[$pagenumber]['id'] === BO_COND_CONFIRMATION) {
             // We need to decide if we want to show on the last page a "go to checkout" button.
             if (self::has_price_set($results)) {
-                $url = new moodle_url('/local/shopping_cart/checkout.php');
-                $continueaction = 'checkout';
-                $continuelabel = get_string('checkout', 'local_shopping_cart');
-                $continuelink = $url->out();
-                $continuebutton = true;
+                $results = self::get_condition_results($optionid, $userid);
+                $lastresultid = array_pop($results)['id'];
+                switch ($lastresultid) {
+                    case BO_COND_ALREADYRESERVED:
+                        $url = new moodle_url('/local/shopping_cart/checkout.php');
+                        $continueaction = 'checkout';
+                        $continuelabel = get_string('checkout', 'local_shopping_cart');
+                        $continuelink = $url->out();
+                        $continuebutton = true;
+                        break;
+                    default:
+                        $continuebutton = true;
+                        $continueaction = 'closemodal';
+                        $continuelabel = get_string('close', 'mod_booking');
+                        break;
+                }
             } else {
                 $continuebutton = true;
                 $continueaction = 'closemodal';

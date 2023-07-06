@@ -129,8 +129,6 @@ class bookingoptions_wbtable extends wunderbyte_table {
      * @throws dml_exception
      */
     public function col_teacher($values) {
-        global $PAGE;
-
         $settings = singleton_service::get_instance_of_booking_option_settings($values->id);
         $ret = '';
 
@@ -146,8 +144,37 @@ class bookingoptions_wbtable extends wunderbyte_table {
         } else {
             // Render col_teacher using a template.
             $data = new col_teacher($values->id, $settings);
-            $output = $PAGE->get_renderer('mod_booking');
+            $output = singleton_service::get_renderer('mod_booking');
             $ret = $output->render_col_teacher($data);
+        }
+        return $ret;
+    }
+
+    /**
+     * This function is called for each data row to allow processing of the
+     * responsiblecontact value.
+     *
+     * @param object $values Contains object with all the values of record.
+     * @return string $string Return a link to the responsible contact's user profile.
+     * @throws dml_exception
+     */
+    public function col_responsiblecontact($values) {
+        global $DB;
+        $settings = singleton_service::get_instance_of_booking_option_settings($values->id);
+        $ret = '';
+        if (empty($settings->responsiblecontact)) {
+            return $ret;
+        }
+        if ($user = $DB->get_record('user', ['id' => $settings->responsiblecontact])) {
+            $userstring = "$user->firstname $user->lastname";
+            $emailstring = " ($user->email)";
+            if ($this->is_downloading()) {
+                $ret = $userstring . $emailstring;
+            } else {
+                $profileurl = new moodle_url('/user/profile.php', array('id' => $settings->responsiblecontact));
+                $ret = get_string('responsible', 'mod_booking')
+                    . ": " . html_writer::link($profileurl, $userstring);
+            }
         }
         return $ret;
     }
@@ -359,7 +386,7 @@ class bookingoptions_wbtable extends wunderbyte_table {
      */
     public function col_bookings($values) {
         global $PAGE;
-        $output = $PAGE->get_renderer('mod_booking');
+        $output = singleton_service::get_renderer('mod_booking');
 
         $settings = singleton_service::get_instance_of_booking_option_settings($values->id, $values);
         // Render col_bookings using a template.
@@ -505,7 +532,6 @@ class bookingoptions_wbtable extends wunderbyte_table {
      * @throws coding_exception
      */
     public function col_showdates($values) {
-        global $PAGE;
         $ret = '';
         if ($this->is_downloading()) {
             $datestrings = dates_handler::return_array_of_sessions_datestrings($values->id);
@@ -513,7 +539,7 @@ class bookingoptions_wbtable extends wunderbyte_table {
         } else {
             // Use the renderer to output this column.
             $data = new \mod_booking\output\col_coursestarttime($values->id, $this->booking);
-            $output = $PAGE->get_renderer('mod_booking');
+            $output = singleton_service::get_renderer('mod_booking');
             $ret = $output->render_col_coursestarttime($data);
         }
         return $ret;
@@ -610,19 +636,23 @@ class bookingoptions_wbtable extends wunderbyte_table {
                     $OUTPUT->pix_icon('t/editstring', get_string('editbookingoption', 'mod_booking')) .
                     get_string('editbookingoption', 'mod_booking')) . '</div>';
 
-            // Multiple dates session.
-            $ddoptions[] = '<div class="dropdown-item">' .
-                html_writer::link(new moodle_url('/mod/booking/optiondates.php',
-                    array('id' => $this->cmid, 'optionid' => $values->id,
-                    'returnto' => 'url',
-                    'returnurl' => $returnurl)),
-                    $OUTPUT->pix_icon('i/scheduled',
-                        get_string('optiondatesmanager', 'booking')) .
-                    get_string('optiondatesmanager', 'booking')) . '</div>';
+            if (has_capability('mod/booking:manageoptiondates', $this->context)) {
+                // Multiple dates session.
+                $ddoptions[] = '<div class="dropdown-item">' .
+                    html_writer::link(new moodle_url('/mod/booking/optiondates.php',
+                        array('id' => $this->cmid, 'optionid' => $values->id,
+                        'returnto' => 'url',
+                        'returnurl' => $returnurl)),
+                        $OUTPUT->pix_icon('i/scheduled',
+                            get_string('optiondatesmanager', 'booking')) .
+                        get_string('optiondatesmanager', 'booking')) . '</div>';
+            }
 
             // Book other users.
-            if (has_capability('mod/booking:subscribeusers', $this->context) ||
-                booking_check_if_teacher($values)) {
+            if (has_capability('mod/booking:bookforothers', $this->context) &&
+                (has_capability('mod/booking:subscribeusers', $this->context) ||
+                booking_check_if_teacher($values))) {
+
                 $subscribeusersurl = new moodle_url('/mod/booking/subscribeusers.php',
                     array('id' => $this->cmid, 'optionid' => $values->id,
                     'returnto' => 'url',

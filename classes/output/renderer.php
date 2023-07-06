@@ -82,6 +82,20 @@ class renderer extends plugin_renderer_base {
                     get_string('myoptions', 'booking', $myoptions));
         }
 
+        if (in_array('showvisible', $showviews)) {
+            $tmpurlparams['whichview'] = 'showvisible';
+            $row[] = new tabobject('showvisible',
+                new moodle_url('/mod/booking/view.php', $tmpurlparams),
+                get_string('visibleoptions', 'mod_booking'));
+        }
+
+        if (in_array('showinvisible', $showviews)) {
+            $tmpurlparams['whichview'] = 'showinvisible';
+            $row[] = new tabobject('showinvisible',
+                new moodle_url('/mod/booking/view.php', $tmpurlparams),
+                get_string('invisibleoptions', 'mod_booking'));
+        }
+
         echo $this->tabtree($row, $current);
     }
 
@@ -277,8 +291,10 @@ class renderer extends plugin_renderer_base {
 
             if (!$rating->settings->scale->isnumeric) {
                 // If a global scale, try to find current course ID from the context.
-                if (empty($rating->settings->scale->courseid) &&
-                         $coursecontext = $rating->context->get_course_context(false)) {
+                /** @var context $ratingcontext */
+                $ratingcontext = $rating->context;
+                if (empty($rating->settings->scale->courseid) && !empty($ratingcontext) &&
+                         $coursecontext = $ratingcontext->get_course_context(false)) {
                     $courseid = $coursecontext->instanceid;
                 } else {
                     $courseid = $rating->settings->scale->courseid;
@@ -624,6 +640,16 @@ class renderer extends plugin_renderer_base {
     public function render_ruleslist($data) {
         $data = $data->export_for_template($this);
         return $this->render_from_template('mod_booking/ruleslist', $data);
+    }
+
+    /**
+     * Render campaignslist
+     * @param $data array
+     * @return string
+     */
+    public function render_campaignslist($data) {
+        $data = $data->export_for_template($this);
+        return $this->render_from_template('mod_booking/campaignslist', $data);
     }
 
     /**

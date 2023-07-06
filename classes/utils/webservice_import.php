@@ -23,9 +23,12 @@
  */
 namespace mod_booking\utils;
 
+use coding_exception;
 use mod_booking\booking;
 use stdClass;
 use mod_booking\booking_option;
+use mod_booking\customfield\booking_handler;
+use moodle_exception;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -102,6 +105,8 @@ class webservice_import {
 
         $this->add_teacher_to_bookingoption($bookingoptionid, $data);
 
+        $this->add_customfields_to_bookingoption($bookingoptionid, $data);
+
         return array('status' => 1);
     }
 
@@ -141,7 +146,7 @@ class webservice_import {
 
             return new booking_option($bookingcmid, $data->bookingoptionid);
         } else {
-            // The text key (booking option name) is unique in every instance, therefore we can find the id by id.
+            // The identifier is unique in every instance, therefore we can find the id by id.
             $sql = "SELECT cm.id as cmid, bo.id as boid
                     FROM {course_modules} cm
                     INNER JOIN {booking_options} bo
@@ -150,11 +155,11 @@ class webservice_import {
                     ON cm.module=m.id
                     WHERE cm.instance=:bookingid
                     AND m.name=:modulename
-                    AND bo.text=:bookingoptionname";
+                    AND bo.identifier=:identifier";
             if ($result = $DB->get_record_sql($sql, array(
                     'bookingid' => $data->bookingid,
                     'modulename' => 'booking',
-                    'bookingoptionname' => $data->name))) {
+                    'identifier' => $data->identifier))) {
                 return new booking_option($result->cmid, $result->boid);
             }
         }
@@ -232,6 +237,9 @@ class webservice_import {
      * @throws \moodle_exception
      */
     private function remap_data(&$data, $bookingoption) {
+
+        global $DB;
+
         self::change_property($data, 'name', 'text');
 
         // Throw an error if coursestarttime is provided without courseendtime.
@@ -279,19 +287,11 @@ class webservice_import {
                 $data->coursestarttime = strtotime($data->coursestarttime);
                 $data->courseendtime = strtotime($data->courseendtime);
 
-                $sessionkey = self::return_next_sessionkey($data, $bookingoption);
-
-                $startkey = 'ms' . $sessionkey . 'starttime';
-                $endkey = 'ms' . $sessionkey. 'endtime';
-
-                if ($data->mergeparam == 1) {
-                    // We don't change, but just add multisession, because here there is only one.
-                    $data->{$startkey} = $data->coursestarttime;
-                    $data->{$endkey} = $data->courseendtime;
-                } else {
-                    self::change_property($data, 'coursestarttime', $startkey);
-                    self::change_property($data, 'courseendtime', $endkey);
+                foreach ($bookingoption->settings->sessions as $session) {
+                    $data->stillexistingdates[$session->id] = "$session->coursestarttime - $session->courseendtime";
                 }
+
+                $data->newoptiondates[] = "$data->coursestarttime - $data->courseendtime";
 
             }
         }
@@ -320,20 +320,34 @@ class webservice_import {
             $data->restrictanswerperiodopening = 1;
             $data->bookingopeningtime = strtotime($data->bookingopeningtime);
         }
-    }
 
-    /**
-     * Function to return the key for the next session, by counting existing ones.
-     * If no bookingoption as of yet, we return 1.
-     * @param object $data
-     * @param booking_option|null $bookingoption
-     * @return int
-     */
-    private static function return_next_sessionkey(object $data, booking_option $bookingoption = null) {
-        if ($bookingoption) {
-            return count($bookingoption->sessions) + 1;
-        } else {
-            return 1;
+        if (!empty($data->responsiblecontact)) {
+
+            if (!$user = $DB->get_record('user', array('suspended' => 0, 'deleted' => 0, 'confirmed' => 1,
+            'email' => $data->responsiblecontact), 'id', IGNORE_MULTIPLE)) {
+
+                throw new \moodle_exception('responsiblecontactnotsubscribed', 'mod_booking', null, null,
+                'The contact with email ' . $data->responsiblecontact .
+                ' does not exist in the target database.');
+            } else {
+                $data->responsiblecontact = $user->id;
+            }
+
+        }
+
+        if (!empty($data->boav_enrolledincourse)) {
+
+            $items = explode(',', $data->boav_enrolledincourse);
+
+            list($inorequal, $params) = $DB->get_in_or_equal($items, SQL_PARAMS_NAMED);
+            $sql = "SELECT id
+                    FROM {course}
+                    WHERE shortname $inorequal";
+            $courses = $DB->get_records_sql($sql, $params);
+
+            $data->bo_cond_enrolledincourse_courseids = array_keys($courses);
+            $data->restrictwithenrolledincourse = 1;
+            unset($data->boav_enrolledincourse);
         }
     }
 
@@ -350,6 +364,30 @@ class webservice_import {
         }
     }
 
+    /**
+     *
+     * @param mixed $optionid
+     * @param mixed $data
+     * @return void
+     * @throws moodle_exception
+     * @throws coding_exception
+     */
+    private function add_customfields_to_bookingoption($optionid, $data) {
+        if (!empty($data->recommendedin)) {
+
+            $handler = booking_handler::create();
+            $handler->field_save($optionid, 'recommendedin', $data->recommendedin);
+        }
+    }
+
+    /**
+     * Add the teacher information to the booking option.
+     * @param mixed $optionid
+     * @param mixed $data
+     * @return void
+     * @throws moodle_exception
+     * @throws coding_exception
+     */
     private function add_teacher_to_bookingoption($optionid, $data) {
         global $DB;
 

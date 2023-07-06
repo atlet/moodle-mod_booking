@@ -155,7 +155,7 @@ class booking {
      * @return int
      */
     public function get_pagination_setting():int {
-        $paginationnum = (int) $this->settings->paginationnum > 0 ? (int) $this->settings->paginationnum : 40;
+        $paginationnum = (int) $this->settings->paginationnum > 0 ? (int) $this->settings->paginationnum : PAGINATIONDEF;
         return $paginationnum;
     }
 
@@ -473,6 +473,10 @@ class booking {
                     $headers[] = get_string('teachers', 'mod_booking');
                     $columns[] = 'teacher';
                     break;
+                case 'responsiblecontact':
+                    $headers[] = get_string('responsiblecontact', 'mod_booking');
+                    $columns[] = 'responsiblecontact';
+                    break;
                 case 'showdates':
                     $headers[] = get_string('dates', 'mod_booking');
                     $columns[] = 'showdates';
@@ -676,6 +680,30 @@ class booking {
     }
 
     // New functions beneath.
+
+    /**
+     * @param $booking
+     * @return bool
+     */
+    public function is_elective() {
+        if ($this->settings->iselective == 1) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Function to check booking settings if we should use credits function
+     * Part of elective functinoality
+     * @return bool
+     */
+    public function uses_credits() {
+        if ($this->settings->iselective == 1
+                && $this->settings->maxcredits > 0) {
+            return true;
+        }
+        return false;
+    }
 
     /**
      * Genereate SQL and params array to fetch all options.
@@ -971,9 +999,11 @@ class booking {
             list($inoptionsql, $optionparams) = $DB->get_in_or_equal($areas['option'], SQL_PARAMS_NAMED);
             // We only select options with an odcount of NULL meaning there are no optiondates.
             // If there are optiondates, we are only interested in them and ignore the option itself.
-            $sql .= " WHERE (s1.area = 'option' AND s2.odcount IS NULL
-                    AND s1.coursestarttime <> 0 AND s1.courseendtime <> 0
-                    AND s1.instanceid $inoptionsql)";
+            $sql .= " WHERE (
+                        s1.area = 'option'
+                        AND s2.odcount IS NULL
+                        AND s1.coursestarttime <> 0 AND s1.courseendtime <> 0
+                        AND s1.instanceid $inoptionsql)";
             $params = array_merge($params, $optionparams);
         }
 

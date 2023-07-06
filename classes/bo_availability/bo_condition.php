@@ -75,7 +75,7 @@ interface bo_condition {
      * @param bool $not Set true if we are inverting the condition
      * @return bool True if available
      */
-    public function is_available(booking_option_settings $settings, $userid, $not);
+    public function is_available(booking_option_settings $settings, int $userid, bool $not): bool;
 
 
     /**
@@ -125,12 +125,12 @@ interface bo_condition {
 
     /**
      * Render the supplementary page before the booking process.
-     * This
      *
      * @param int $optionid
+     * @param int $userid optional user id
      * @return array
      */
-    public function render_page(int $optionid);
+    public function render_page(int $optionid, int $userid = 0);
 
     /**
      * Some conditions (like price & bookit) provide a button.

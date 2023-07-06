@@ -19,6 +19,7 @@ use cache_helper;
 use coding_exception;
 use completion_info;
 use context_module;
+use context_system;
 use dml_exception;
 use Exception;
 use invalid_parameter_exception;
@@ -505,11 +506,11 @@ class booking_option {
     public function get_text_depending_on_status(booking_answers $bookinganswers, ?int $userid = null) {
         global $USER, $PAGE;
 
-        // When we call this via webservice, we don't have a context, this throws an error.
-        // It's no use passing the context object either.
-
-        if (!isset($PAGE->context)) {
-            $PAGE->set_context(context_module::instance($this->cmid));
+        // With shortcodes & webservice we might not have a valid context object.
+        if (!isset($PAGE->context) || !$context = $PAGE->context ?? null) {
+            if (empty($context)) {
+                $PAGE->set_context(context_module::instance($this->cmid));
+            }
         }
 
         $userid = $userid ?? $USER->id;
@@ -552,7 +553,9 @@ class booking_option {
         }
 
         foreach ($params as $name => $value) {
-            $text = str_replace('{' . $name . '}', $value, $text);
+            if (!is_null($value)) { // Since php 8.1.
+                $text = str_replace('{' . $name . '}', $value, $text);
+            }
         }
 
         return $text;
@@ -629,6 +632,9 @@ class booking_option {
      * Add booked/waitinglist info to each userobject of users.
      */
     public function sort_answers() {
+
+        $maxoverbooking = $this->option->maxoverbooking ?? 0;
+
         if (!empty($this->bookedusers) && null != $this->option) {
             foreach ($this->bookedusers as $rank => $userobject) {
                 $userobject->bookingcmid = $this->booking->cm->id;
@@ -637,7 +643,7 @@ class booking_option {
                 }
                 // Rank starts at 0 so add + 1 to corespond to max answer settings.
                 if ($this->option->maxanswers < ($rank + 1) &&
-                         $rank + 1 <= ($this->option->maxanswers + $this->option->maxoverbooking)) {
+                         $rank + 1 <= ($this->option->maxanswers + $maxoverbooking)) {
                     $userobject->booked = 'waitinglist';
                 } else if ($rank + 1 <= $this->option->maxanswers) {
                     $userobject->booked = 'booked';
@@ -901,77 +907,84 @@ class booking_option {
     public function sync_waiting_list() {
         global $DB;
 
-        if ($this->option->limitanswers) {
+        /* TODO: We might need to rewrite this function and use the booking_answers class instead of direct DB calls.
+        The way it works now, we could run into serious problems - e.g. when combining this functionality with Booking campaigns! */
 
-            // If users drop out of the waiting list because of changed limits, delete and inform them.
-            $answerstodelete = $DB->get_records_sql(
-                'SELECT * FROM {booking_answers} WHERE optionid = ? AND waitinglist < 3 ORDER BY timemodified ASC',
-                array($this->optionid), $this->option->maxoverbooking + $this->option->maxanswers);
+        // If there is no waiting list, we do not do anything!
+        if (!empty($this->option->maxoverbooking) || get_config('booking', 'turnoffwaitinglist')) {
+            if ($this->option->limitanswers && !empty($this->option->maxanswers)) {
 
-            foreach ($answerstodelete as $answertodelete) {
-                $DB->delete_records('booking_answers', array('id' => $answertodelete->id));
-
-                $messagecontroller = new message_controller(
-                    MSGCONTRPARAM_QUEUE_ADHOC, MSGPARAM_CANCELLED_BY_TEACHER_OR_SYSTEM,
-                    $this->cmid, $this->bookingid, $this->optionid, $answertodelete->userid
-                );
-                $messagecontroller->send_or_queue();
-            }
-
-            // Update, enrol and inform users who have switched from the waiting list to status "booked".
-            // We include STATUSPARAM_BOOKED STATUSPARAM_WAITINGLIST & STATUSPARAM_RESERVED (all < 3) in this logic.
-            $newbookedanswers = $DB->get_records_sql(
+                // If users drop out of the waiting list because of changed limits, delete and inform them.
+                $answerstodelete = $DB->get_records_sql(
                     'SELECT * FROM {booking_answers} WHERE optionid = ? AND waitinglist < 3 ORDER BY timemodified ASC',
-                    array($this->optionid), 0, $this->option->maxanswers);
-            foreach ($newbookedanswers as $newbookedanswer) {
-                if ($newbookedanswer->waitinglist == STATUSPARAM_WAITINGLIST) {
-                    $newbookedanswer->waitinglist = STATUSPARAM_BOOKED;
-                    $DB->update_record("booking_answers", $newbookedanswer);
-                    $this->enrol_user_coursestart($newbookedanswer->userid);
+                    array($this->optionid), $this->option->maxoverbooking + $this->option->maxanswers);
+
+                foreach ($answerstodelete as $answertodelete) {
+                    $answertodelete->waitinglist = STATUSPARAM_DELETED;
+                    $DB->update_record('booking_answers', $answertodelete);
 
                     $messagecontroller = new message_controller(
-                        MSGCONTRPARAM_QUEUE_ADHOC, MSGPARAM_STATUS_CHANGED,
-                        $this->cmid, $this->bookingid, $this->optionid, $newbookedanswer->userid
+                        MSGCONTRPARAM_QUEUE_ADHOC, MSGPARAM_CANCELLED_BY_TEACHER_OR_SYSTEM,
+                        $this->cmid, $this->bookingid, $this->optionid, $answertodelete->userid
                     );
                     $messagecontroller->send_or_queue();
                 }
-            }
 
-            // Update and inform users who have been put on the waiting list because of changed limits.
-            // We include STATUSPARAM_BOOKED STATUSPARAM_WAITINGLIST & STATUSPARAM_RESERVED (all < 3) in this logic.
-            $newwaitinglistanswers = $DB->get_records_sql(
-                    'SELECT * FROM {booking_answers} WHERE optionid = ? AND waitinglist < 3 ORDER BY timemodified ASC',
-                    array($this->optionid), $this->option->maxanswers, $this->option->maxoverbooking);
+                // Update, enrol and inform users who have switched from the waiting list to status "booked".
+                // We include STATUSPARAM_BOOKED STATUSPARAM_WAITINGLIST & STATUSPARAM_RESERVED (all < 3) in this logic.
+                $newbookedanswers = $DB->get_records_sql(
+                        'SELECT * FROM {booking_answers} WHERE optionid = ? AND waitinglist < 3 ORDER BY timemodified ASC',
+                        array($this->optionid), 0, $this->option->maxanswers);
+                foreach ($newbookedanswers as $newbookedanswer) {
+                    if ($newbookedanswer->waitinglist == STATUSPARAM_WAITINGLIST) {
+                        $newbookedanswer->waitinglist = STATUSPARAM_BOOKED;
+                        $DB->update_record("booking_answers", $newbookedanswer);
+                        $this->enrol_user_coursestart($newbookedanswer->userid);
 
-            foreach ($newwaitinglistanswers as $newwaitinglistanswer) {
-                if ($newwaitinglistanswer->waitinglist == STATUSPARAM_BOOKED) {
-                    $newwaitinglistanswer->waitinglist = STATUSPARAM_WAITINGLIST;
-                    $DB->update_record("booking_answers", $newwaitinglistanswer);
-
-                    $messagecontroller = new message_controller(
-                        MSGCONTRPARAM_QUEUE_ADHOC, MSGPARAM_STATUS_CHANGED,
-                        $this->cmid, $this->bookingid, $this->optionid, $newwaitinglistanswer->userid
-                    );
-                    $messagecontroller->send_or_queue();
+                        $messagecontroller = new message_controller(
+                            MSGCONTRPARAM_QUEUE_ADHOC, MSGPARAM_STATUS_CHANGED,
+                            $this->cmid, $this->bookingid, $this->optionid, $newbookedanswer->userid
+                        );
+                        $messagecontroller->send_or_queue();
+                    }
                 }
-            }
-        } else {
-            // If option was set to unlimited, inform all users that have been on the waiting list of the status change.
-            if ($onwaitinglistanswers = $DB->get_records('booking_answers', ['optionid' => $this->optionid,
-                                                                            'waitinglist' => 1])) {
-                foreach ($onwaitinglistanswers as $onwaitinglistanswer) {
 
-                    $messagecontroller = new message_controller(
-                        MSGCONTRPARAM_QUEUE_ADHOC, MSGPARAM_STATUS_CHANGED,
-                        $this->cmid, $this->bookingid, $this->optionid, $onwaitinglistanswer->userid
-                    );
-                    $messagecontroller->send_or_queue();
+                // Update and inform users who have been put on the waiting list because of changed limits.
+                // We include STATUSPARAM_BOOKED STATUSPARAM_WAITINGLIST & STATUSPARAM_RESERVED (all < 3) in this logic.
+                $newwaitinglistanswers = $DB->get_records_sql(
+                        'SELECT * FROM {booking_answers} WHERE optionid = ? AND waitinglist < 3 ORDER BY timemodified ASC',
+                        array($this->optionid), $this->option->maxanswers, $this->option->maxoverbooking);
+
+                foreach ($newwaitinglistanswers as $newwaitinglistanswer) {
+                    if ($newwaitinglistanswer->waitinglist == STATUSPARAM_BOOKED) {
+                        $newwaitinglistanswer->waitinglist = STATUSPARAM_WAITINGLIST;
+                        $DB->update_record("booking_answers", $newwaitinglistanswer);
+
+                        $messagecontroller = new message_controller(
+                            MSGCONTRPARAM_QUEUE_ADHOC, MSGPARAM_STATUS_CHANGED,
+                            $this->cmid, $this->bookingid, $this->optionid, $newwaitinglistanswer->userid
+                        );
+                        $messagecontroller->send_or_queue();
+                    }
                 }
-            }
+            } else {
+                // If option was set to unlimited, inform all users that have been on the waiting list of the status change.
+                if ($onwaitinglistanswers = $DB->get_records('booking_answers', ['optionid' => $this->optionid,
+                                                                                'waitinglist' => 1])) {
+                    foreach ($onwaitinglistanswers as $onwaitinglistanswer) {
 
-            // Now move everybody from the waiting list to booked users.
-            $DB->execute("UPDATE {booking_answers} SET waitinglist = 0 WHERE optionid = :optionid AND waitinglist < 2",
-                    array('optionid' => $this->optionid));
+                        $messagecontroller = new message_controller(
+                            MSGCONTRPARAM_QUEUE_ADHOC, MSGPARAM_STATUS_CHANGED,
+                            $this->cmid, $this->bookingid, $this->optionid, $onwaitinglistanswer->userid
+                        );
+                        $messagecontroller->send_or_queue();
+                    }
+                }
+
+                // Now move everybody from the waiting list to booked users.
+                $DB->execute("UPDATE {booking_answers} SET waitinglist = 0 WHERE optionid = :optionid AND waitinglist < 2",
+                        array('optionid' => $this->optionid));
+            }
         }
     }
 
@@ -984,6 +997,16 @@ class booking_option {
     public function enrol_user_coursestart($userid) {
         if ($this->option->enrolmentstatus == 2 ||
             ($this->option->enrolmentstatus < 2 && $this->option->coursestarttime < time())) {
+
+                // This is a new elective function. We only allow booking in the right order.
+            if ($this->booking->is_elective()) {
+                if (!elective::check_if_allowed_to_inscribe($this, $userid)) {
+                    // phpcs:ignore Squiz.PHP.CommentedOutCode.Found
+                    /* mtrace("The user with the userid {$userid} has to finish courses of other booking options first."); */
+                    return;
+                }
+            }
+
             $this->enrol_user($userid);
         }
     }
@@ -1008,7 +1031,6 @@ class booking_option {
             $substractfromlimit = 0,
             $addedtocart = false,
             $verified = UNVERIFIED) {
-        global $DB;
 
         // First check, we only accept verified submissions.
         // This function always needs to be called with the verified param.
@@ -1025,9 +1047,15 @@ class booking_option {
         // False means, that it can't be booked.
         // 0 means, that we can book right away
         // 1 means, that there is only a place on the waiting list.
-        $waitinglist = $this->check_if_limit($user->id);
+        $waitinglist = $this->check_if_limit($user->id, self::option_allows_overbooking_for_user($this->optionid, $user->id));
+        // With the second param, we check if overbooking is allowed.
 
         if ($waitinglist === false) {
+
+            // TODO: introduce an "allowoverbooking" param into the availability JSON.
+            // If the JSON contains it, we want to allow overbooking even without a waiting list.
+            // TOOD: It has to be added to the override conditions mform elements as a checkbox.
+
             // phpcs:ignore Squiz.PHP.CommentedOutCode.Found
             /* echo "Couldn't subscribe user $user->id because of full waitinglist <br>";*/
             return false;
@@ -1174,9 +1202,9 @@ class booking_option {
 
         $counter = 0;
         foreach ($currentanswers as $currentanswer) {
-            // This should never happen, but if we have more than one reserveration, we just confirm the first and delete the rest.
+            // This should never happen, but if we have more than one reservation, we just confirm the first and delete the rest.
             if ($counter > 0) {
-                $DB->delete_records('booking_answers', array('id' => $currentanswer->id));
+                $DB->delete_records('booking_answers', array('id' => $currentanswer->id, 'waitinglist' => STATUSPARAM_RESERVED));
             } else {
                 // When it's the first reserveration, we just confirm it.
                 $currentanswer->timemodified = time();
@@ -1227,8 +1255,9 @@ class booking_option {
 
         $event = event\bookingoption_booked::create(
                 array('objectid' => $this->optionid,
-                    'context' => \context_module::instance($this->booking->cm->id),
-                    'relateduserid' => $user->id, 'other' => array('userid' => $user->id)));
+                    'context' => context_module::instance($this->booking->cm->id),
+                    'userid' => $user->id,
+                    'relateduserid' => $user->id));
         $event->trigger();
 
         $settings = singleton_service::get_instance_of_booking_option_settings($this->optionid);
@@ -1581,6 +1610,7 @@ class booking_option {
                 if (!$DB->delete_records('booking_optiondates_teachers', ['optiondateid' => $record->id])) {
                     $result = false;
                 }
+                cache_helper::purge_by_event('setbackcachedteachersjournal');
             }
         }
 
@@ -1693,12 +1723,17 @@ class booking_option {
     }
 
     /**
-     * Check if user can enrol
+     * Check if user can enrol.
+     *
+     * Important notice: As of Booking 8, we use availability conditions to configure if a user can see
+     * the book now button. If a user is entitled to book (e.g. an admin or a special user who can always book
+     * - which was set with "OR" override conditions) then (s)he can even book if the option is fully booked.
      *
      * @param integer $userid
+     * @param bool $allowoverbooking
      * @return mixed false if enrolement is not possible, 0 for can book, 1 for waitinglist and 2 for notification list.
      */
-    private function check_if_limit(int $userid) {
+    private function check_if_limit(int $userid, bool $allowoverbooking = false) {
 
         $bookingoptionsettings = singleton_service::get_instance_of_booking_option_settings($this->optionid);
         $bookinganswer = singleton_service::get_instance_of_booking_answers($bookingoptionsettings);
@@ -1711,11 +1746,14 @@ class booking_option {
         if ($bookingstatus = reset($bookingstatus)) {
             if (isset($bookingstatus['fullybooked']) && !$bookingstatus['fullybooked']) {
                 return STATUSPARAM_BOOKED;
-            } else if (!isset($bookingstatus['maxoverbooking']) ||
-                (isset($bookingstatus['freeonwaitinglist']) && $bookingstatus['freeonwaitinglist'] > 0)) {
+            } else if (isset($bookingstatus['freeonwaitinglist']) && $bookingstatus['freeonwaitinglist'] > 0) {
                 return STATUSPARAM_WAITINGLIST;
             } else {
-                return false;
+                if ($allowoverbooking) {
+                    return STATUSPARAM_BOOKED;
+                } else {
+                    return false;
+                }
             }
         }
     }
@@ -1905,7 +1943,7 @@ class booking_option {
             'institution' => $this->option->institution,
             'address' => $this->option->address,
             'maxanswers' => $this->option->maxanswers,
-            'maxoverbooking' => $this->option->maxoverbooking,
+            'maxoverbooking' => $this->option->maxoverbooking ?? 0,
             'minanswers' => $this->option->minanswers,
             'bookingopeningtime' => ($this->option->bookingopeningtime == 0 ? get_string('nodateset', 'mod_booking') : userdate(
                 $this->option->bookingopeningtime, get_string('strftimedatetime', 'langconfig'))),
@@ -2220,10 +2258,12 @@ class booking_option {
             }
             $useridaskey = array_flip($sortedanswers);
 
+            $maxoverbooking = $this->option->maxoverbooking ?? 0;
+
             if ($this->option->limitanswers) {
                 if (!isset($useridaskey[$userid])) {
                     $status = STATUSPARAM_NOTBOOKED;
-                } else if ($useridaskey[$userid] > $this->option->maxanswers + $this->option->maxoverbooking) {
+                } else if ($useridaskey[$userid] > $this->option->maxanswers + $maxoverbooking) {
                     $status = "Problem, please contact the admin";
                 } else if (($useridaskey[$userid]) >= $this->option->maxanswers) {
                     $status = STATUSPARAM_WAITINGLIST;
@@ -2402,6 +2442,7 @@ class booking_option {
         switch ($descriptionparam) {
 
             case DESCRIPTION_WEBSITE:
+            case DESCRIPTION_OPTIONVIEW:
                 // We don't want to show these Buttons at all if the user is not booked.
                 if (!$forbookeduser) {
                     return [];
@@ -2823,5 +2864,39 @@ class booking_option {
         ];
 
         return $data;
+    }
+
+    /*
+     * Helper function to check if an option allows overbooking.
+     *
+     * @param int $optionid
+     * @param int $userid
+     * @return bool true if overbooking is allowed
+     */
+    public static function option_allows_overbooking_for_user(int $optionid, int $userid):bool {
+
+        /* If the global setting to allow overbooking is on, we still need to check
+        if the current user has the capability to overbook. */
+        if (get_config('booking', 'allowoverbooking')
+            && has_capability('mod/booking:canoverbook', context_system::instance())) {
+            return true;
+        }
+
+        $settings = singleton_service::get_instance_of_booking_option_settings($optionid);
+        if (!empty($settings->availability)) {
+            foreach (json_decode($settings->availability) as $ac) {
+                /* Currently there is only one special case where we want to allow overbooking:
+                When the fullybooked condition is present as an override condition in combination
+                with an "OR" operator. In the future, there might be additional use cases that allow
+                overbooking. */
+                if (isset($ac->id) && $ac->id === BO_COND_JSON_SELECTUSERS
+                    && isset($ac->overrideoperator) && $ac->overrideoperator === 'OR'
+                    && isset($ac->overrides) && in_array("" . BO_COND_FULLYBOOKED . "", $ac->overrides)
+                    && isset($ac->userids) && in_array("". $userid . "", $ac->userids)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

@@ -21,8 +21,10 @@ use context_system;
 use local_entities\entitiesrelation_handler;
 use mod_booking\bo_availability\bo_subinfo;
 use mod_booking\bo_availability\conditions\subbooking;
+use mod_booking\booking_campaigns\campaigns_info;
 use mod_booking\customfield\booking_handler;
 use mod_booking\subbookings\subbookings_info;
+use mod_booking\booking_campaigns\booking_campaign;
 use moodle_exception;
 use stdClass;
 use moodle_url;
@@ -60,7 +62,7 @@ class booking_option_settings {
     public $maxanswers = null;
 
     /** @var int $maxoverbooking */
-    public $maxoverbooking = null;
+    public $maxoverbooking = 0;
 
     /** @var int $minanswers */
     public $minanswers = null;
@@ -227,6 +229,18 @@ class booking_option_settings {
     /** @var string $imageurl url */
     public $imageurl = '';
 
+    /** @var int $responsiblecontact userid of the responsible contact person */
+    public $responsiblecontact = null;
+
+    /** @var int $credits */
+    public $credits = null;
+
+    /** @var int $sortorder */
+    public $sortorder = null;
+
+    /** @var array $electivecombinations */
+    public $electivecombinations = null;
+
 
     /**
      * Constructor for the booking option settings class.
@@ -302,7 +316,7 @@ class booking_option_settings {
             $this->titleprefix = $dbrecord->titleprefix;
             $this->text = $dbrecord->text;
             $this->maxanswers = $dbrecord->maxanswers;
-            $this->maxoverbooking = $dbrecord->maxoverbooking;
+            $this->maxoverbooking = $dbrecord->maxoverbooking ?? 0;
             $this->minanswers = $dbrecord->minanswers;
             $this->bookingopeningtime = $dbrecord->bookingopeningtime;
             $this->bookingclosingtime = $dbrecord->bookingclosingtime;
@@ -344,6 +358,11 @@ class booking_option_settings {
             $this->dayofweek = $dbrecord->dayofweek;
             $this->availability = $dbrecord->availability;
             $this->status = $dbrecord->status;
+            $this->responsiblecontact = $dbrecord->responsiblecontact;
+
+            // Elecitve.
+            $this->credits = $dbrecord->credits;
+            $this->sortorder = $dbrecord->sortorder;
 
             // Price formula: absolute value.
             if (isset($dbrecord->priceformulaadd)) {
@@ -473,11 +492,31 @@ class booking_option_settings {
                 $this->subbookings = $dbrecord->subbookings;
             }
 
+            // If the key "electivecombinations" is not yet set, we need to load them via handler first.
+            if (!isset($dbrecord->electivecombinations)) {
+                $this->load_elective_combinations($optionid);
+                $dbrecord->electivecombinations = $this->electivecombinations;
+            } else {
+                $this->electivecombinations = $dbrecord->electivecombinations;
+            }
+
+            // Check if there are active campaigns.
+            // If yes, we need to apply the booking limit factor.
+            $campaigns = campaigns_info::get_all_campaigns();
+            foreach ($campaigns as $camp) {
+                /** @var booking_campaign $campaign */
+                $campaign = $camp;
+                if ($campaign->campaign_is_active($this->id)) {
+                    $dbrecord->maxanswers = $campaign->get_campaign_limit($this->maxanswers);
+                    // Campaign booking limit has been applied.
+                }
+            }
+
             return $dbrecord;
-        } else {
-            debugging('Could not create option settings class for optionid: ' . $optionid);
-            return null;
         }
+
+        // If record is not found in DB, we return null.
+        return null;
     }
 
     /**
@@ -763,8 +802,25 @@ class booking_option_settings {
         }
     }
 
+    /**
+     * Load subbookings
+     *
+     * @param integer $optionid
+     * @return void
+     */
     private function load_subbookings(int $optionid) {
         $this->subbookings = subbookings_info::load_subbookings($optionid);
+    }
+
+    /**
+     * Load elective combinations
+     *
+     * @param integer $optionid
+     * @return void
+     */
+    private function load_elective_combinations(int $optionid) {
+
+        $this->electivecombinations = elective::load_combinations($optionid);
     }
 
     /**
@@ -1007,6 +1063,7 @@ class booking_option_settings {
         }
 
         $price = price::get_price('option', $this->id, $user);
+
         $canceluntil = booking_option::return_cancel_until_date($this->id);
 
         $returnarray = [

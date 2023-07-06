@@ -80,7 +80,7 @@ class bookitbutton implements bo_condition {
      * @param bool $not Set true if we are inverting the condition
      * @return bool True if available
      */
-    public function is_available(booking_option_settings $settings, $userid, $not = false):bool {
+    public function is_available(booking_option_settings $settings, int $userid, bool $not = false): bool {
 
         // In this case, the book it button is always shown.
         // This always "blocks" the booking, so we always return false.
@@ -150,12 +150,17 @@ class bookitbutton implements bo_condition {
      * Not all bo_conditions need to take advantage of this. But eg a condition which requires...
      * ... the acceptance of a booking policy would render the policy with this function.
      *
-     * @param integer $optionid
+     * @param int $optionid
+     * @param int $userid optional user id
      * @return array
      */
-    public function render_page(int $optionid) {
+    public function render_page(int $optionid, int $userid = 0) {
 
-        $data1 = new bookingoption_description($optionid, null, DESCRIPTION_WEBSITE, true, false);
+        if (!empty($userid)) {
+            $user = singleton_service::get_instance_of_user($userid);
+        }
+
+        $data1 = new bookingoption_description($optionid, null, DESCRIPTION_WEBSITE, true, false, $user ?? null);
 
         $template = 'mod_booking/bookingoption_description_prepagemodal_bookit';
 
@@ -167,7 +172,7 @@ class bookitbutton implements bo_condition {
 
         $settings = singleton_service::get_instance_of_booking_option_settings($optionid);
 
-        list($template, $data2) = booking_bookit::render_bookit_template_data($settings, 0, false);
+        list($template, $data2) = booking_bookit::render_bookit_template_data($settings, $userid ?? 0, false);
         $data2 = reset($data2);
         $template = reset($template);
 
@@ -223,7 +228,7 @@ class bookitbutton implements bo_condition {
         }
         $label = $this->get_description_string(false, $full);
 
-        return bo_info::render_button($settings, $userid, $label, 'btn btn-secondary', false, $fullwidth,
+        return bo_info::render_button($settings, $userid, $label, 'btn btn-secondary mt-1 mb-1', false, $fullwidth,
             'button', 'option', false, 'noforward');
     }
 

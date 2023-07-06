@@ -75,7 +75,7 @@ class confirmcancel implements bo_condition {
      * @param bool $not Set true if we are inverting the condition
      * @return bool True if available
      */
-    public function is_available(booking_option_settings $settings, $userid, $not = false):bool {
+    public function is_available(booking_option_settings $settings, int $userid, bool $not = false): bool {
 
         global $DB;
 
@@ -167,10 +167,11 @@ class confirmcancel implements bo_condition {
      * Not all bo_conditions need to take advantage of this. But eg a condition which requires...
      * ... the acceptance of a booking policy would render the policy with this function.
      *
-     * @param integer $optionid
+     * @param int $optionid
+     * @param int $userid optional user id
      * @return array
      */
-    public function render_page(int $optionid) {
+    public function render_page(int $optionid, int $userid = 0) {
         return [];
     }
 
@@ -196,7 +197,7 @@ class confirmcancel implements bo_condition {
         }
         $label = $this->get_description_string();
 
-        return bo_info::render_button($settings, $userid, $label, 'btn btn-danger w-auto ml-1', false, $fullwidth,
+        return bo_info::render_button($settings, $userid, $label, 'btn btn-danger ml-1', false, $fullwidth,
             'button', 'option', false);
     }
 

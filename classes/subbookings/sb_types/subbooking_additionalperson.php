@@ -127,7 +127,7 @@ class subbooking_additionalperson implements booking_subbooking {
 
         // Add price.
         $price = new price('subbooking', $sboid);
-        $price->add_price_to_mform($mform);
+        $price->add_price_to_mform($mform, true); // Second param true means no price formula here!
 
     }
 
@@ -255,10 +255,7 @@ class subbooking_additionalperson implements booking_subbooking {
      */
     public function return_interface(booking_option_settings $settings):array {
 
-        // The interface of the timeslot booking should merge when there are multiple slot bookings.
-        // Therefore, we need to first find out how many of these are present.
-
-        // The interface of the timeslot booking should merge when there are multiple slot bookings.
+        // The interfaces should merge when there are multiple "additional person" subbookings.
         // Therefore, we need to first find out how many of these are present.
         $arrayofmine = array_filter($settings->subbookings, function($x) {
             return $x->type == $this->type;
@@ -270,12 +267,8 @@ class subbooking_additionalperson implements booking_subbooking {
             return [];
         }
 
-        // Now that we render the last item, we need to render all of them, plus the container.
-        // We need to create the json for rendering.
-
-        $data = new subbooking_additionalperson_output($settings);
-
-        return [$data, 'mod_booking/subbooking/additionalperson'];
+        $dataobj = new subbooking_additionalperson_output($settings);
+        return [['data' => $dataobj->data], 'mod_booking/subbooking/additionalperson'];
     }
 
     /**
@@ -296,14 +289,14 @@ class subbooking_additionalperson implements booking_subbooking {
         // When choosing the elements from the subbookings, we store our current state in the cache.
         $data = additionalperson_form::get_data_from_cache($this->id);
 
-        // If we find the multiplyer her, we set it, else it's 1.
-        $multiplyer = (int)$data->subbooking_addpersons ?? 1;
+        // If we find the multiplier here, we set it, else it's 1.
+        $multiplier = (int)$data->subbooking_addpersons ?? 1;
 
-        if (empty($multiplyer)) {
-            $multiplyer = 1;
+        if (empty($multiplier)) {
+            $multiplier = 1;
         }
 
-        $price['price'] = $multiplyer * $price['price'];
+        $price['price'] = $multiplier * $price['price'];
 
         return $price;
     }

@@ -71,14 +71,17 @@ class prepagemodal implements renderable, templatable {
             $settings,
             int $totalnumberofpages,
             string $buttoncondition,
-            string $extrabuttoncondition,
+            string $extrabuttoncondition = '',
             int $userid = 0) {
 
         global $PAGE;
 
         $context = context_module::instance($settings->cmid);
 
-        $PAGE->set_context($context);
+        // Verification required to avoid error like "unsupported modification of PAGE->context from xx to yy".
+        if (!isset($PAGE->context->contextlevel)) {
+            $PAGE->set_context($context);
+        }
 
         if (has_capability('mod/booking:bookforothers', $context)) {
             $full = true;
@@ -96,8 +99,9 @@ class prepagemodal implements renderable, templatable {
         if (!empty($extrabuttoncondition)) {
             $extracondition = new $extrabuttoncondition();
             list($extratemplate, $extradata) = $extracondition->render_button($settings, $userid, $full);
-
-            $extradata['top'] = $data['main'];
+            if (!empty($data['main'])) {
+                $extradata['top'] = $data['main'];
+            }
             $data = $extradata;
         }
 

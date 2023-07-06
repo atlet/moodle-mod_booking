@@ -40,21 +40,14 @@ class booking_rules {
     public $rules = [];
 
     /**
-     * Constructor of this class.
-     */
-    public function __construct() {
-
-    }
-
-    /**
      * Returns the rendered html for a list of rules.
      *
      * @return void
      */
-    public function return_rendered_list_of_saved_rules($bookingid = 0) {
+    public static function return_rendered_list_of_saved_rules($bookingid = 0) {
         global $PAGE;
 
-        $rules = $this->get_list_of_saved_rules($bookingid);
+        $rules = self::get_list_of_saved_rules($bookingid);
 
         $data = new ruleslist($rules);
         $output = $PAGE->get_renderer('booking');
@@ -67,7 +60,7 @@ class booking_rules {
      * @param int $bookingid
      * @return array
      */
-    public function get_list_of_saved_rules($bookingid = 0):array {
+    private static function get_list_of_saved_rules($bookingid = 0):array {
         global $DB;
 
         // If the bookingid is 0, we are dealing with global rules.

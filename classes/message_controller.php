@@ -132,9 +132,13 @@ class message_controller {
         // When we call this via webservice, we don't have a context, this throws an error.
         // It's no use passing the context object either.
 
-        // phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-        if (!isset($PAGE->context)) {
-            $PAGE->set_context(context_module::instance($cmid));
+        // With shortcodes & webservice we might not have a valid context object.
+        if (!isset($PAGE->context) || !$context = $PAGE->context ?? null) {
+            if (empty($context)) {
+                $PAGE->set_context(context_module::instance($cmid));
+            } else {
+                $PAGE->set_context($context);
+            }
         }
 
         if (!$bookingid) {
@@ -261,7 +265,7 @@ class message_controller {
         $params->qr_id = '<img src="' . $base64id . '" title="Moodle user ID." />';
         $params->qr_username = '<img src="' . $base64username . '" title="Moodle username." />';
         $params->participant = fullname($this->user);
-        $params->email = $this->user->email;
+        $params->email = $this->user->email ?? '';
         $params->title = format_string($this->optionsettings->get_title_with_prefix());
         $params->duration = $this->bookingsettings->duration;
         $params->starttime = $this->optionsettings->coursestarttime ?
@@ -423,6 +427,13 @@ class message_controller {
             }
         }
 
+        // Add a param to the option's teachers report (training journal).
+        $teachersreportlink = new \moodle_url('/mod/booking/optiondates_teachers_report.php', [
+            'id' => $this->cmid,
+            'optionid' => $this->optionid,
+        ]);
+        $params->journal = \html_writer::link($teachersreportlink, $teachersreportlink->out());
+
         return $params;
     }
 
@@ -463,7 +474,9 @@ class message_controller {
 
         // Replace the placeholders.
         foreach ($this->params as $name => $value) {
-            $text = str_replace('{' . $name . '}', $value, $text);
+            if (!is_null($value)) { // Since php 8.1.
+                $text = str_replace('{' . $name . '}', $value, $text);
+            }
         }
 
         return $text;

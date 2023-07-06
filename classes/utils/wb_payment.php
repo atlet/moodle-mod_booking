@@ -83,8 +83,8 @@ pwIDAQAB
             }
         }
         // Overriding - always use PRO for testing / debugging.
-        global $CFG;
-        if (!empty($CFG->phpunit_dataroot) || !empty($CFG->behat_wwwroot)) {
+        // Check if Behat OR PhpUnit tests are running.
+        if ((defined('BEHAT_SITE_RUNNING') && BEHAT_SITE_RUNNING) || (defined('PHPUNIT_TEST') && PHPUNIT_TEST)) {
             return true;
         }
         return false;

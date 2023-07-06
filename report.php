@@ -186,13 +186,12 @@ $isteacher = booking_check_if_teacher($bookingoption->option);
 if ($paging < 1) {
     $paging = 25;
 }
-if (!($isteacher) || has_capability('mod/booking:readresponses', $context)) {
+if (!($isteacher || has_capability('mod/booking:viewreports', $context))) {
     require_capability('mod/booking:readresponses', $context);
 }
 
 $event = \mod_booking\event\report_viewed::create(
-    array('objectid' => $optionid, 'context' => context_module::instance($cm->id))
-);
+        array('objectid' => $optionid, 'context' => $context));
 $event->trigger();
 
 if ($action == 'downloadpdf') {
@@ -966,15 +965,14 @@ if (!$tableallbookings->is_downloading()) {
         $linkst = empty($linkst) ? "" : "(" . implode(", ", $linkst) . ")";
     }
 
-    if ($isteacher) {
-        $url = new moodle_url(
-            '/mod/booking/subscribeusers.php',
-            array('id' => $cm->id, 'optionid' => $optionid)
-        );
-        $linkst = $linkst . html_writer::link(
-            $url,
-            html_writer::tag('p', get_string('bookotherusers', 'booking'), ['class' => 'btn btn-secondary'])
-        );
+    if (has_capability('mod/booking:bookforothers', context_module::instance($cm->id)) &&
+                (has_capability('mod/booking:subscribeusers', context_module::instance($cm->id)) ||
+                booking_check_if_teacher($bookingoption->booking->settings))) {
+        $url = new moodle_url('/mod/booking/subscribeusers.php',
+            array('id' => $cm->id, 'optionid' => $optionid));
+        $linkst = $linkst . "<div>" . html_writer::link(
+            $url, '<i class="fa fa-users fa-fw" aria-hidden="true"></i>&nbsp;' .
+                get_string('bookotherusers', 'booking'), ['class' => 'btn btn-light']) . "</div>";
     }
 
     echo "<p>" .
@@ -1175,14 +1173,15 @@ if (!$tableallbookings->is_downloading()) {
         )
     );
 
-    $pollurl = trim($bookingoption->option->pollurl);
+    // PHP 8.1 compatibility with extra safety if poolurl has changed outside option form.
+    $pollurl = '';
+    if (!empty($bookingoption->option->pollurl)) {
+        $pollurl = trim($bookingoption->option->pollurl);
+    }
     if (!empty($pollurl)) {
-        echo html_writer::link(
-            $bookingoption->option->pollurl,
-            get_string('copypollurl', 'booking'),
-            array('onclick' => 'copyToClipboard("' . $pollurl . '"); return false;')
-        ) .
-            ($bookingoption->option->pollsend ? ' &#x2713;' : '') . ' | ';
+        echo html_writer::link($pollurl, get_string('copypollurl', 'booking'),
+                array('onclick' => 'copyToClipboard("' . $pollurl . '"); return false;')) .
+                 ($bookingoption->option->pollsend ? ' &#x2713;' : '') . ' | ';
     }
 
     echo html_writer::link($onlyoneurl, get_string('onlythisbookingoption', 'booking'), array());

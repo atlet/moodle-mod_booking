@@ -38,6 +38,7 @@ use local_entities\local\entities\entitydate;
 use mod_booking\bo_availability\bo_info;
 use mod_booking\subbookings\subbookings_info;
 use mod_booking\dates_handler;
+use mod_booking\elective;
 use mod_booking\teachers_handler;
 use moodle_url;
 use moodleform;
@@ -251,7 +252,7 @@ class option_form extends moodleform {
                 'noselectionstring' => get_string('donotselectlocation', 'mod_booking'),
                 'tags' => true
         );
-        $mform->addElement('autocomplete', 'location', get_string('addnewlocation', 'mod_booking'), $locationstrings, $options);
+        $mform->addElement('autocomplete', 'location', get_string('location', 'mod_booking'), $locationstrings, $options);
         if (!empty($CFG->formatstringstriptags)) {
             $mform->setType('location', PARAM_TEXT);
         } else {
@@ -273,7 +274,7 @@ class option_form extends moodleform {
                 'tags' => true
         );
         $mform->addElement('autocomplete', 'institution',
-            get_string('addnewinstitution', 'mod_booking'), $institutionstrings, $options);
+            get_string('institution', 'mod_booking'), $institutionstrings, $options);
         $mform->addHelpButton('institution', 'institution', 'mod_booking');
 
         $mform->addElement('text', 'address', get_string('address', 'mod_booking'),
@@ -297,9 +298,11 @@ class option_form extends moodleform {
         $mform->setType('maxanswers', PARAM_INT);
         $mform->disabledIf('maxanswers', 'limitanswers', 'notchecked');
 
-        $mform->addElement('text', 'maxoverbooking', get_string('maxoverbooking', 'mod_booking'));
-        $mform->setType('maxoverbooking', PARAM_INT);
-        $mform->disabledIf('maxoverbooking', 'limitanswers', 'notchecked');
+        if (!get_config('booking', 'turnoffwaitinglist')) {
+            $mform->addElement('text', 'maxoverbooking', get_string('maxoverbooking', 'mod_booking'));
+            $mform->setType('maxoverbooking', PARAM_INT);
+            $mform->disabledIf('maxoverbooking', 'limitanswers', 'notchecked');
+        }
 
         $mform->addElement('text', 'minanswers', get_string('minanswers', 'mod_booking'));
         $mform->setType('minanswers', PARAM_INT);
@@ -417,6 +420,35 @@ class option_form extends moodleform {
         $teacherhandler = new teachers_handler($optionid);
         $teacherhandler->add_to_mform($mform);
 
+        // Responsible contact person.
+        // Workaround: Only show, if it is not turned off in the option form config.
+        // We currently need this, because hideIf does not work with headers.
+        // In expert mode, we do not hide anything.
+        if ($this->formmode == 'expert' ||
+            !isset($optionformconfig['responsiblecontactheader']) || $optionformconfig['responsiblecontactheader'] == 1) {
+            // Advanced options.
+            $mform->addElement('header', 'responsiblecontactheader', get_string('responsiblecontact', 'mod_booking'));
+        }
+        // Responsible contact person - autocomplete.
+        $options = [
+            'ajax' => 'core_search/form-search-user-selector',
+            'multiple' => false,
+            'noselectionstring' => get_string('choose...', 'mod_booking'),
+            'valuehtmlcallback' => function($value) {
+                global $DB, $OUTPUT;
+                $user = $DB->get_record('user', ['id' => (int)$value], '*', IGNORE_MISSING);
+                if (!$user || !user_can_view_profile($user)) {
+                    return false;
+                }
+                $details = user_get_user_details($user);
+                return $OUTPUT->render_from_template(
+                        'core_search/form-user-selector-suggestion', $details);
+            }
+        ];
+        $mform->addElement('autocomplete', 'responsiblecontact',
+            get_string('responsiblecontact', 'mod_booking'), [], $options);
+        $mform->addHelpButton('responsiblecontact', 'responsiblecontact', 'mod_booking');
+
         // Add price.
         $price = new price('option', $this->_customdata['optionid']);
         $price->add_price_to_mform($mform);
@@ -450,6 +482,8 @@ class option_form extends moodleform {
         // TODO: expert/simple mode needs to work with this too!
         // Add subbookings options.
         subbookings_info::add_subbookings_to_mform($mform, $this->_customdata);
+
+        elective::instance_option_form_definition($mform, $this->_customdata);
 
         // Workaround: Only show, if it is not turned off in the option form config.
         // We currently need this, because hideIf does not work with headers.
@@ -603,8 +637,10 @@ class option_form extends moodleform {
         $buttonarray = array();
         $buttonarray[] = &$mform->createElement('submit', 'submitbutton',
                 get_string('submitandgoback', 'mod_booking'));
-        $buttonarray[] = &$mform->createElement("submit", 'submittandaddnew',
-                get_string('submitandaddnew', 'mod_booking'));
+        $buttonarray[] = &$mform->createElement("submit", 'submitandadd',
+                get_string('submitandadd', 'mod_booking'));
+        $buttonarray[] = &$mform->createElement("submit", 'submitandstay',
+            get_string('submitandstay', 'mod_booking'));
         $buttonarray[] = &$mform->createElement('cancel');
         $mform->addGroup($buttonarray, 'buttonar', '', array(' '), false);
         $mform->closeHeaderBefore('buttonar');
@@ -676,6 +712,25 @@ class option_form extends moodleform {
             $erhandler = new entitiesrelation_handler('mod_booking', 'option');
             self::order_all_dates_to_book_in_form($fromform);
             $erhandler->instance_form_validation((array)$fromform, $errors);
+        }
+
+        // Price validation.
+        if ($data["useprice"] == 1) {
+            $pricecategories = $DB->get_records_sql("SELECT * FROM {booking_pricecategories} WHERE disabled = 0");
+            foreach ($pricecategories as $pricecategory) {
+                // Check for negative prices, they are not allowed.
+                if (isset($data["pricegroup_$pricecategory->identifier"]["bookingprice_$pricecategory->identifier"]) &&
+                    $data["pricegroup_$pricecategory->identifier"]["bookingprice_$pricecategory->identifier"] < 0) {
+                    $errors["pricegroup_$pricecategory->identifier"] =
+                        get_string('error:negativevaluenotallowed', 'mod_booking');
+                }
+                // If checkbox to use prices is turned on, we do not allow empty strings as prices!
+                if (isset($data["pricegroup_$pricecategory->identifier"]["bookingprice_$pricecategory->identifier"]) &&
+                    $data["pricegroup_$pricecategory->identifier"]["bookingprice_$pricecategory->identifier"] === "") {
+                    $errors["pricegroup_$pricecategory->identifier"] =
+                        get_string('error:pricemissing', 'mod_booking');
+                }
+            }
         }
 
         $cfhandler = booking_handler::create();
@@ -796,6 +851,8 @@ class option_form extends moodleform {
             $defaultvalues->id = $id;
         }
 
+        elective::option_form_set_data($defaultvalues);
+
         parent::set_data($defaultvalues);
     }
 
@@ -844,6 +901,11 @@ class option_form extends moodleform {
                 $data->annotation = $data->annotation['text'];
             } else {
                 $data->annotation = '';
+            }
+
+            // Ensure further php 8.1 compatibility.
+            if (isset($data->pollurl)) {
+                $data->pollurl = trim($data->pollurl);
             }
         }
 

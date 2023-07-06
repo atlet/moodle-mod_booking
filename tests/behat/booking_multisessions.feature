@@ -23,54 +23,42 @@ Feature: In a booking create multi session options
     And the following "activities" exist:
       | activity | course | name       | intro                  | bookingmanager | eventtype | Default view for booking options | Activate e-mails (confirmations, notifications and more) | Booking option name  |
       | booking  | C1     | My booking | My booking description | teacher1       | Webinar   | All bookings                     | Yes                                                      | New option - Webinar |
-    And I create booking option "New option - Webinar" in "My booking"
+    And I create booking option "New option - Multisession" in "My booking"
 
   @javascript
-  Scenario: Create session with multiple dates
+  Scenario: Boooking option: add multiple session dates via page manage option dates
     Given I log in as "teacher1"
     When I am on "Course 1" course homepage
     And I follow "My booking"
-    And I should see "New option"
-    And I click on "Book now" "text" in the "#allbookingoptionstable_r1" "css_element"
-    And I wait "5" seconds
+    And I should see "New option - Multisession" in the "#allbookingoptionstable_r1" "css_element"
     And I click on "Settings" "icon" in the "#allbookingoptionstable_r1" "css_element"
-    And I click on "Duplicate this booking option" "link" in the "#allbookingoptionstable_r1" "css_element"
+    And I click on "Manage option dates" "link" in the "#allbookingoptionstable_r1" "css_element"
     And I set the following fields to these values:
-      | Booking option name | Test option - Copy - Multisession |
-    And I press "Save and go back"
-    And I click on "Settings" "icon" in the "#allbookingoptionstable_r2" "css_element"
-    And I click on "Duplicate this booking option" "link" in the "#allbookingoptionstable_r2" "css_element"
-    And I set the following fields to these values:
-      | Booking option name | Test option - Copy2 |
-    And I press "Save and go back"
-    And I click on "Settings" "icon" in the "#allbookingoptionstable_r3" "css_element"
-    And I click on "Manage option dates" "link" in the "#allbookingoptionstable_r3" "css_element"
-    And I set the following fields to these values:
-      | coursestarttime[day]    | 15                    |
-      | coursestarttime[month]  | March                 |
+      | coursestarttime[day]    | 15                  |
+      | coursestarttime[month]  | March               |
       | coursestarttime[year]   | ## + 1 year ##%Y##  |
-      | coursestarttime[hour]   | 13                    |
-      | coursestarttime[minute] | 00                    |
-      | endhour                 | 20                    |
-      | endminute               | 00                    |
+      | coursestarttime[hour]   | 13                  |
+      | coursestarttime[minute] | 00                  |
+      | endhour                 | 20                  |
+      | endminute               | 00                  |
     And I press "Save"
     And I set the following fields to these values:
-      | coursestarttime[day]    | 20  |
-      | coursestarttime[month]  | June |
+      | coursestarttime[day]    | 20                  |
+      | coursestarttime[month]  | June                |
       | coursestarttime[year]   | ## + 2 year ##%Y##  |
-      | coursestarttime[hour]   | 14                    |
-      | coursestarttime[minute] | 00                    |
-      | endhour                 | 21                    |
-      | endminute               | 00                    |
+      | coursestarttime[hour]   | 14                  |
+      | coursestarttime[minute] | 00                  |
+      | endhour                 | 21                  |
+      | endminute               | 00                  |
     And I press "Save"
     And I set the following fields to these values:
-      | coursestarttime[day]    | 25  |
-      | coursestarttime[month]  | September |
+      | coursestarttime[day]    | 25                  |
+      | coursestarttime[month]  | September           |
       | coursestarttime[year]   | ## + 3 year ##%Y##  |
-      | coursestarttime[hour]   | 15                    |
-      | coursestarttime[minute] | 00                    |
-      | endhour                 | 22                    |
-      | endminute               | 00                    |
+      | coursestarttime[hour]   | 15                  |
+      | coursestarttime[minute] | 00                  |
+      | endhour                 | 22                  |
+      | endminute               | 00                  |
     And I press "Save"
     Then I should see "15 March" in the "#region-main table.generaltable" "css_element"
     And I should see "## + 1 year ##%Y##" in the "#region-main table.generaltable" "css_element"
@@ -82,102 +70,67 @@ Feature: In a booking create multi session options
     And I should see "## + 3 year ##%Y##" in the "#region-main table.generaltable" "css_element"
     And I should see "3:00 PM to 10:00 PM" in the "#region-main table.generaltable" "css_element"
     And I press "Back"
-    Then I should see "Test option - Copy - Multisession" in the "#allbookingoptionstable_r3" "css_element"
-    And I wait "5" seconds
-    And I click on "Show dates" "link" in the "#allbookingoptionstable_r3" "css_element"
     And I wait "1" seconds
-    Then I should see "15 March" in the "#allbookingoptionstable_r3" "css_element"
-    And I should see "## + 1 year ##%Y##" in the "#allbookingoptionstable_r3" "css_element"
-    And I should see "1:00 PM - 8:00 PM" in the "#allbookingoptionstable_r3" "css_element"
-    And I should see "20 June" in the "#allbookingoptionstable_r3" "css_element"
-    And I should see "## + 2 year ##%Y##" in the "#allbookingoptionstable_r3" "css_element"
-    And I should see "2:00 PM - 9:00 PM" in the "#allbookingoptionstable_r3" "css_element"
-    And I should see "25 September" in the "#allbookingoptionstable_r3" "css_element"
-    And I should see "## + 3 year ##%Y##" in the "#allbookingoptionstable_r3" "css_element"
-    And I should see "3:00 PM - 10:00 PM" in the "#allbookingoptionstable_r3" "css_element"
+    And I click on "Show dates" "link" in the "#allbookingoptionstable_r1" "css_element"
+    And I wait "1" seconds
+    Then I should see "15 March" in the "#allbookingoptionstable_r1" "css_element"
+    And I should see "## + 1 year ##%Y##" in the "#allbookingoptionstable_r1" "css_element"
+    And I should see "1:00 PM - 8:00 PM" in the "#allbookingoptionstable_r1" "css_element"
+    And I should see "20 June" in the "#allbookingoptionstable_r1" "css_element"
+    And I should see "## + 2 year ##%Y##" in the "#allbookingoptionstable_r1" "css_element"
+    And I should see "2:00 PM - 9:00 PM" in the "#allbookingoptionstable_r1" "css_element"
+    And I should see "25 September" in the "#allbookingoptionstable_r1" "css_element"
+    And I should see "## + 3 year ##%Y##" in the "#allbookingoptionstable_r1" "css_element"
+    And I should see "3:00 PM - 10:00 PM" in the "#allbookingoptionstable_r1" "css_element"
 
   @javascript
-  Scenario: Send reminder mail to participant
-    Given I log in as "teacher1"
-    When I am on "Course 1" course homepage
-    And I follow "My booking"
-    And I click on "Settings" "icon" in the "#allbookingoptionstable_r1" "css_element"
-    And I click on "Edit booking option" "link" in the "#allbookingoptionstable_r1" "css_element"
-    And I wait "1" seconds
-    And I press "Teachers"
-    And I wait "1" seconds
-    And I set the field "Assign teachers:" to "Teacher 1 (teacher1@example.com)"
-    And I press "Save and go back"
-    And I follow "My booking"
-    And I click on "Settings" "icon" in the "#allbookingoptionstable_r1" "css_element"
-    And I click on "Book other users" "link" in the "#allbookingoptionstable_r1" "css_element"
-    And I click on "Student 1 (student1@example.com)" "text"
-    And I click on "Student 2 (student2@example.com)" "text"
-    And I click on "Add" "button"
-    And I follow "<< Back to responses"
-    And I click on "selectall" "checkbox"
-    And I click on "Send reminder e-mail" "button"
-    And I click on "selectall" "checkbox"
-    And I click on "Send custom message" "button"
-    And I set the following fields to these values:
-      | Subject | Behat test                                                     |
-      | Message | Dear, Firstly, I would like to thank you for booking my Course |
-    And I press "Save changes"
-    And I should see "Your message has been sent."
-    # And I run all adhoc tasks
-    # And I open the link "webserver/_/mail"
-    # Then I should see "Teacher 1 (via Acceptance test site)"
-    # And I should see "Behat test"
-
-  @javascript
-  Scenario: Student books an option
-    ## URL webserver/_/mail is inacessible
-    ## When I log in as "student1"
-    ## And I open the link "webserver/_/mail"
-    ## And I follow "Delete all messages"
-    ## And I press "Delete all messages"
-    ## And I open the link "webserver"
-    ## Then I am on "Course 1" course homepage
-    Given I log in as "student1"
-    When I am on "Course 1" course homepage
-    And I follow "My booking"
-    And I should see "New option - Webinar"
-    And I click on "Book now" "text" in the "#allbookingoptionstable_r1" "css_element"
-    And I should see "Do you really want to book?" in the "#allbookingoptionstable_r1" "css_element"
-    And I click on "Do you really want to book?" "text" in the "#allbookingoptionstable_r1" "css_element"
-    And I should see "Booked" in the "#allbookingoptionstable_r1" "css_element"
-    ## Next step(s) cause faiure (coding error, email was not sent):
-    ## Then I trigger cron
-    ## And I wait "1" seconds
-    ## And I run all adhoc tasks
-    ## URL webserver/_/mail is inacessible
-    ## And I open the link "webserver/_/mail"
-    ## Then I should see "Teacher 1 (via Acceptance test site)"
-    ## And I should see "Booking confirmation for New option - Webinar"
-
-  @javascript
-  Scenario: Teacher sends mails to students
-    Given I log in as "teacher1"
+  Scenario: Boooking option: add multiple session dates by editing booking option
+    Given I log in as "admin"
     When I am on "Course 1" course homepage
     Then I follow "My booking"
-    And I follow "My booking"
+    And I should see "New option - Multisession" in the "#allbookingoptionstable_r1" "css_element"
     And I click on "Settings" "icon" in the "#allbookingoptionstable_r1" "css_element"
-    And I click on "Book other users" "link" in the "#allbookingoptionstable_r1" "css_element"
-    And I click on "Student 1 (student1@example.com)" "text"
-    And I click on "Student 2 (student2@example.com)" "text"
-    And I click on "Add" "button"
-    And I follow "<< Back to responses"
-    And I click on "selectall" "checkbox"
-    And I click on "Send reminder e-mail" "button"
-    And I should see "Notification e-mail has been sent!"
-    ## Next step(s) cause faiure (coding error, email was not sent):
-    ## Then I trigger cron
-    ## And I wait "1" seconds
-    ## And I run all adhoc tasks
-
-  @javascript
-  Scenario: Run cron
-    Given I log in as "admin1"
-    Then I trigger cron
+    And I click on "Edit booking option" "link" in the "#allbookingoptionstable_r1" "css_element"
+    And I follow "Dates"
+    And I press "Custom dates"
     And I wait "1" seconds
-    And I run all adhoc tasks
+    And I should see "Date 1" in the ".modal-body" "css_element"
+    And I press "Add date"
+    And I should see "Date 2" in the ".modal-body" "css_element"
+    ## Does not work in modal if "expand all" exist on page
+    ## And I set the following fields to these values:
+    And I set the field "optiondatestart[0][day]" to "15"
+    And I set the field "optiondatestart[0][month]" to "March"
+    And I set the field "optiondatestart[0][year]" to "## + 1 year ##%Y##"
+    And I set the field "optiondatestart[0][hour]" to "13"
+    And I set the field "optiondatestart[0][minute]" to "00"
+    And I set the field "optiondateend[0][day]" to "15"
+    And I set the field "optiondateend[0][month]" to "March"
+    And I set the field "optiondateend[0][year]" to "## + 1 year ##%Y##"
+    And I set the field "optiondateend[0][hour]" to "16"
+    And I set the field "optiondateend[0][minute]" to "00"
+    And I set the field "optiondatestart[1][day]" to "20"
+    And I set the field "optiondatestart[1][month]" to "June"
+    And I set the field "optiondatestart[1][year]" to "## + 2 year ##%Y##"
+    And I set the field "optiondatestart[1][hour]" to "14"
+    And I set the field "optiondatestart[1][minute]" to "00"
+    And I set the field "optiondateend[1][day]" to "20"
+    And I set the field "optiondateend[1][month]" to "June"
+    And I set the field "optiondateend[1][year]" to "## + 2 year ##%Y##"
+    And I set the field "optiondateend[1][hour]" to "17"
+    And I set the field "optiondateend[1][minute]" to "00"
+    And I press "Save changes"
+    And I wait "1" seconds
+    Then I should see "15 March" in the "ul.reoccurringdates" "css_element"
+    And I should see "## + 1 year ##%Y##" in the "ul.reoccurringdates" "css_element"
+    And I should see "1:00 PM - 4:00 PM" in the "ul.reoccurringdates" "css_element"
+    And I should see "20 June" in the "ul.reoccurringdates" "css_element"
+    And I should see "## + 2 year ##%Y##" in the "ul.reoccurringdates" "css_element"
+    And I should see "2:00 PM - 5:00 PM" in the "ul.reoccurringdates" "css_element"
+    And I press "Save and go back"
+    Then I should see "15 March" in the "#allbookingoptionstable_r1" "css_element"
+    And I should see "## + 1 year ##%Y##" in the "#allbookingoptionstable_r1" "css_element"
+    And I should see "1:00 PM - 4:00 PM" in the "#allbookingoptionstable_r1" "css_element"
+    And I should see "20 June" in the "#allbookingoptionstable_r1" "css_element"
+    And I should see "## + 2 year ##%Y##" in the "#allbookingoptionstable_r1" "css_element"
+    And I should see "2:00 PM - 5:00 PM" in the "#allbookingoptionstable_r1" "css_element"

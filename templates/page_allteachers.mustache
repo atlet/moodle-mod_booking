@@ -22,7 +22,7 @@
 
     Data attributes required for JS:
     * data-region
-    
+
     Example context (json):
     {
         "canedit" : true,
@@ -60,7 +60,9 @@
     {{#teachers}}
         <div class="card m-2 page-allteachers-card">
             <div class="card-header bg-dark d-flex justify-content-between align-items-center">
-                <div class="text-white h3 mb-0 page-allteachers-teachername">{{firstname}} {{lastname}}</div>
+                <a href="{{link}}" style="text-decoration: none;">
+                    <div class="text-white h3 mb-0 page-allteachers-teachername">{{firstname}} {{lastname}}</div>
+                </a>
                 <div class="page-allteachers-orderletter bg-light rounded text-dark text-center">{{orderletter}}</div>
             </div>
             <div class="card-body bg-light">
@@ -76,47 +78,47 @@
             <div class="card-footer bg-light">
                 <div class="row page-allteachers-buttons d-flex justify-content-around" aria-label="Basic example">
                     <a href="{{link}}" class="btn btn-light">
-                        <span>
+                        <div>
                             <i class="fa fa-graduation-cap" aria-hidden="true"></i>
                             <div>{{#str}} showcoursesofteacher, mod_booking {{/str}}</div>
-                        </span>
+                        </div>
                     </a>
                     {{#messagingispossible}}
                     <a id="message-user-button" role="button" data-conversationid="0"
                     data-userid="{{teacherid}}" class="btn btn-light"
                     href="{{messagelink}}">
-                        <span>
+                        <div>
                             <i class="icon fa fa-comment-o fa-fw iconsmall" title="{{#str}} messagebutton, mod_booking {{/str}}"
                             role="img" aria-label="{{#str}} messagebutton, mod_booking {{/str}}"></i>
                             <div class="header-button-title">{{#str}} messagebutton, mod_booking {{/str}}</div>
-                        </span>
+                        </div>
                     </a>
                     {{/messagingispossible}}
                     {{^messagingispossible}}
                     <div data-toggle="tooltip" data-placement="top" title="{{#str}} messagingteacherimpossible, mod_booking {{/str}}">
                         <a id="message-user-button" role="button" class="btn btn-light disabled">
-                            <span>
+                            <div>
                                 <i class="icon fa fa-comment-o fa-fw iconsmall" title="{{#str}} messagebutton, mod_booking {{/str}}"
                                 role="img" aria-label="{{#str}} messagebutton, mod_booking {{/str}}"></i>
                                 <div class="header-button-title">{{#str}} messagebutton, mod_booking {{/str}}</div>
-                            </span>
+                            </div>
                         </a>
                     </div>
                     {{/messagingispossible}}
                     {{#email}}
                     <a href="mailto:{{email}}" class="page-allteachers-email btn btn-light">
-                        <span>
+                        <div>
                             <i class="fa fa-envelope" aria-hidden="true"></i>
                             <div>{{#str}} sendmail, mod_booking {{/str}}</div>
-                        </span>
+                        </div>
                     </a>
                     {{/email}}
                     {{#linktoperformedunitsreport}}
                     <a href="{{linktoperformedunitsreport}}" class="page-allteachers-linktoperformedunitsreport btn btn-light" target="_self">
-                        <span>
+                        <div>
                             <i class="fa fa-clock-o" aria-hidden="true"></i>
                             <div>{{#str}} hours {{/str}}</div>
-                        </span>
+                        </div>
                     </a>
                     {{/linktoperformedunitsreport}}
                 </div>

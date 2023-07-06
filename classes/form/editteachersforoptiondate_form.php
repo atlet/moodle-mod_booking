@@ -16,9 +16,13 @@
 
 namespace mod_booking\form;
 
+use cache_helper;
 use context;
 use context_module;
 use context_system;
+use mod_booking\event\optiondates_teacher_added;
+use mod_booking\event\optiondates_teacher_deleted;
+use moodle_exception;
 use moodle_url;
 use stdClass;
 
@@ -53,7 +57,16 @@ class editteachersforoptiondate_form extends \core_form\dynamic_form {
      * @return void
      */
     protected function check_access_for_dynamic_submission(): void {
-        require_capability('mod/booking:addeditownoption', $this->get_context_for_dynamic_submission());
+
+        $context = $this->get_context_for_dynamic_submission();
+
+        if ((has_capability('mod/booking:updatebooking', $context)
+            || has_capability('mod/booking:addeditownoption', $context)
+            || has_capability('mod/booking:viewreports', $context)
+            || has_capability('mod/booking:limitededitownoption', $context)) == false) {
+
+                throw new moodle_exception('youdonthavetherighttoaccessthisform', 'mod_booking');
+        }
     }
 
     /**
@@ -80,7 +93,7 @@ class editteachersforoptiondate_form extends \core_form\dynamic_form {
      * This is the correct place to insert and delete data from DB after modal form submission.
      */
     public function process_dynamic_submission() {
-        global $DB;
+        global $DB, $USER;
 
         $data = $this->get_data();
         $teachersforoptiondate = $data->teachersforoptiondate;
@@ -102,8 +115,21 @@ class editteachersforoptiondate_form extends \core_form\dynamic_form {
                         'optiondateid' => $data->optiondateid,
                         'userid' => $existingteacherid
                     ]);
+
+                    // Trigger an event so we can use it with booking rules.
+                    $event = optiondates_teacher_deleted::create([
+                        'objectid' => $data->optionid,
+                        'context' => \context_system::instance(),
+                        'userid' => $USER->id,
+                        'relateduserid' => $existingteacherid,
+                        'other' => [
+                            'cmid' => $data->cmid
+                        ]
+                    ]);
+                    $event->trigger();
                 }
             }
+            cache_helper::purge_by_event('setbackcachedteachersjournal');
         }
         // Add teachers if they have been added in autocomplete.
         if (!empty($teachersforoptiondate)) {
@@ -113,8 +139,22 @@ class editteachersforoptiondate_form extends \core_form\dynamic_form {
                     $newteacherrecord->optiondateid = $data->optiondateid;
                     $newteacherrecord->userid = $teacherforoptiondate;
                     $DB->insert_record('booking_optiondates_teachers', $newteacherrecord);
+
+                    // Trigger an event so we can use it with booking rules.
+                    // Trigger an event so we can use it with booking rules.
+                    $event = optiondates_teacher_added::create([
+                        'objectid' => $data->optionid,
+                        'context' => \context_system::instance(),
+                        'userid' => $USER->id,
+                        'relateduserid' => $teacherforoptiondate,
+                        'other' => [
+                            'cmid' => $data->cmid
+                        ]
+                    ]);
+                    $event->trigger();
                 }
             }
+            cache_helper::purge_by_event('setbackcachedteachersjournal');
         }
 
         // Save reason.

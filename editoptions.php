@@ -74,7 +74,9 @@ if (!$context = context_module::instance($cmid)) {
     throw new moodle_exception('badcontext');
 }
 
-if ((has_capability('mod/booking:updatebooking', $context) || has_capability('mod/booking:addeditownoption', $context)) == false) {
+if ((has_capability('mod/booking:updatebooking', $context) || (has_capability(
+    'mod/booking:addeditownoption', $context) && booking_check_if_teacher($values))) == false) {
+
     throw new moodle_exception('nopermissions');
 }
 
@@ -95,6 +97,10 @@ if (has_capability('mod/booking:cantoggleformmode', $context)) {
 
 // Duplicate this booking option.
 if ($optionid == -1 && $copyoptionid != 0) {
+
+    // Current time at duplication.
+    $now = time();
+
     // Adding new booking option - default values.
     $defaultvalues = $DB->get_record('booking_options', array('id' => $copyoptionid));
     $oldoptionid = $defaultvalues->id;
@@ -140,6 +146,7 @@ if ($optionid == -1 && $copyoptionid != 0) {
         }
         $DB->insert_records('booking_prices', $prices);
     }
+
     // Also duplicate associated Moodle custom fields (e.g. "sports").
     $sql = "SELECT cfd.*
         FROM {customfield_data} cfd
@@ -157,10 +164,24 @@ if ($optionid == -1 && $copyoptionid != 0) {
     $oldcustomfields = $DB->get_records_sql($sql, $params);
     foreach ($oldcustomfields as $cf) {
         unset($cf->id);
-        $cf->timecreated = time();
-        $cf->timemodified = time();
+        $cf->timecreated = $now;
+        $cf->timemodified = $now;
         $cf->instanceid = $optionid;
         $DB->insert_record('customfield_data', $cf);
+    }
+
+    // We also need to duplicate subbookings of the booking option.
+    $sql = "SELECT *
+        FROM {booking_subbooking_options}
+        WHERE optionid = :oldoptionid";
+    $oldsubbookings = $DB->get_records_sql($sql, $params);
+    foreach ($oldsubbookings as $sb) {
+        unset($sb->id);
+        $sb->usermodified = $USER->id;
+        $sb->timecreated = $now;
+        $sb->timemodified = $now;
+        $sb->optionid = $optionid;
+        $DB->insert_record('booking_subbooking_options', $sb);
     }
 
 } else if ($optionid > 0 && $defaultvalues = $DB->get_record('booking_options',
@@ -234,9 +255,6 @@ if ($mform->is_cancelled()) {
         }
 
         dates_handler::add_values_from_post_to_form($fromform);
-
-        // Save the additional JSON conditions (the ones which have been added to the mform).
-        bo_info::save_json_conditions_from_form($fromform);
 
         // Todo: Should nbooking be renamed to $optionid?
         $nbooking = booking_update_options($fromform, $context);
@@ -341,9 +359,11 @@ if ($mform->is_cancelled()) {
         $handler = booking_handler::create();
         $handler->instance_form_save($fromform, $optionid == -1);
 
-        // Redirect after pressing one of the 2 submit buttons.
+        // Redirect after pressing one of the 3 submit buttons.
         if (isset($fromform->submittandaddnew)) {
             $redirecturl = new moodle_url('/mod/booking/editoptions.php', array('id' => $cmid, 'optionid' => -1));
+        } else if (isset($fromform->submitandstay)) {
+            $redirecturl = new moodle_url('/mod/booking/editoptions.php', array('id' => $cmid, 'optionid' => $fromform->optionid));
         } else {
 
             if (!empty($returnurl)) {

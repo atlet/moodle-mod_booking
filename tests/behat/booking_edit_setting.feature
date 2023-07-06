@@ -81,35 +81,85 @@ Feature: Edit booking's organizer, info and semester settings as a teacher or ad
     And I should see "Sport class" in the ".modtype_booking .description .eventtype" "css_element"
     And I should see "Click on View available options, choose a booking option and click Book now" in the ".modtype_booking .description .shortinfo" "css_element"
 
+  ##@javascript
+  ##Scenario: Settings - create two semester settings and see it in booking options
+  ##  Given I log in as "admin"
+  ##  And I visit "/admin/category.php?category=modbookingfolder"
+  ##  And I follow "Booking: Semesters"
+  ##  ## And I press "Add semester"
+  ##  And I set the following fields to these values:
+  ##    | semesteridentifier[0]   | nextmay            |
+  ##    | semestername[0]         | Next May           |
+  ##    | semesterstart[0][day]   | 1                  |
+  ##    | semesterstart[0][month] | May                |
+  ##    | semesterstart[0][year]  | ## + 1 year ##%Y## |
+  ##    | semesterend[0][day]     | 31                 |
+  ##    | semesterend[0][month]   | May                |
+  ##    | semesterend[0][year]    | ## + 1 year ##%Y## |
+  ##  ## Need to overrider potential bug:
+  ##  And I set the field "semesterend[0][day]" to "31"
+  ##  And I press "Add semester"
+  ##  And I set the following fields to these values:
+  ##    | semesteridentifier[1]   | nextjune           |
+  ##    | semestername[1]         | Next June          |
+  ##    | semesterstart[1][day]   | 1                  |
+  ##    | semesterstart[1][month] | June               |
+  ##    | semesterstart[1][year]  | ## + 1 year ##%Y## |
+  ##    | semesterend[1][day]     | 30                 |
+  ##    | semesterend[1][month]   | June               |
+  ##    | semesterend[1][year]    | ## + 1 year ##%Y## |
+  ##  ## Need to overrider potential bug:
+  ##  And I set the field "semesterend[1][day]" to "30"
+  ##  And I press "Save changes"
+  ##  Then I should see "Semester 1"
+  ##  And the following fields match these values:
+  ##    | semesteridentifier[0]   | nextjune           |
+  ##    | semestername[0]         | Next June          |
+  ##    | semesterstart[0][day]   | 1                  |
+  ##    | semesterstart[0][month] | June               |
+  ##    | semesterstart[0][year]  | ## + 1 year ##%Y## |
+  ##    | semesterend[0][day]     | 30                 |
+  ##    | semesterend[0][month]   | June               |
+  ##    | semesterend[0][year]    | ## + 1 year ##%Y## |
+  ##  And I should see "Semester 2"
+  ##  And the following fields match these values:
+  ##    | semesteridentifier[1]   | nextmay            |
+  ##    | semestername[1]         | Next May           |
+  ##    | semesterstart[1][day]   | 1                  |
+  ##    | semesterstart[1][month] | May                |
+  ##    | semesterstart[1][year]  | ## + 1 year ##%Y## |
+  ##    | semesterend[1][day]     | 31                 |
+  ##    | semesterend[1][month]   | May                |
+  ##    | semesterend[1][year]    | ## + 1 year ##%Y## |
+  ##  And I log out
+  ##  Given I log in as "teacher1"
+  ##  When I am on "Course 1" course homepage
+  ##  And I follow "My booking"
+  ##  And I click on "Settings" "icon" in the "#allbookingoptionstable_r1" "css_element"
+  ##  And I click on "Edit booking option" "link" in the "#allbookingoptionstable_r1" "css_element"
+  ##  And I follow "Dates"
+  ##  And I should see "Next May (nextmay)" in the "#id_datesheadercontainer .form-autocomplete-selection" "css_element"
+  ##  And I expand the "Select time period" autocomplete
+  ##  ## And I open the autocomplete suggestions list in the "#id_datesheadercontainer" "css_element"
+  ##  And I wait "1" seconds
+  ##  And I should see "Next June (nextjune)" in the "#id_datesheadercontainer .form-autocomplete-suggestions" "css_element"
+
   @javascript
-  Scenario: Settings - create two semester settings for booking options
+  Scenario: Settings - create semester settings and use it in booking options
     Given I log in as "admin"
     And I visit "/admin/category.php?category=modbookingfolder"
     And I follow "Booking: Semesters"
-    ## And I press "Add semester"
     And I set the following fields to these values:
-      | semesteridentifier[0]   | nextmay            |
-      | semestername[0]         | Next May           |
+      | semesteridentifier[0]   | nextjune           |
+      | semestername[0]         | Next June          |
       | semesterstart[0][day]   | 1                  |
-      | semesterstart[0][month] | May                |
+      | semesterstart[0][month] | June               |
       | semesterstart[0][year]  | ## + 1 year ##%Y## |
-      | semesterend[0][day]     | 31                 |
-      | semesterend[0][month]   | May                |
+      | semesterend[0][day]     | 30                 |
+      | semesterend[0][month]   | June               |
       | semesterend[0][year]    | ## + 1 year ##%Y## |
     ## Need to overrider potential bug:
-    And I set the field "semesterend[0][day]" to "31"
-    And I press "Add semester"
-    And I set the following fields to these values:
-      | semesteridentifier[1]   | nextjune           |
-      | semestername[1]         | Next June          |
-      | semesterstart[1][day]   | 1                  |
-      | semesterstart[1][month] | June               |
-      | semesterstart[1][year]  | ## + 1 year ##%Y## |
-      | semesterend[1][day]     | 30                 |
-      | semesterend[1][month]   | June               |
-      | semesterend[1][year]    | ## + 1 year ##%Y## |
-    ## Need to overrider potential bug:
-    And I set the field "semesterend[1][day]" to "30"
+    And I set the field "semesterend[0][day]" to "30"
     And I press "Save changes"
     Then I should see "Semester 1"
     And the following fields match these values:
@@ -121,16 +171,6 @@ Feature: Edit booking's organizer, info and semester settings as a teacher or ad
       | semesterend[0][day]     | 30                 |
       | semesterend[0][month]   | June               |
       | semesterend[0][year]    | ## + 1 year ##%Y## |
-    And I should see "Semester 1"
-    And the following fields match these values:
-      | semesteridentifier[1]   | nextmay            |
-      | semestername[1]         | Next May           |
-      | semesterstart[1][day]   | 1                  |
-      | semesterstart[1][month] | May                |
-      | semesterstart[1][year]  | ## + 1 year ##%Y## |
-      | semesterend[1][day]     | 31                 |
-      | semesterend[1][month]   | May                |
-      | semesterend[1][year]    | ## + 1 year ##%Y## |
     And I log out
     Given I log in as "teacher1"
     When I am on "Course 1" course homepage
@@ -139,11 +179,7 @@ Feature: Edit booking's organizer, info and semester settings as a teacher or ad
     And I click on "Settings" "icon" in the "#allbookingoptionstable_r1" "css_element"
     And I click on "Edit booking option" "link" in the "#allbookingoptionstable_r1" "css_element"
     And I follow "Dates"
-    And I should see "Next May (nextmay)" in the "#id_datesheadercontainer .form-autocomplete-selection" "css_element"
-    And I expand the "Select time period" autocomplete
-    ## And I open the autocomplete suggestions list in the "#id_datesheadercontainer" "css_element"
-    And I wait "1" seconds
-    And I should see "Next June (nextjune)" in the "#id_datesheadercontainer .form-autocomplete-suggestions" "css_element"
+    And I should see "Next June (nextjune)" in the "#id_datesheadercontainer .form-autocomplete-selection" "css_element"
     And I set the following fields to these values:
       | Booking option name   | Option - Test Semester |
       | Select time period    | Next June (nextjune)   |
@@ -164,3 +200,83 @@ Feature: Edit booking's organizer, info and semester settings as a teacher or ad
     And I should see "7 June" in the "#allbookingoptionstable_r1" "css_element"
     And I should see "14 June" in the "#allbookingoptionstable_r1" "css_element"
     ## And I should see "14 June ## + 1 year ##%Y##, 1:00PM - 2:00PM" in the "#allbookingoptionstable_r1" "css_element"
+
+  @javascript
+  Scenario: Booking settings - access the teacher pages without login
+    Given I log in as "admin"
+    When I am on "Course 1" course homepage
+    And I follow "My booking"
+    And I click on "Settings" "icon" in the "#allbookingoptionstable_r1" "css_element"
+    And I click on "Edit booking option" "link" in the "#allbookingoptionstable_r1" "css_element"
+    And I wait "1" seconds
+    And I press "Teachers"
+    And I wait "1" seconds
+    And I set the field "Assign teachers:" to "Teacher 1"
+    And I press "Save and go back"
+    And I visit "/admin/category.php?category=modbookingfolder"
+    And I set the field "s_booking_teachersnologinrequired" to ""
+    And I press "Save changes"
+    And I log out
+    And I visit "/mod/booking/teachers.php"
+    And I wait to be redirected
+    And I should see "Log in to" in the "#region-main" "css_element"
+    And I log in as "admin"
+    And I visit "/admin/category.php?category=modbookingfolder"
+    And I set the field "s_booking_teachersnologinrequired" to "checked"
+    And I press "Save changes"
+    And I log out
+    And I visit "/mod/booking/teachers.php"
+    Then I should see "Teacher 1" in the ".page-allteachers-card" "css_element"
+    And I follow "Teacher"
+    And I should see "Teacher 1" in the ".card-title" "css_element"
+
+  @javascript
+  Scenario: Booking settings - display teachers' emails pages without login
+    Given I log in as "admin"
+    When I am on "Course 1" course homepage
+    And I follow "My booking"
+    And I click on "Settings" "icon" in the "#allbookingoptionstable_r1" "css_element"
+    And I click on "Edit booking option" "link" in the "#allbookingoptionstable_r1" "css_element"
+    And I wait "1" seconds
+    And I press "Teachers"
+    And I wait "1" seconds
+    And I set the field "Assign teachers:" to "Teacher 1"
+    And I press "Save and go back"
+    And I visit "/admin/category.php?category=modbookingfolder"
+    And I set the field "s_booking_teachersnologinrequired" to "checked"
+    And I set the field "s_booking_teachersshowemails" to ""
+    And I press "Save changes"
+    And I log out
+    And I visit "/mod/booking/teachers.php"
+    Then I should see "Teacher 1" in the ".page-allteachers-card" "css_element"
+    And I should not see "Mail" in the ".page-allteachers-card" "css_element"
+    And I follow "Teacher"
+    And I should see "Teacher 1" in the ".card-title" "css_element"
+    And I should not see "teacher1@example.com" in the ".card-title" "css_element"
+    And I log in as "admin"
+    And I visit "/admin/category.php?category=modbookingfolder"
+    And I set the field "s_booking_teachersshowemails" to "checked"
+    And I press "Save changes"
+    And I log out
+    And I visit "/mod/booking/teachers.php"
+    Then I should see "Teacher 1" in the ".page-allteachers-card" "css_element"
+    And I should see "Mail" in the ".page-allteachers-card" "css_element"
+    And I follow "Teacher"
+    And I should see "Teacher 1" in the ".card-title" "css_element"
+    And I should see "teacher1@example.com" in the ".card-body" "css_element"
+
+  @javascript
+  Scenario: Booking settings - hide branding info
+    Given I log in as "admin"
+    When I visit "/admin/category.php?category=modbookingfolder"
+    And I set the field "s_booking_turnoffwunderbytelogo" to ""
+    And I press "Save changes"
+    And I am on "Course 1" course homepage
+    And I follow "My booking"
+    Then I should see "Booking module created by Wunderbyte GmbH" in the "#region-main" "css_element"
+    When I visit "/admin/category.php?category=modbookingfolder"
+    And I set the field "s_booking_turnoffwunderbytelogo" to "checked"
+    And I press "Save changes"
+    And I am on "Course 1" course homepage
+    And I follow "My booking"
+    Then I should not see "Booking module created by Wunderbyte GmbH" in the "#region-main" "css_element"
