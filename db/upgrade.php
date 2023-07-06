@@ -5952,7 +5952,7 @@ function xmldb_booking_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2023061400, 'booking');
     }
 
-    if ($oldversion < 2023040600) {
+    if ($oldversion < 2023062500) {
 
         // Define field reviewed to be added to booking_optiondates.
         $table = new xmldb_table('booking_optiondates');
@@ -5964,10 +5964,10 @@ function xmldb_booking_upgrade($oldversion) {
         }
 
         // Booking savepoint reached.
-        upgrade_mod_savepoint(true, 2023040600, 'booking');
+        upgrade_mod_savepoint(true, 2023062500, 'booking');
     }
 
-    if ($oldversion < 2023041101) {
+    if ($oldversion < 2023062501) {
 
         // Define table booking_campaigns to be created.
         $table = new xmldb_table('booking_campaigns');
@@ -5991,10 +5991,10 @@ function xmldb_booking_upgrade($oldversion) {
         }
 
         // Booking savepoint reached.
-        upgrade_mod_savepoint(true, 2023041101, 'booking');
+        upgrade_mod_savepoint(true, 2023062501, 'booking');
     }
 
-    if ($oldversion < 2023042600) {
+    if ($oldversion < 2023062502) {
 
         // Define field responsiblecontact to be added to booking_options.
         $table = new xmldb_table('booking_options');
@@ -6006,11 +6006,11 @@ function xmldb_booking_upgrade($oldversion) {
         }
 
         // Booking savepoint reached.
-        upgrade_mod_savepoint(true, 2023042600, 'booking');
+        upgrade_mod_savepoint(true, 2023062502, 'booking');
     }
 
     // Add the elective tables & upgrades.
-    if ($oldversion < 2023061200) {
+    if ($oldversion < 2023062600) {
 
         // Add booking combinations table.
         $table = new xmldb_table('booking_combinations');
@@ -6084,7 +6084,7 @@ function xmldb_booking_upgrade($oldversion) {
         }
 
         // Booking savepoint reached.
-        upgrade_mod_savepoint(true, 2023061200, 'booking');
+        upgrade_mod_savepoint(true, 2023062600, 'booking');
     }
 
     return true;
