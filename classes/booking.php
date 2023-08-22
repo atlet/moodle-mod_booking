@@ -673,6 +673,8 @@ class booking {
                     );
                     $url = new moodle_url('/mod/booking/report.php', $params);
 
+                    booking_option::purge_cache_for_option($nrecid);
+
                     redirect($url);
                 }
             }
