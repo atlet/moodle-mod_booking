@@ -240,7 +240,8 @@ class mod_booking_mod_form extends moodleform_mod {
             'showactive' => get_string('activebookingoptions', 'mod_booking'),
             'myinstitution' => get_string('myinstitution', 'mod_booking'),
             'showvisible' => get_string('visibleoptions', 'mod_booking'),
-            'showinvisible' => get_string('invisibleoptions', 'mod_booking'));
+            'showinvisible' => get_string('invisibleoptions', 'mod_booking')
+        );
 
         // View selections to show on booking options overview.
         $options = array(
@@ -655,8 +656,10 @@ class mod_booking_mod_form extends moodleform_mod {
         $mform->setType('mailtemplatessource', PARAM_INT);
 
         // Add the fields to allow editing of the default text.
-        $editoroptions = array('subdirs' => false, 'maxfiles' => 0, 'maxbytes' => 0,
-            'trusttext' => false, 'context' => $systemcontext);
+        $editoroptions = array(
+            'subdirs' => false, 'maxfiles' => 0, 'maxbytes' => 0,
+            'trusttext' => false, 'context' => $systemcontext
+        );
 
         $fieldmapping = (object) array(
             'status' => '{status}', 'participant' => '{participant}',
@@ -1211,7 +1214,7 @@ class mod_booking_mod_form extends moodleform_mod {
         // Adding the template selector.
         if ($thasissues) {
             // If coursecertificate has issues, just add the current template to the selector.
-            $templates = $this->get_current_template();
+            $templates = $this->get_current_template(true);
         } else {
             // Get all available templates for the user.
             $templates = $this->get_template_select();
@@ -1419,8 +1422,11 @@ class mod_booking_mod_form extends moodleform_mod {
         $mform->disabledIf('autcrtemplate', 'autcractive');
 
         // Restricting access
-        $mform->addElement('header', 'authheader',
-                get_string('restrictheader', 'booking'));
+        $mform->addElement(
+            'header',
+            'authheader',
+            get_string('restrictheader', 'booking')
+        );
 
         $mform->addElement('static', 'description', '', get_string('restrictwhatitis', 'booking'));
         $authmethods = get_enabled_auth_plugins(true);
@@ -1694,15 +1700,24 @@ class mod_booking_mod_form extends moodleform_mod {
      *
      * @return array
      */
-    private function get_current_template(): array {
+    private function get_current_template($teacher = false): array {
         global $DB;
         $templates = [];
+
         if ($instance = $this->get_instance()) {
-            $sql = "SELECT ct.id, ct.name
+            if ($teacher) {
+                $sql = "SELECT ct.id, ct.name
+                FROM {tool_certificate_templates} ct
+                JOIN {booking} c
+                ON c.ttemplate = ct.id
+                AND c.id = :instance";
+            } else {
+                $sql = "SELECT ct.id, ct.name
                     FROM {tool_certificate_templates} ct
                     JOIN {booking} c
                     ON c.template = ct.id
                     AND c.id = :instance";
+            }
             if ($record = $DB->get_record_sql($sql, ['instance' => $instance], IGNORE_MISSING)) {
                 $templates[$record->id] = format_string($record->name);
             }
