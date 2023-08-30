@@ -37,7 +37,7 @@ use local_entities\entitiesrelation_handler;
 use local_entities\local\entities\entitydate;
 use mod_booking\bo_availability\bo_info;
 use mod_booking\subbookings\subbookings_info;
-use mod_booking\dates_handler;
+use mod_booking\option\dates_handler;
 use mod_booking\elective;
 use mod_booking\teachers_handler;
 use moodle_url;
@@ -84,7 +84,7 @@ class option_form extends moodleform {
         $optionid = 0;
         if (isset($this->_customdata['cmid'])) {
             $cmid = $this->_customdata['cmid'];
-            $booking = new booking($cmid);
+            $booking = singleton_service::get_instance_of_booking_by_cmid($cmid);
         }
         if (isset($this->_customdata['optionid'])) {
             $optionid = $this->_customdata['optionid'];
@@ -143,8 +143,10 @@ class option_form extends moodleform {
         $mform->addRule('identifier', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
         $mform->setType('identifier', PARAM_TEXT);
         $mform->addHelpButton('identifier', 'optionidentifier', 'mod_booking');
+
         // By default, a random identifier will be generated.
-        $randomidentifier = substr(str_shuffle(md5(microtime())), 0, 8);
+        $randomidentifier = booking_option::create_truly_unique_option_identifier();
+
         $mform->setDefault('identifier', $randomidentifier);
 
         // Prefix to be shown before the title.
@@ -152,6 +154,9 @@ class option_form extends moodleform {
         $mform->addRule('titleprefix', get_string('maximumchars', '', 10), 'maxlength', 10, 'client');
         $mform->setType('titleprefix', PARAM_TEXT);
         $mform->addHelpButton('titleprefix', 'titleprefix', 'mod_booking');
+        if (!empty($bookingoptionsettings)) {
+            $mform->setDefault('titleprefix', $bookingoptionsettings->titleprefix);
+        }
 
         // Booking option name.
         $mform->addElement('text', 'text', get_string('bookingoptionname', 'mod_booking'), array('size' => '64'));
@@ -371,12 +376,12 @@ class option_form extends moodleform {
 
         $mform->addElement('text', 'pollurl', get_string('bookingpollurl', 'mod_booking'), array('size' => '64'));
         $mform->setType('pollurl', PARAM_TEXT);
-        $mform->addHelpButton('pollurl', 'pollurl', 'mod_booking');
+        $mform->addHelpButton('pollurl', 'feedbackurl', 'mod_booking');
 
         $mform->addElement('text', 'pollurlteachers',
                 get_string('bookingpollurlteachers', 'mod_booking'), array('size' => '64'));
         $mform->setType('pollurlteachers', PARAM_TEXT);
-        $mform->addHelpButton('pollurlteachers', 'pollurlteachers', 'mod_booking');
+        $mform->addHelpButton('pollurlteachers', 'feedbackurlteachers', 'mod_booking');
 
         $mform->addElement('text', 'howmanyusers', get_string('bookotheruserslimit', 'mod_booking'), 0);
         $mform->addRule('howmanyusers', get_string('err_numeric', 'form'), 'numeric', null, 'client');
@@ -453,6 +458,12 @@ class option_form extends moodleform {
         $price = new price('option', $this->_customdata['optionid']);
         $price->add_price_to_mform($mform);
 
+        // If the form is no elective, and we can pay with credits, we can actually use this.
+        if (!$booking->is_elective() && $booking->uses_credits()) {
+            $mform->addElement('text', 'credits', get_string('credits', 'mod_booking'));
+            $mform->setType('credits', PARAM_INT);
+        }
+
         // Add entities.
         if (class_exists('local_entities\entitiesrelation_handler')) {
             $erhandler = new entitiesrelation_handler('mod_booking', 'option');
@@ -477,7 +488,7 @@ class option_form extends moodleform {
 
         // TODO: expert/simple mode needs to work with this too!
         // Add availability conditions.
-        bo_info::add_conditions_to_mform($mform, $optionid);
+        bo_info::add_conditions_to_mform($mform, $optionid, $this);
 
         // TODO: expert/simple mode needs to work with this too!
         // Add subbookings options.
@@ -532,7 +543,6 @@ class option_form extends moodleform {
             $mform->addElement('editor', 'beforebookedtext', get_string("beforebookedtext", "booking"),
                     null, null);
             $mform->setType('beforebookedtext', PARAM_CLEANHTML);
-            $mform->addHelpButton('beforebookedtext', 'beforebookedtext', 'mod_booking');
         }
 
         // Workaround: Only show, if it is not turned off in the option form config.
@@ -543,7 +553,6 @@ class option_form extends moodleform {
             $mform->addElement('editor', 'beforecompletedtext',
                     get_string("beforecompletedtext", "booking"), null, null);
             $mform->setType('beforecompletedtext', PARAM_CLEANHTML);
-            $mform->addHelpButton('beforecompletedtext', 'beforecompletedtext', 'mod_booking');
         }
 
         // Workaround: Only show, if it is not turned off in the option form config.
@@ -554,7 +563,6 @@ class option_form extends moodleform {
             $mform->addElement('editor', 'aftercompletedtext',
                     get_string("aftercompletedtext", "booking"), null, null);
             $mform->setType('aftercompletedtext', PARAM_CLEANHTML);
-            $mform->addHelpButton('aftercompletedtext', 'aftercompletedtext', 'mod_booking');
         }
 
         // Templates and recurring 'events' - only visible when adding new.

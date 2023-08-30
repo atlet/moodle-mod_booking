@@ -202,7 +202,9 @@ class bo_info {
                     'description' => $description,
                     'classname' => $classname,
                     'button' => $button, // This indicates if this condition provides a button.
-                    'insertpage' => $insertpage // Bool, only in combination with is available false.
+                    'insertpage' => $insertpage, // Bool, only in combination with is available false.
+                    'condition' => $condition,
+                    'reciprocal' => $condition->is_shown_in_mform(),
                 ];
             } else {
                 // Else we need to instantiate the condition first.
@@ -237,6 +239,8 @@ class bo_info {
                     'classname' => $classname,
                     'button' => $button, // This indicates if this condition provides a button.
                     'insertpage' => $insertpage, // Bool, only in combination with is available false.
+                    'condition' => $condition,
+                    'reciprocal' => $instance->is_shown_in_mform(),
                 ];
             }
 
@@ -248,6 +252,10 @@ class bo_info {
 
         // Now we might need to override the result of a previous condition which has been resolved as false before.
         foreach ($overrideconditions as $condition) {
+
+            // As we manipulate this value, we have to keep the original value.
+            $resultsarray[$condition->id]['isavailable:original'] = $resultsarray[$condition->id]['isavailable'];
+
             // Foreach override condition id (ocid).
             foreach ($condition->overrides as $ocid) {
                 if (isset($resultsarray[$ocid])) {
@@ -258,9 +266,16 @@ class bo_info {
                         case 'OR':
                             // If one of the two results is true, both are true.
                             if (isset($resultsarray[$ocid])) {
+                                $overrideswithkeys = array_flip($resultsarray[$ocid]['condition']->overrides ?? []);
+                                if (!$resultsarray[$ocid]['reciprocal'] ||
+                                    isset($overrideswithkeys[$condition->id])) {
+                                    if ($resultsarray[$ocid]['isavailable']) {
+                                        $resultsarray[$condition->id]['isavailable'] = true;
+                                    }
+                                }
                                 // If the original condition availability is true...
                                 // ...then we also can set the override condition to true.
-                                if ($resultsarray[$condition->id]['isavailable']) {
+                                if ($resultsarray[$condition->id]['isavailable:original']) {
                                     $resultsarray[$ocid]['isavailable'] = true;
                                 }
                             }
@@ -352,9 +367,10 @@ class bo_info {
      *
      * @param MoodleQuickForm $mform
      * @param int $optionid
+     * @param moodleform $moodleform
      * @return void
      */
-    public static function add_conditions_to_mform(MoodleQuickForm &$mform, int $optionid) {
+    public static function add_conditions_to_mform(MoodleQuickForm &$mform, int $optionid, $moodleform = null) {
         global $DB;
         // Workaround: Only show, if it is not turned off in the option form config.
         // We currently need this, because hideIf does not work with headers.
@@ -377,7 +393,7 @@ class bo_info {
 
         foreach ($conditions as $condition) {
             // For each condition, add the appropriate form fields.
-            $condition->add_condition_to_mform($mform, $optionid);
+            $condition->add_condition_to_mform($mform, $optionid, $moodleform);
         }
     }
 
@@ -389,7 +405,7 @@ class bo_info {
      */
     public static function save_json_conditions_from_form(stdClass &$fromform) {
 
-        $optionid = $fromform->optionid;
+        $optionid = $fromform->optionid ?? 0;
 
         if (!empty($optionid) && $optionid > 0) {
             $conditions = self::get_conditions(CONDPARAM_JSON_ONLY);

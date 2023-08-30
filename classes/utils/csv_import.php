@@ -31,7 +31,7 @@ use stdClass;
 use html_writer;
 use local_entities\entitiesrelation_handler;
 use mod_booking\customfield\booking_handler;
-use mod_booking\dates_handler;
+use mod_booking\option\dates_handler;
 use mod_booking\price;
 use mod_booking\singleton_service;
 use mod_booking\teachers_handler;
@@ -47,9 +47,14 @@ require_once($CFG->libdir . "/csvlib.class.php");
 class csv_import {
 
     /**
-     * @var booking
+     * @var booking $booking
      */
     protected $booking;
+
+    /**
+     * @var int $cmid
+     */
+    protected $cmid;
 
     /**
      * @var string
@@ -103,6 +108,10 @@ class csv_import {
 
     public function __construct(booking $booking) {
         global $DB, $CFG;
+
+        // Easy access for cmid and booking settings.
+        $this->cmid = $booking->cmid;
+
         $this->columns = $DB->get_columns('booking_options');
         // Unset fields that can not be filled out be users.
         unset($this->columns['id']);
@@ -169,7 +178,12 @@ class csv_import {
      * @throws \dml_exception
      */
     public function process_data($csvcontent, $formdata = null) {
-        global $DB;
+
+        global $DB, $CFG;
+
+        // We need the lib for the teacher creation.
+        require_once($CFG->dirroot . '/mod/booking/lib.php');
+
         $this->error = '';
         $this->formdata = $formdata;
         $iid = csv_import_reader::get_new_iid('modbooking');
@@ -214,8 +228,30 @@ class csv_import {
 
             // Fetch a potentially existing booking option which will be updated.
             if (isset($csvrecord['identifier'])) {
-                $optionid = $DB->get_field('booking_options', 'id',
-                ['bookingid' => $this->booking->id, 'identifier' => $csvrecord['identifier']]);
+                $existingoptions = $DB->get_records('booking_options', [
+                    'identifier' => $csvrecord['identifier']
+                ]);
+                if (empty($existingoptions)) {
+                    // It's a new option with a new identifier.
+                    $optionid = false;
+                } else if (count($existingoptions) == 1) {
+                    // Exactly one existing option was found.
+                    $existingoption = array_pop($existingoptions);
+                    // Check if the option is within the correct booking instance.
+                    if ($existingoption->bookingid == $this->booking->id) {
+                        $optionid = $existingoption->id;
+                    } else {
+                        $this->add_csverror(
+                            "Identifier {$csvrecord['identifier']} is already in use within another booking instance!", $i);
+                        $i++;
+                        continue;
+                    }
+                } else if (count($existingoptions) > 1) {
+                    $this->add_csverror("Identifier {$csvrecord['identifier']} is not unique!", $i);
+                    $i++;
+                    continue;
+                }
+
             } else {
                 $optionid = false;
             }
@@ -246,11 +282,18 @@ class csv_import {
                         $this->prepare_data($column, $value, $bookingoption);
                     }
                 }
+
+                /* NOTE: This line is the reason why booking options will never get updated directly.
+                We'll need to re-write the CSV importer, so updating also works correctly -
+                see issue https://github.com/Wunderbyte-GmbH/moodle-mod_booking/issues/310. */
                 if ($optionid === false) {
-                    $optionid = booking_update_options($bookingoption, $this->booking->get_context());
+                    $optionid = booking_update_options($bookingoption, $this->booking->get_context(), UPDATE_OPTIONS_PARAM_IMPORT);
                 }
                 // Set the option id again in order to use it in prepare_data for user data.
                 $bookingoption->id = $optionid;
+
+                // Get the booking option settings class.
+                $settings = singleton_service::get_instance_of_booking_option_settings($optionid);
 
                 // At this point, we can map the custom fields.
                 $handler = booking_handler::create();
@@ -276,7 +319,14 @@ class csv_import {
 
                         $eroptionhandler = new entitiesrelation_handler('mod_booking', 'option');
 
-                        $entities = $eroptionhandler->get_entities_by_name($bookingoption->location);
+                        if (is_numeric($bookingoption->location)) {
+                            // It's the entity id.
+                            $entities = $eroptionhandler->get_entities_by_id($bookingoption->location);
+                        } else {
+                            // It's the entity name (NOT shortname).
+                            $entities = $eroptionhandler->get_entities_by_name($bookingoption->location);
+                        }
+
                         // If we have exactly one entiity, we create the entities entry.
                         if (count($entities) === 1) {
                             $entity = reset($entities);
@@ -285,8 +335,6 @@ class csv_import {
                             $eroptionhandler->save_entity_relation($optionid, $entity->id);
 
                             // We also need to save the entity relation to the single sessions.
-                            $settings = singleton_service::get_instance_of_booking_option_settings($optionid);
-
                             if (count($settings->sessions) > 0) {
                                 // If there are booking option dates, we need to run through them.
                                 // We need a new instance from the entities handler with a different area.
@@ -305,26 +353,28 @@ class csv_import {
                     $this->prepare_data($userfield, $value, $bookingoption);
                 }
                 if (isset($userdata['teacheremail'])) {
-                    $teacher = $DB->get_record('user', array('suspended' => 0, 'deleted' => 0, 'confirmed' => 1,
-                        'email' => $userdata['teacheremail']), 'id', IGNORE_MULTIPLE);
-                    if (isset($teacher->id)) {
-                        $teacherexists = $DB->record_exists('booking_teachers',
-                            array('bookingid' => $this->booking->id, 'userid' => $teacher->id,
-                                'optionid' => $optionid));
-                        if ($teacherexists === false && $teacher !== false && $teacher->id > 0 && $optionid > 0) {
-                            $newteacher = new stdClass();
-                            $newteacher->bookingid = $this->booking->id;
-                            $newteacher->userid = $teacher->id;
-                            $newteacher->optionid = $optionid;
-                            $DB->insert_record('booking_teachers', $newteacher, true);
 
-                            // When inserting a new teacher, we also need to insert the teacher for each optiondate.
-                            teachers_handler::subscribe_teacher_to_all_optiondates($optionid, $teacher->id);
-                        } else if ($teacherexists === false ) {
-                            $this->add_csverror(get_string('noteacherfound', 'booking', $i), $i);
+                    // First we explode teacheremail, there might be mulitple teachers.
+                    // We always use comma as separator.
+                    $teacheremails = explode(',', $userdata['teacheremail']);
+
+                    foreach ($teacheremails as $teacheremail) {
+
+                        // First, we trim the $teacheremail to make sure there are not whitespaces or linebreaks.
+                        $teacheremail = trim($teacheremail);
+
+                        // Now we check if the email exists as a user on the platform.
+                        if (!$teacher = $DB->get_record('user', array('suspended' => 0, 'deleted' => 0, 'confirmed' => 1,
+                            'email' => $teacheremail), 'id', IGNORE_MULTIPLE)) {
+
+                                $this->add_csverror(get_string('noteacherfound', 'booking', $i), $i);
+                                continue;
                         }
-                    } else {
-                        $this->add_csverror(get_string('noteacherfound', 'booking', $i), $i);
+
+                        // If we can't add the teacher, we add an error.
+                        if (!subscribe_teacher_to_booking_option($teacher->id, $optionid, $settings->cmid)) {
+                            $this->add_csverror(get_string('teachercouldntbeadded', 'booking', $i), $i);
+                        }
                     }
                 }
 
@@ -342,20 +392,23 @@ class csv_import {
                         if ($user->suspended != 0) {
                             $this->add_csverror("The user with username {$user->username} and e-mail {$user->email} was
                             not subscribed to the booking option because of suspension", $i);
+                            $i++;
                             continue;
                         }
                         if ($user->deleted != 0) {
                             $this->add_csverror("The user with username {$user->username} and e-mail {$user->email} was
                             not subscribed to the booking option because of deletion", $i);
+                            $i++;
                             continue;
                         }
                         if ($user->confirmed != 1) {
                             $this->add_csverror("The user with username {$user->username} and e-mail {$user->email} was
                             not subscribed to the booking option because he/she is not confirmed", $i);
+                            $i++;
                             continue;
                         }
 
-                        $option = singleton_service::get_instance_of_booking_option($this->booking->cm->id, $optionid);
+                        $option = singleton_service::get_instance_of_booking_option($this->cmid, $optionid);
                         if ($option->user_submit_response($user, 0, 0, false, VERIFIED) === false) {
                             $this->add_csverror("The user with username {$user->username} and e-mail {$user->email} was
                             not subscribed to the booking option", $i);
@@ -370,18 +423,20 @@ class csv_import {
                     $user = $DB->get_record('user', array('suspended' => 0, 'deleted' => 0, 'confirmed' => 1,
                         'username' => $userdata['user_username']), 'id', IGNORE_MULTIPLE);
                     if ($user !== false) {
-                        $option = singleton_service::get_instance_of_booking_option($this->booking->cm->id, $optionid);
+                        $option = singleton_service::get_instance_of_booking_option($this->cmid, $optionid);
                         $option->user_submit_response($user, 0, 0, false, VERIFIED);
                     }
                 }
             }
-            $i++;
+            $i++; // Increment CSV line counter.
         }
         $cir->cleanup(true);
         $cir->close();
 
         // We need to purge all caches to be sure display works correctly.
         cache_helper::purge_by_event('setbackoptionstable');
+        // We also need to set back Wunderbyte table cache!
+        cache_helper::purge_by_event('setbackencodedtables');
 
         return true;
     }
@@ -423,6 +478,8 @@ class csv_import {
     protected function prepare_data($column, $value, &$bookingoption) {
         global $DB;
 
+        $bookingsettings = singleton_service::get_instance_of_booking_settings_by_cmid($this->cmid);
+
         // Prepare custom fields.
         // phpcs:ignore Squiz.PHP.CommentedOutCode.Found
         /*foreach ($this->customfields as $key => $customfield) {
@@ -441,27 +498,23 @@ class csv_import {
                     $bookingoption->$column = $this->fix_encoding($value);
                     break;
                 case 'bookingclosingtime':
+                    $bookingoption->restrictanswerperiodclosing = 1;
+                    $bookingoption->$column = $this->get_timestamp($value);
+                    break;
                 case 'bookingopeningtime':
+                    $bookingoption->restrictanswerperiodopening = 1;
+                    $bookingoption->$column = $this->get_timestamp($value);
+                    break;
                 case 'coursestarttime':
                 case 'courseendtime':
-                    $date = date_create_from_format($this->formdata->dateparseformat, $value);
                     $bookingoption->startendtimeknown = 1;
-                    if ($date) {
-                        $bookingoption->$column = $date->getTimestamp();
-                    } else {
-                        $bookingoption->$column = strtotime($value);
-                    }
+                    $bookingoption->$column = $this->get_timestamp($value);
                     break;
                 // For optiondates.
                 case preg_match('/ms[1-3]starttime/', $column) ? $column : !$column:
                 case preg_match('/ms[1-3]endtime/', $column) ? $column : !$column:
-                    $date = date_create_from_format($this->formdata->dateparseformat, $value);
                     $bookingoption->startendtimeknown = 1;
-                    if ($date) {
-                        $bookingoption->$column = $date->getTimestamp();
-                    } else {
-                        $bookingoption->$column = strtotime($value);
-                    }
+                    $bookingoption->$column = $this->get_timestamp($value);
                     break;
                 case 'institution':
                     // Create institution if it does not exist.
@@ -469,10 +522,13 @@ class csv_import {
                     break;
                 case 'dayofweektime':
                     // Deal with option dates.
-                    // TODO: get semester from csv file!!!!
-                    $sql = "SELECT MAX(id) AS id FROM {booking_semesters}";
-                    if ($semesterid = $DB->get_field_sql($sql)) {
-                        $msdates = dates_handler::get_optiondate_series($semesterid, $value);
+
+                    // So we can be sure that we use the right dates.
+                    cache_helper::purge_by_event('setbacksemesters');
+
+                    // We need to get the semester from the booking instance!
+                    if (!empty($bookingsettings->semesterid)) {
+                        $msdates = dates_handler::get_optiondate_series($bookingsettings->semesterid, $value);
                         $counter = 1;
                         if (isset($msdates['dates'])) {
                             foreach ($msdates['dates'] as $msdate) {
@@ -593,7 +649,7 @@ class csv_import {
         $bookingoption->institution = '';
         $bookingoption->invisible = 0;
         $bookingoption->annotation = '';
-        $bookingoption->identifier = substr(str_shuffle(md5(microtime())), 0, 8);
+        $bookingoption->identifier = '';
         $bookingoption->titleprefix = '';
         $bookingoption->priceformulamultiply = 1;
         $bookingoption->priceformulaadd = 0;
@@ -706,5 +762,21 @@ class csv_import {
         } else {
             return utf8_encode($instr);
         }
+    }
+
+    /**
+     * Returns the timestamp from the given value.
+     * @param string $value
+     * @return int
+     */
+    private function get_timestamp($value) {
+        $date = date_create_from_format($this->formdata->dateparseformat, $value);
+        if ($date) {
+            $timestamp = $date->getTimestamp() ?? 0;
+        } else {
+            $timestamp = strtotime($value) ?? 0;
+        }
+
+        return $timestamp;
     }
 }

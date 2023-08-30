@@ -308,23 +308,9 @@ class renderer extends plugin_renderer_base {
     }
 
     /**
-     * display all the bookings of the whole moodle site
-     * sorted by course
-     *
-     * @param mod_booking\output\booking_bookinginstance $data
-     * @return string rendered html
-     */
-    public function render_bookings(mod_booking\output\booking_bookinginstance $data) {
-        $o = '';
-        $data = $data->export_for_template($this);
-        $o .= $this->render_from_template('mod_booking/site_overview_bookinginstance', $data);
-        return $o;
-    }
-
-    /**
      * display signinsheet pdf download form
      *
-     * @param mod_booking\output\booking_bookinginstance $data
+     * @param mod_booking\output\signin_downloadform $data
      * @return string rendered html
      */
     public function render_signin_pdfdownloadform(mod_booking\output\signin_downloadform $data) {
@@ -464,16 +450,6 @@ class renderer extends plugin_renderer_base {
         $o = '';
         $data = $data->export_for_template($this);
         $o .= $this->render_from_template('mod_booking/bookingoption_changes', $data);
-        return $o;
-    }
-
-    /** Function to render bookingoption_description in template.
-     * This creates a link on a dedicated optionview.php, instead of the modal.
-     */
-    public function render_col_text_link(stdClass $data) {
-        $o = '';
-        $data = (array)$data;
-        $o .= $this->render_from_template('mod_booking/col_text_link', $data);
         return $o;
     }
 

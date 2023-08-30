@@ -33,7 +33,7 @@ use context;
 use context_system;
 use core_form\dynamic_form;
 use html_writer;
-use mod_booking\dates_handler;
+use mod_booking\option\dates_handler;
 use mod_booking\semester;
 use mod_booking\singleton_service;
 use moodle_url;
@@ -122,9 +122,7 @@ class dynamicchangesemesterform extends dynamic_form {
 
         $cmid = optional_param('id', 0, PARAM_INT);
 
-        if (empty($this->bookingsettings)) {
-            $bookingsettings = singleton_service::get_instance_of_booking_settings_by_cmid($cmid);
-        }
+        $bookingsettings = singleton_service::get_instance_of_booking_settings_by_cmid($cmid);
 
         $mform = $this->_form;
 

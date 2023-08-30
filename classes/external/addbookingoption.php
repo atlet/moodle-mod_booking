@@ -76,6 +76,8 @@ class addbookingoption extends external_api {
                 'Idnumber identifier of target course. Overriden by bookingidnumber.', (bool) VALUE_DEFAULT, null),
             'courseshortname' => new external_value(PARAM_RAW,
                 'Shortname of target course. Overriden by bookingidnumber.', (bool) VALUE_DEFAULT, null),
+            'enroltocourseshortname' => new external_value(PARAM_RAW,
+                'Shortname of course uses will be enroled to.', (bool) VALUE_DEFAULT, null),
             'maxanswers' => new external_value(PARAM_INT,
                 'Max places', (bool) VALUE_DEFAULT, null),
             'maxoverbooking' => new external_value(PARAM_INT,
@@ -140,7 +142,7 @@ class addbookingoption extends external_api {
                 'Default is 0 and visible. 1 will make the option invisible to students.', (bool) VALUE_DEFAULT, 0),
             'responsiblecontact' => new external_value(PARAM_RAW,
                 'Responsible contact as e-mail. Only one possible.', (bool) VALUE_DEFAULT, ''),
-            'boav_enrolledincourse' => new external_value(PARAM_RAW,
+            'boavenrolledincourse' => new external_value(PARAM_RAW,
                 'Booking Condition enrolled courses with shortnames, comma separated', (bool) VALUE_DEFAULT, ''),
             'recommendedin' => new external_value(PARAM_RAW,
                 'This is for the recommendedin-feature and takes the shortnames of the courses, separated by commas.',
@@ -169,6 +171,7 @@ class addbookingoption extends external_api {
                         int $bookingoptionid = null,
                         $courseidnumber = null,
                         string $courseshortname = null,
+                        string $enroltocourseshortname = null,
                         int $maxanswers = null,
                         int $maxoverbooking = null,
                         int $minanswers = null,
@@ -189,7 +192,7 @@ class addbookingoption extends external_api {
                         string $notifcationtext = null,
                         int $notifcationtextformat = null,
                         int $disablebookingusers = 0,
-                        int $beforebookedtext = null,
+                        string $beforebookedtext = null,
                         string $beforecompletedtext = null,
                         string $aftercompletedtext = null,
                         string $shorturl = null,
@@ -217,6 +220,7 @@ class addbookingoption extends external_api {
                         'bookingidnumber' => $bookingidnumber, // Idnumber of target booking instance.
                         'courseidnumber' => $courseidnumber, // Way of identifying target course via idnumber.
                         'courseshortname' => $courseshortname, // Way of identifiying target course via shortname.
+                        'enroltocourseshortname' => $enroltocourseshortname, // Shortname of the course useres will be enroled to.
                         'bookingoptionid' => $bookingoptionid, // Moodle id of bookingoption to update booking option.
                         'maxanswers' => $maxanswers,
                         'maxoverbooking' => $maxoverbooking,
@@ -250,7 +254,7 @@ class addbookingoption extends external_api {
                         'courseendtime' => $courseendtime,
                         'invisible' => $invisible,
                         'responsiblecontact' => $responsiblecontact,
-                        'boav_enrolledincourse' => $boavenrolledincourse,
+                        'boavenrolledincourse' => $boavenrolledincourse,
                         'recommendedin' => $recommendedin,
                         'mergeparam' => $mergeparam
                     ));

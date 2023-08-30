@@ -66,6 +66,7 @@ class teachers_handler {
      */
     public function add_to_mform(MoodleQuickForm &$mform) {
         global $DB, $COURSE;
+
         // Workaround: Only show, if it is not turned off in the option form config.
         // We currently need this, because hideIf does not work with headers.
         // In expert mode, we always show everything.
@@ -157,6 +158,11 @@ class teachers_handler {
      */
     public function save_from_form(stdClass &$formdata, bool $doenrol = true) {
 
+        // If we don't have the key here, we ignore all of this.
+        if (!isset($formdata->teachersforoption)) {
+            return;
+        }
+
         // Array of teacher ids.
         $teacherids = $formdata->teachersforoption;
 
@@ -243,7 +249,13 @@ class teachers_handler {
                 $newentry->optiondateid = $existingoptiondate->id;
                 $newentry->userid = $userid;
                 // 2. Insert the teacher into booking_optiondates_teachers for every optiondate.
-                $DB->insert_record('booking_optiondates_teachers', $newentry);
+
+                // Only do this if the record does not exist already.
+                if (!$DB->record_exists('booking_optiondates_teachers', [
+                    'optiondateid' => $newentry->optiondateid,
+                    'userid' => $newentry->userid])) {
+                        $DB->insert_record('booking_optiondates_teachers', $newentry);
+                }
             }
             cache_helper::purge_by_event('setbackcachedteachersjournal');
         }
@@ -311,12 +323,6 @@ class teachers_handler {
      */
     public static function remove_teachers_from_deleted_optiondate(int $optiondateid) {
         global $DB;
-
-        if (empty($optiondateid)) {
-            throw new moodle_exception(
-                'Could not delete teacher(s) from the deleted optiondate because of missing optiondateid.'
-            );
-        }
 
         // Delete all entries in booking_optiondates_teachers associated with the optiondate.
         $DB->delete_records('booking_optiondates_teachers', ['optiondateid' => $optiondateid]);

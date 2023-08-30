@@ -32,7 +32,6 @@ use mod_booking\booking;
 use mod_booking\elective;
 use mod_booking\singleton_service;
 use mod_booking\table\bookingoptions_wbtable;
-use moodle_exception;
 use moodle_url;
 use renderer_base;
 use renderable;
@@ -248,7 +247,7 @@ class view implements renderable, templatable {
         $booking = singleton_service::get_instance_of_booking_by_cmid($cmid);
 
         // Create the table.
-        $allbookingoptionstable = new bookingoptions_wbtable('allbookingoptionstable', $booking);
+        $allbookingoptionstable = new bookingoptions_wbtable("cmid_{$cmid}_electivetable", $booking);
 
         $wherearray = ['bookingid' => (int)$booking->id];
         list($fields, $from, $where, $params, $filter) =
@@ -274,7 +273,7 @@ class view implements renderable, templatable {
         $booking = singleton_service::get_instance_of_booking_by_cmid($cmid);
 
         // Create the table.
-        $allbookingoptionstable = new bookingoptions_wbtable('allbookingoptionstable', $booking);
+        $allbookingoptionstable = new bookingoptions_wbtable("cmid_{$cmid}_allbookingoptionstable", $booking);
 
         $wherearray = ['bookingid' => (int)$booking->id];
         list($fields, $from, $where, $params, $filter) =
@@ -300,7 +299,7 @@ class view implements renderable, templatable {
         $booking = singleton_service::get_instance_of_booking_by_cmid($cmid);
 
         // Create the table.
-        $activebookingoptionstable = new bookingoptions_wbtable('activebookingoptionstable', $booking);
+        $activebookingoptionstable = new bookingoptions_wbtable("cmid_{$cmid}_activebookingoptionstable", $booking);
 
         $wherearray = ['bookingid' => (int)$booking->id];
         $additionalwhere = '((courseendtime > :timenow OR courseendtime = 0) AND status = 0)';
@@ -313,7 +312,7 @@ class view implements renderable, templatable {
 
         // Initialize the default columnes, headers, settings and layout for the table.
         // In the future, we can parametrize this function so we can use it on many different places.
-        $this->wbtable_initialize_list_layout($activebookingoptionstable, false, true, true);
+        $this->wbtable_initialize_list_layout($activebookingoptionstable, true, true, true);
 
         $out = $activebookingoptionstable->outhtml($booking->get_pagination_setting(), true);
 
@@ -332,7 +331,7 @@ class view implements renderable, templatable {
         $booking = singleton_service::get_instance_of_booking_by_cmid($cmid);
 
         // Create the table.
-        $mybookingoptionstable = new bookingoptions_wbtable('mybookingoptionstable', $booking);
+        $mybookingoptionstable = new bookingoptions_wbtable("cmid_{$cmid}_userid_{$USER->id}_mybookingoptionstable", $booking);
 
         $wherearray = ['bookingid' => (int)$booking->id];
         list($fields, $from, $where, $params, $filter) =
@@ -341,7 +340,7 @@ class view implements renderable, templatable {
 
         // Initialize the default columnes, headers, settings and layout for the table.
         // In the future, we can parametrize this function so we can use it on many different places.
-        $this->wbtable_initialize_list_layout($mybookingoptionstable, false, true, true);
+        $this->wbtable_initialize_list_layout($mybookingoptionstable, true, true, true);
 
         $out = $mybookingoptionstable->outhtml($booking->get_pagination_setting(), true);
 
@@ -362,7 +361,7 @@ class view implements renderable, templatable {
         $booking = singleton_service::get_instance_of_booking_by_cmid($cmid);
 
         // Create the table.
-        $teacheroptionstable = new bookingoptions_wbtable('teacheroptionstable', $booking);
+        $teacheroptionstable = new bookingoptions_wbtable("cmid_{$cmid}_teacherid_{$teacherid}_teacheroptionstable", $booking);
 
         $wherearray = [
             'bookingid' => (int)$booking->id,
@@ -392,7 +391,7 @@ class view implements renderable, templatable {
         $booking = singleton_service::get_instance_of_booking_by_cmid($cmid);
 
         // Create the table.
-        $showonlyonetable = new bookingoptions_wbtable('showonlyonetable', $booking);
+        $showonlyonetable = new bookingoptions_wbtable("cmid_{$cmid}_optionid_{$optionid}_showonlyonetable", $booking);
 
         $wherearray = [
             'bookingid' => (int) $booking->id,
@@ -422,7 +421,7 @@ class view implements renderable, templatable {
         $booking = singleton_service::get_instance_of_booking_by_cmid($cmid);
 
         // Create the table.
-        $myinstitutiontable = new bookingoptions_wbtable('myinstitutiontable', $booking);
+        $myinstitutiontable = new bookingoptions_wbtable("cmid_{$cmid}_institution_{$institution}_myinstitutiontable", $booking);
 
         $wherearray = [
             'bookingid' => (int) $booking->id,
@@ -451,7 +450,7 @@ class view implements renderable, templatable {
         $booking = singleton_service::get_instance_of_booking_by_cmid($cmid);
 
         // Create the table.
-        $visibleoptionstable = new bookingoptions_wbtable('visibleoptionstable', $booking);
+        $visibleoptionstable = new bookingoptions_wbtable("cmid_{$cmid}_visibleoptionstable", $booking);
 
         $wherearray = [
             'bookingid' => (int) $booking->id,
@@ -480,7 +479,7 @@ class view implements renderable, templatable {
         $booking = singleton_service::get_instance_of_booking_by_cmid($cmid);
 
         // Create the table.
-        $invisibleoptionstable = new bookingoptions_wbtable('invisibleoptionstable', $booking);
+        $invisibleoptionstable = new bookingoptions_wbtable("cmid_{$cmid}_invisibleoptionstable", $booking);
 
         $wherearray = [
             'bookingid' => (int) $booking->id,
@@ -753,6 +752,9 @@ class view implements renderable, templatable {
         }
 
         $wbtable->tabletemplate = 'mod_booking/table_list';
+
+        // Let's collapse filters per default.
+        $wbtable->filteronloadinactive = true;
     }
 
     /**

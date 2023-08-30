@@ -118,12 +118,19 @@ $functions = array(
         'capabilities' => '',
         'ajax' => true
     ),
-    'mod_booking_search_users' => array(
-        'classname' => 'mod_booking\external\mod_booking_search_users',
-        'description' => 'Search for users...',
+    'mod_booking_search_booking_options' => array(
+        'classname' => 'mod_booking\external\search_booking_options',
+        'description' => 'Search a list of all booking options',
         'type' => 'read',
         'capabilities' => '',
-        'ajax' => true
+        'ajax' => 1
+    ),
+    'mod_booking_search_users' => array(
+            'classname' => 'mod_booking\external\search_users',
+            'description' => 'Search a list of all users',
+            'type' => 'read',
+            'capabilities' => '',
+            'ajax' => 1
     ),
 );
 

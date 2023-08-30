@@ -28,6 +28,7 @@ use mod_booking\booking;
 use stdClass;
 use mod_booking\booking_option;
 use mod_booking\customfield\booking_handler;
+use mod_booking\singleton_service;
 use moodle_exception;
 
 defined('MOODLE_INTERNAL') || die();
@@ -144,9 +145,20 @@ class webservice_import {
                     AND m.name=:modulename";
             $bookingcmid = $DB->get_field_sql($sql, array('bookingoptionid' => $data->bookingoptionid, 'modulename' => 'booking'));
 
-            return new booking_option($bookingcmid, $data->bookingoptionid);
+            return singleton_service::get_instance_of_booking_option($bookingcmid, $data->bookingoptionid);
         } else {
-            // The identifier is unique in every instance, therefore we can find the id by id.
+            // We have to check if the identifier is really unique.
+            if ($DB->get_record_sql("SELECT *
+                FROM {booking_options}
+                WHERE identifier = :identifier
+                AND bookingid <> :bookingid",
+                ['bookingid' => $data->bookingid,
+                'identifier' => $data->identifier])) {
+
+                throw new moodle_exception("Option with identifier $data->identifier could not be imported because the " .
+                    "identifier is already used in another booking instance.", 'mod_booking');
+            }
+
             $sql = "SELECT cm.id as cmid, bo.id as boid
                     FROM {course_modules} cm
                     INNER JOIN {booking_options} bo
@@ -160,7 +172,7 @@ class webservice_import {
                     'bookingid' => $data->bookingid,
                     'modulename' => 'booking',
                     'identifier' => $data->identifier))) {
-                return new booking_option($result->cmid, $result->boid);
+                return singleton_service::get_instance_of_booking_option($result->cmid, $result->boid);
             }
         }
 
@@ -280,18 +292,24 @@ class webservice_import {
                 $data->startendtimeknown = 1;
                 $data->coursestarttime = strtotime($data->coursestarttime);
                 $data->courseendtime = strtotime($data->courseendtime);
-            } else if ($data->mergeparam == 1 || $data->mergeparam == 2) {
+            } else if ($data->mergeparam == 1 || $data->mergeparam == 2 || $data->mergeparam == 3) {
 
                 $data->startendtimeknown = 1;
 
                 $data->coursestarttime = strtotime($data->coursestarttime);
                 $data->courseendtime = strtotime($data->courseendtime);
 
+                $createnewdates = true;
                 foreach ($bookingoption->settings->sessions as $session) {
                     $data->stillexistingdates[$session->id] = "$session->coursestarttime - $session->courseendtime";
-                }
 
-                $data->newoptiondates[] = "$data->coursestarttime - $data->courseendtime";
+                    if ("$data->coursestarttime - $data->courseendtime" == "$session->coursestarttime - $session->courseendtime") {
+                        $createnewdates = false;
+                    }
+                }
+                if ($createnewdates) {
+                    $data->newoptiondates[] = "$data->coursestarttime - $data->courseendtime";
+                }
 
             }
         }
@@ -335,9 +353,9 @@ class webservice_import {
 
         }
 
-        if (!empty($data->boav_enrolledincourse)) {
+        if (!empty($data->boavenrolledincourse)) {
 
-            $items = explode(',', $data->boav_enrolledincourse);
+            $items = explode(',', $data->boavenrolledincourse);
 
             list($inorequal, $params) = $DB->get_in_or_equal($items, SQL_PARAMS_NAMED);
             $sql = "SELECT id
@@ -347,7 +365,16 @@ class webservice_import {
 
             $data->bo_cond_enrolledincourse_courseids = array_keys($courses);
             $data->restrictwithenrolledincourse = 1;
-            unset($data->boav_enrolledincourse);
+            unset($data->boavenrolledincourse);
+        }
+
+        if (!empty($data->enroltocourseshortname)) {
+
+            if ($courseid = $DB->get_field('course', 'id', ['shortname' => $data->enroltocourseshortname])) {
+                $data->courseid = $courseid;
+                unset($data->enroltocourseshortname);
+            }
+
         }
     }
 
@@ -392,7 +419,7 @@ class webservice_import {
         global $DB;
 
         // If no teacher e-mail is provided, we don't do anything.
-        if (empty($data->teacheremail)) {
+        if (empty($data->teacheremail) || !strpos($data->teacheremail, "@")) {
             return;
         }
 

@@ -211,7 +211,7 @@ class mod_booking_mod_form extends moodleform_mod {
             array('size' => '64')
         );
         $mform->setType('pollurl', PARAM_TEXT);
-        $mform->addHelpButton('pollurl', 'pollurl', 'mod_booking');
+        $mform->addHelpButton('pollurl', 'feedbackurl', 'mod_booking');
 
         $mform->addElement(
             'text',
@@ -220,7 +220,7 @@ class mod_booking_mod_form extends moodleform_mod {
             array('size' => '64')
         );
         $mform->setType('pollurlteachers', PARAM_TEXT);
-        $mform->addHelpButton('pollurlteachers', 'pollurlteachers', 'mod_booking');
+        $mform->addHelpButton('pollurlteachers', 'feedbackurlteachers', 'mod_booking');
 
         $mform->addElement(
             'filemanager',
@@ -994,7 +994,6 @@ class mod_booking_mod_form extends moodleform_mod {
             null
         );
         $mform->setType('beforecompletedtext', PARAM_CLEANHTML);
-        $mform->addHelpButton('beforecompletedtext', 'beforecompletedtext', 'mod_booking');
 
         $mform->addElement(
             'editor',
@@ -1004,7 +1003,6 @@ class mod_booking_mod_form extends moodleform_mod {
             null
         );
         $mform->setType('aftercompletedtext', PARAM_CLEANHTML);
-        $mform->addHelpButton('aftercompletedtext', 'aftercompletedtext', 'mod_booking');
 
         $mform->addElement(
             'editor',
@@ -1014,7 +1012,6 @@ class mod_booking_mod_form extends moodleform_mod {
             null
         );
         $mform->setType('beforebookedtext', PARAM_CLEANHTML);
-        $mform->addHelpButton('beforebookedtext', 'beforebookedtext', 'mod_booking');
 
         // Sign-In Sheet Configuration.
         $mform->addElement('header', 'cfgsigninheader', get_string('cfgsignin', 'booking'));

@@ -24,9 +24,14 @@ $string['alreadypassed'] = 'Already passed';
 $string['bookingoption'] = 'Booking option';
 $string['bookingoptionnamewithoutprefix'] = 'Name (without prefix)';
 $string['bookings'] = 'Bookings';
+$string['cancelallusers'] = 'Cancel booking for all users';
 $string['cancelmyself'] = 'Undo my booking';
 $string['cancelsign'] = '<i class="fa fa-ban" aria-hidden="true"></i>';
 $string['close'] = 'Close';
+$string['confirmoptioncreation'] = 'Do you want to split this booking option so that a separate booking option is created
+ from each individual date of this booking option?';
+$string['createoptionsfromoptiondate'] = 'For each option date create a new option';
+$string['customformnotchecked'] = 'You didn\'t accept yet.';
 $string['updatebooking'] = 'Update booking';
 $string['booking:manageoptiontemplates'] = "Manage option templates";
 $string['booking:cantoggleformmode'] = 'User can edit all settings';
@@ -48,6 +53,7 @@ $string['responsiblecontact'] = 'Responsible contact person';
 $string['responsiblecontact_help'] = 'Choose a person who is responsible for this booking option. This is not supposed to be the teacher!';
 $string['reviewed'] = 'Reviewed';
 $string['search'] = 'Search...';
+$string['sendmailtoallbookedusers'] = 'Send e-mail to all booked users';
 $string['teachers'] = 'Teachers';
 $string['assignteachers'] = 'Assign teachers:';
 $string['thankyoubooked'] = '<i class="fa fa-3x fa-calendar-check-o text-success" aria-hidden="true"></i><br><br>
@@ -59,10 +65,11 @@ $string['thankyouwaitinglist'] = '<i class="fa fa-3x fa-clock-o text-primary" ar
  You were added to the waiting list for <b>{$a}</b>. You will automatically move up, in case someone drops out.';
 $string['thankyouerror'] = '<i class="fa fa-3x fa-frown-o text-danger" aria-hidden="true"></i><br>
 Unfortunately, there was an error when booking <b>{$a}</b>.';
-$string['usersmatching'] = 'Gefundene Nutzer:innen';
-$string['allmoodleusers'] = 'Alle Nutzer:innen dieser Website';
-$string['enrolledusers'] = 'In den Kurs eingeschriebene Nutzer:innen';
-$string['nopriceisset'] = 'Kein Preis vorhanden';
+$string['toomanytoshow'] = 'Too many records found...';
+$string['usersmatching'] = 'Matching users';
+$string['allmoodleusers'] = 'All users of this site';
+$string['enrolledusers'] = 'Users enrolled in course';
+$string['nopriceisset'] = 'No price has been set';
 
 // General errors.
 $string['error:choosevalue'] = 'You have to choose a value here.';
@@ -331,7 +338,6 @@ $string['confirmdeletebookingoption'] = 'Do you really want to delete this booki
 $string['norighttobook'] = 'Booking is not possible for your user role. Please contact the site administrator to give you the appropriate rights or enrol/sign in.';
 $string['maxperuserwarning'] = 'You currently have used {$a->count} out of {$a->limit} maximum available bookings ({$a->eventtype}) for your user account';
 $string['bookedpast'] = 'Booked (course terminated)';
-$string['bookotherusers'] = 'Book other users';
 $string['attachedfiles'] = 'Attached files';
 $string['eventduration'] = 'Event duration';
 $string['eventpoints'] = 'Points';
@@ -347,6 +353,8 @@ $string['organizatorname_help'] = 'You can either enter the organizer name manua
 $string['availableplaces'] = 'Places available: {$a->available} of {$a->maxanswers}';
 $string['pollurl'] = 'Poll url';
 $string['pollurlteachers'] = 'Teachers poll url';
+$string['feedbackurl'] = 'Poll url';
+$string['feedbackurlteachers'] = 'Teachers poll url';
 $string['select'] = 'Selection';
 $string['activebookingoptions'] = 'Active booking options';
 $string['starttimenotset'] = 'Start date not set';
@@ -413,6 +421,7 @@ $string['page:bookitbutton'] = 'Book';
 $string['page:subbooking'] = 'Supplementary bookings';
 $string['page:confirmation'] = 'Booking complete';
 $string['page:checkout'] = 'Checkout';
+$string['page:customform'] = 'Fill out form';
 
 $string['confirmationmessagesettings'] = 'Confirmation e-mail settings';
 $string['usernameofbookingmanager'] = 'Choose a booking manager';
@@ -453,69 +462,11 @@ Please make sure that there are existing e-mail templates in the booking setting
 $string['mailtemplatesinstance'] = 'Use mail templates from this booking instance (default)';
 $string['mailtemplatesglobal'] = 'Use global mail templates from plugin settings';
 
-$string['pollurlteachers_help'] = 'You can use any of the following placeholders in the text:
-<ul>
-<li>{bookingdetails} - Detailed summary of the booking option (incl. sessions und link to booking option)</li>
-<li>{gotobookingoption} - Link to booking option</li>
-<li>{numberparticipants} - Number of participants (without waiting list)</li>
-<li>{numberwaitinglist} - Number of participants on the waiting list</li>
-<li>{status} - Booking status</li>
-<li>{participant}</li>
-<li>{email} - User email</li>
-<li>{title}</li>
-<li>{duration}</li>
-<li>{starttime}</li>
-<li>{endtime}</li>
-<li>{startdate}</li>
-<li>{enddate}</li>
-<li>{courselink}</li>
-<li>{bookinglink}</li>
-<li>{location}</li>
-<li>{institution}</li>
-<li>{address}</li>
-<li>{eventtype}</li>
-<li>{teacher} - Name of first teacher</li>
-<li>{teachers} - List of all teachers</li>
-<li>{teacherN} - Name of specific teacher, e.g. {teacher1}</li>
-<li>{pollstartdate}</li>
-<li>{qr_id} - Insert QR code with user id</li>
-<li>{qr_username} - Insert QR code with user username</li>
-<li>{dates} - Session times</li>
-<li>{shorturl} - Short URL of option</li>
-<li>{usercalendarurl} - Link to subscribe to user calendar (personal events)</li>
-<li>{coursecalendarurl} - Link to subscribe to course calendar (course events)</li>
-</ul>';
+$string['feedbackurl_help'] = 'Enter a link to a feedback form that should be sent to participants.
+ It can be added to e-mails with the <b>{pollurl}</b> placeholder.';
 
-$string['pollurl_help'] = 'You can use any of the following placeholders in the text:
-<ul>
-<li>{bookingdetails} - Detailed summary of the booking option (incl. sessions und link to booking option)</li>
-<li>{gotobookingoption} - Link to booking option</li>
-<li>{status} - Booking status</li>
-<li>{participant}</li>
-<li>{email} - User email</li>
-<li>{title}</li>
-<li>{duration}</li>
-<li>{starttime}</li>
-<li>{endtime}</li>
-<li>{startdate}</li>
-<li>{enddate}</li>
-<li>{courselink}</li>
-<li>{bookinglink}</li>
-<li>{location}</li>
-<li>{institution}</li>
-<li>{address}</li>
-<li>{eventtype}</li>
-<li>{teacher} - Name of first teacher</li>
-<li>{teachers} - List of all teachers</li>
-<li>{teacherN} - Name of specific teacher, e.g. {teacher1}</li>
-<li>{pollstartdate}</li>
-<li>{qr_id} - Insert QR code with user id</li>
-<li>{qr_username} - Insert QR code with user username</li>
-<li>{dates} - Session times</li>
-<li>{shorturl} - Short URL of option</li>
-<li>{usercalendarurl} - Link to subscribe to user calendar (personal events)</li>
-<li>{coursecalendarurl} - Link to subscribe to course calendar (course events)</li>
-</ul>';
+$string['feedbackurlteachers_help'] = 'Enter a link to a feedback form that should be sent to teachers.
+ It can be added to e-mails with the <b>{pollurlteachers}</b> placeholder.';
 
 $string['bookedtext_help'] = 'Leave this blank to use the site default text. You can use any of the following placeholders in the text:
 <ul>
@@ -882,105 +833,6 @@ $string['activitycompletiontext_help'] = 'Leave this blank to use the site defau
 </ul>';
 
 $string['notificationtext_help'] = 'Leave this blank to use the site default text. You can use any of the following placeholders in the text:
-<ul>
-<li>{bookingdetails} - Detailed summary of the booking option (incl. sessions und link to booking option)</li>
-<li>{gotobookingoption} - Link to booking option</li>
-<li>{status} - Booking status</li>
-<li>{participant}</li>
-<li>{email} - User email</li>
-<li>{title}</li>
-<li>{duration}</li>
-<li>{starttime}</li>
-<li>{endtime}</li>
-<li>{startdate}</li>
-<li>{enddate}</li>
-<li>{courselink}</li>
-<li>{bookinglink}</li>
-<li>{pollurl}</li>
-<li>{pollurlteachers}</li>
-<li>{location}</li>
-<li>{institution}</li>
-<li>{address}</li>
-<li>{eventtype}</li>
-<li>{teacher} - Name of first teacher</li>
-<li>{teachers} - List of all teachers</li>
-<li>{teacherN} - Name of specific teacher, e.g. {teacher1}</li>
-<li>{pollstartdate}</li>
-<li>{qr_id} - Insert QR code with user id</li>
-<li>{qr_username} - Insert QR code with user username</li>
-<li>{dates} - Session times</li>
-<li>{shorturl} - Short URL of option</li>
-<li>{usercalendarurl} - Link to subscribe to user calendar (personal events)</li>
-<li>{coursecalendarurl} - Link to subscribe to course calendar (course events)</li>
-</ul>';
-
-$string['beforebookedtext_help'] = 'Leave this blank to use the site default text. You can use any of the following placeholders in the text:
-<ul>
-<li>{bookingdetails} - Detailed summary of the booking option (incl. sessions und link to booking option)</li>
-<li>{gotobookingoption} - Link to booking option</li>
-<li>{status} - Booking status</li>
-<li>{participant}</li>
-<li>{email} - User email</li>
-<li>{title}</li>
-<li>{duration}</li>
-<li>{starttime}</li>
-<li>{endtime}</li>
-<li>{startdate}</li>
-<li>{enddate}</li>
-<li>{courselink}</li>
-<li>{bookinglink}</li>
-<li>{pollurl}</li>
-<li>{pollurlteachers}</li>
-<li>{location}</li>
-<li>{institution}</li>
-<li>{address}</li>
-<li>{eventtype}</li>
-<li>{teacher} - Name of first teacher</li>
-<li>{teachers} - List of all teachers</li>
-<li>{teacherN} - Name of specific teacher, e.g. {teacher1}</li>
-<li>{pollstartdate}</li>
-<li>{qr_id} - Insert QR code with user id</li>
-<li>{qr_username} - Insert QR code with user username</li>
-<li>{dates} - Session times</li>
-<li>{shorturl} - Short URL of option</li>
-<li>{usercalendarurl} - Link to subscribe to user calendar (personal events)</li>
-<li>{coursecalendarurl} - Link to subscribe to course calendar (course events)</li>
-</ul>';
-
-$string['beforecompletedtext_help'] = 'Leave this blank to use the site default text. You can use any of the following placeholders in the text:
-<ul>
-<li>{bookingdetails} - Detailed summary of the booking option (incl. sessions und link to booking option)</li>
-<li>{gotobookingoption} - Link to booking option</li>
-<li>{status} - Booking status</li>
-<li>{participant}</li>
-<li>{email} - User email</li>
-<li>{title}</li>
-<li>{duration}</li>
-<li>{starttime}</li>
-<li>{endtime}</li>
-<li>{startdate}</li>
-<li>{enddate}</li>
-<li>{courselink}</li>
-<li>{bookinglink}</li>
-<li>{pollurl}</li>
-<li>{pollurlteachers}</li>
-<li>{location}</li>
-<li>{institution}</li>
-<li>{address}</li>
-<li>{eventtype}</li>
-<li>{teacher} - Name of first teacher</li>
-<li>{teachers} - List of all teachers</li>
-<li>{teacherN} - Name of specific teacher, e.g. {teacher1}</li>
-<li>{pollstartdate}</li>
-<li>{qr_id} - Insert QR code with user id</li>
-<li>{qr_username} - Insert QR code with user username</li>
-<li>{dates} - Session times</li>
-<li>{shorturl} - Short URL of option</li>
-<li>{usercalendarurl} - Link to subscribe to user calendar (personal events)</li>
-<li>{coursecalendarurl} - Link to subscribe to course calendar (course events)</li>
-</ul>';
-
-$string['aftercompletedtext_help'] = 'Leave this blank to use the site default text. You can use any of the following placeholders in the text:
 <ul>
 <li>{bookingdetails} - Detailed summary of the booking option (incl. sessions und link to booking option)</li>
 <li>{gotobookingoption} - Link to booking option</li>
@@ -1449,6 +1301,7 @@ $string['copytotemplatesucesfull'] = 'Booking option was sucesfully saved as tem
 
 // Send message.
 $string['booking:cansendmessages'] = 'Can send messages';
+$string['messageprovider:sendmessages'] = 'Can send messages';
 $string['activitycompletionsuccess'] = 'All selected users have been marked for activity completion';
 $string['booking:communicate'] = 'Can communicate';
 $string['confirmoptioncompletion'] = '(Un)confirm completion status';
@@ -1623,8 +1476,6 @@ $string['googleapikey'] = 'Google API key';
 $string['googleapikey_desc'] = 'API key for Google URL Shortener. Get it here: https://developers.google.com/url-shortener/v1/getting_started#APIKey';
 $string['numberrows'] = 'Number rows';
 $string['numberrowsdesc'] = 'Number each row of the sign-in sheet. Number will be displayed left of the name in the same column';
-$string['multiicalfiles'] = 'Attach one iCal file per date for MS Outlook 2010 compatibility';
-$string['multiicalfilesdesc'] = 'Only MS Outlook 2010 does not support multiple dates within one iCal file. Previous and later version do support it (Ex. Outlook365). If you want to send MS Outlook compatible dates, then activate this option in order to attach multiple iCal files (one per date/event)';
 
 $string['availabilityinfotexts_heading'] = 'Availability info texts for booking places and waiting list';
 $string['availabilityinfotexts_desc'] = 'Only available in the PRO version.';
@@ -1649,6 +1500,14 @@ $string['pricecategories'] = 'Booking: Price categories';
 
 $string['bookingpricesettings'] = 'Price settings';
 $string['bookingpricesettings_desc'] = 'Here you can customize booking prices.';
+
+$string['bookwithcreditsactive'] = "Book with credits";
+$string['bookwithcreditsactive_desc'] = "Users with credits can book directly without paying a price.";
+
+$string['bookwithcreditsprofilefield'] = "User profile field for credits";
+$string['bookwithcreditsprofilefield_desc'] = "To use this functionality, please define a user profile field where credits are stored.
+ <span class='text-danger'><b>Be careful:</b> You should create this field in a way that your users can't set a credit themselves.</span>";
+
 
 $string['priceisalwayson'] = 'Prices always active';
 $string['priceisalwayson_desc'] = 'If you activate this checkbox, you cannot deactive prices for individual booking options.
@@ -1717,14 +1576,26 @@ $string['appearancesettings_desc'] = 'Configure the appearance of the booking pl
 $string['turnoffwunderbytelogo'] = 'Do not show Wunderbyte logo und link';
 $string['turnoffwunderbytelogo_desc'] = 'If you activate this setting, the Wunderbyte logo and the link to the Wunderbyte website won\'t be shown.';
 
+$string['collapseshowsettings'] = "Collapse 'show dates' with more than x dates.";
+$string['collapseshowsettings_desc'] = "To avoid a messy view with too many dates, a lower limit for collapsed dates can be defined here.";
+
 $string['teachersettings'] = 'Teachers (PRO)';
 $string['teachersettings_desc'] = 'Teacher-specific settings.';
+
+$string['teacherslinkonteacher'] = 'Add links to teacher pages';
+$string['teacherslinkonteacher_desc'] = 'When there are teachers added to booking options, this setting will add a link to an overview page for each teacher.';
+
 $string['teachersnologinrequired'] = 'Login for teacher pages not necessary';
 $string['teachersnologinrequired_desc'] = 'If you activate this setting, everyone can access the teacher pages, regardless if logged in or not.';
 $string['teachersshowemails'] = 'Always show teacher\'s email addresses to everyone';
 $string['teachersshowemails_desc'] = 'If you activate this setting, every user can see
- the e-mail address of any teacher - even if they are not logged in. <span class="text-danger"><b>Be careful:</b> This might be
- a privacy issue. Only activate this, if you are sure it corresponds with your organization\'s privacy policy.</span>';
+    the e-mail address of any teacher - even if they are not logged in. <span class="text-danger"><b>Be careful:</b> This might be
+    a privacy issue. Only activate this, if you are sure it corresponds with your organization\'s privacy policy.</span>';
+$string['teachersallowmailtobookedusers'] = 'Allow teachers to send an e-mail to all booked users using their own mail client';
+$string['teachersallowmailtobookedusers_desc'] = 'If you activate this setting, teachers can click a button to send an e-mail
+    to all booked users using their own mail client - the e-mail-addresses of all users will be visible.
+    <span class="text-danger"><b>Be careful:</b> This might be a privacy issue. Only activate this,
+    if you are sure it corresponds with your organization\'s privacy policy.</span>';
 
 // Mobile.
 $string['next'] = 'Next';
@@ -1981,6 +1852,11 @@ $string['cachedef_cachedprices'] = 'Prices in booking (cache)';
 $string['cachedef_cachedbookinginstances'] = 'Booking instances (cache)';
 $string['cachedef_bookingoptionsettings'] = 'Booking option settings (cache)';
 $string['cachedef_cachedsemesters'] = 'Semesters (cache)';
+$string['cachedef_cachedteachersjournal'] = 'Teaches journal (Cache)';
+$string['cachedef_subbookingforms'] = 'Subbooking Forms (Cache)';
+$string['cachedef_conditionforms'] = 'Condition Forms (Cache)';
+$string['cachedef_confirmbooking'] = 'Booking confirmed (Cache)';
+$string['cachedef_electivebookingorder'] = 'Elective booking order (Cache)';
 
 // Dates_handler.php.
 $string['chooseperiod'] = 'Select time period';
@@ -2077,9 +1953,6 @@ $string['applyunitfactor_desc'] = 'If this setting is active, the educational un
 $string['roundpricesafterformula'] = 'Round prices (price formula)';
 $string['roundpricesafterformula_desc'] = 'If active, prices will be rounded to full numbers (no decimals) after the <strong>price formula</strong> has been applied.';
 
-// Col_text_link.mustache.
-$string['cancelallusers'] = 'Cancel booking for all users';
-
 // Col_availableplaces.mustache.
 $string['manageresponses'] = 'Manage bookings';
 
@@ -2104,11 +1977,12 @@ $string['bo_cond_isbookable'] = 'isbookable: Booking is allowed';
 $string['bo_cond_isloggedin'] = 'isloggedin: User is logged in';
 $string['bo_cond_fullybookedoverride'] = 'fullybookedoverride: Can be overbooked by staff';
 $string['bo_cond_iscancelled'] = 'iscancelled: Booking option cancelled';
-$string['bo_cond_subbooking_blocks'] = 'subbookingblocks: Subbooking blocks this Booking option';
-$string['bo_cond_subbooking'] = 'subbooking: Subbooking adds additonal options to this Booking option';
+$string['bo_cond_subbooking_blocks'] = 'Subbooking blocks this booking option';
+$string['bo_cond_subbooking'] = 'Subbbookings exist';
 $string['bo_cond_bookitbutton'] = 'bookitbutton: Show the normal booking button.';
 $string['bo_cond_isloggedinprice'] = 'isloggedinprice: Show all prices when not logged in.';
 $string['bo_cond_optionhasstarted'] = 'Has already started';
+$string['bo_cond_customform'] = 'Fill out form';
 
 $string['bo_cond_booking_time_available'] = 'Within normal booking times.';
 $string['bo_cond_booking_time_not_available'] = 'Not within normal booking times.';
@@ -2223,6 +2097,12 @@ $string['bo_cond_subbooking_full_available'] = 'Booking is possible';
 $string['bo_cond_subbooking_not_available'] = 'Book it';
 $string['bo_cond_subbooking_full_not_available'] = 'Booking is possible';
 
+$string['restrictwithcustomform'] = 'Form needs to be filled out before booking';
+$string['bo_cond_customform_available'] = 'Book it';
+$string['bo_cond_customform_full available'] = 'Booking is possible';
+$string['bo_cond_customform_not_available'] = 'Book it';
+$string['bo_cond_customform_full_not_available'] = 'Booking is possible';
+
 // BO conditions in mform.
 $string['selectuserscheckbox'] = 'Only specific user(s) are allowed to book';
 $string['bo_cond_selectusers_userids'] = 'User(s) allowed to book';
@@ -2237,7 +2117,7 @@ $string['bo_cond_selectusers_userids_help'] = '<p>If you use this condition, onl
 
 $string['userinfofieldoff'] = 'No user profile field selected';
 $string['restrictwithuserprofilefield'] = 'A chosen user profile field should have a certain value';
-$string['restrictwithpreviouslybooked'] = 'User has previously booked a certain option';
+$string['previouslybookedcheckbox'] = 'User has previously booked a certain option';
 $string['bo_cond_userprofilefield_field'] = 'Profile field';
 $string['bo_cond_userprofilefield_value'] = 'Value';
 $string['bo_cond_userprofilefield_operator'] = 'Operator';
@@ -2264,6 +2144,14 @@ $string['overrideoperator'] = 'Operator';
 $string['overrideoperator:and'] = 'AND';
 $string['overrideoperator:or'] = 'OR';
 $string['bo_cond_previouslybooked_optionid'] = 'Must be already booked';
+
+$string['noelement'] = "No Element";
+$string['checkbox'] = "Checkbox";
+$string['displaytext'] = "Display text";
+$string['textarea'] = "Textarea";
+$string['shorttext'] = "Shorttext";
+$string['formtype'] = "Type of form";
+$string['bo_cond_customform_label'] = "Label";
 
 // Teacher_performed_units_report.php.
 $string['error:wrongteacherid'] = 'Error: No user could be found for the provided "teacherid".';
@@ -2456,6 +2344,8 @@ $string['sortbookingoptions'] = "Please sort your bookings in the right order. Y
 $string['selectoptionsfirst'] = "Please select booking options first.";
 $string['electivesettings'] = 'Elective Settings';
 $string['iselective'] = 'Use instance as elective';
+$string['iselective_help'] = 'This allows you to force users to book several booking options at once in a specific order
+ or in specific relations to each other. Additionally, you can force the use of credits.';
 $string['maxcredits'] = 'Max credits to use';
 $string['maxcredits_help'] = 'You can define the max amount of credits users can or must use when booking options. You can define in every booking option how many credits it is worth.';
 $string['unlimitedcredits'] = 'Don\'t use credits';
@@ -2464,6 +2354,9 @@ $string['enforceorder_help'] = 'Users will be inscribed only once they have comp
 $string['consumeatonce'] = 'All credits have to be consumed at once';
 $string['consumeatonce_help'] = 'Uses can only book once, and they have to book all options in one step.';
 $string['credits'] = 'Credits';
+$string['bookwithcredits'] = '{$a} credits';
+$string['bookwithcredit'] = '{$a} credit';
+$string['notenoughcreditstobook'] = 'Not enough credit to book';
 $string['electivenotbookable'] = 'Not bookable';
 $string['credits_help'] = 'The number of credits which will be used by booking this option.';
 $string['mustcombine'] = 'Necessary booking options';

@@ -16,7 +16,6 @@
 
 namespace mod_booking\task;
 
-use mod_booking\booking_option;
 use mod_booking\elective;
 use mod_booking\singleton_service;
 
@@ -63,7 +62,7 @@ class enrol_bookedusers_tocourse extends \core\task\scheduled_task {
                 continue;
             }
 
-            $boption = new booking_option($cm->id, $optionid);
+            $boption = singleton_service::get_instance_of_booking_option($cm->id, $optionid);
 
             $booking = $boption->booking;
             // phpcs:ignore
@@ -80,7 +79,7 @@ class enrol_bookedusers_tocourse extends \core\task\scheduled_task {
 
                 if ($bookingsettings->iselective
                     && $enforceorder == 1) {
-                    if (!elective::check_if_allowed_to_inscribe($boption, $bookeduser->id)) {
+                    if (!elective::check_if_allowed_to_inscribe($boption, $bookeduser->userid)) {
                         continue;
                     }
                 }
@@ -90,12 +89,12 @@ class enrol_bookedusers_tocourse extends \core\task\scheduled_task {
                 // TODO: check if enrolment successful... (enrol_user needs to return boolean).
 
                 if (!empty($boption->option->courseid)) {
-                    mtrace("The user with the {$bookeduser->id} has been enrolled to the course {$boption->option->courseid}.");
+                    mtrace("The user with the {$bookeduser->userid} has been enrolled to the course {$boption->option->courseid}.");
                 }
 
                 // We update enrolement status of this option only if it's not an elective.
                 if (empty($bookingsettings->iselective)) {
-                    list($insql, $params) = $DB->get_in_or_equal(array_keys($optionid));
+                    list($insql, $params) = $DB->get_in_or_equal([$optionid]);
                     $DB->set_field_select('booking_options', 'enrolmentstatus', '1', 'id ' . $insql, $params);
                 }
 

@@ -246,7 +246,7 @@ class mod_booking_observer {
 
         $users = $bookingoption->get_all_users_booked();
         foreach ($users as $user) {
-            new calendar($event->contextinstanceid, $optionid, $user->id, calendar::TYPEOPTIONDATE, $event->objectid, 1);
+            new calendar($event->contextinstanceid, $optionid, $user->userid, calendar::TYPEOPTIONDATE, $event->objectid, 1);
         }
     }
 
@@ -261,7 +261,7 @@ class mod_booking_observer {
         $cmid = $event->other['cmid'];
         $selecteduserid = $event->relateduserid;
 
-        $bookingoption = new booking_option($cmid, $optionid);
+        $bookingoption = singleton_service::get_instance_of_booking_option($cmid, $optionid);
 
         if (empty($bookingoption->booking->settings->sendmail)) {
             // If sendmail is not set or not active, we don't do anything.

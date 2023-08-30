@@ -106,9 +106,9 @@ class booking {
         }
 
         // In the constructur, we call the booking_settings, where we get the values from db or cache.
-        $bosettings = singleton_service::get_instance_of_booking_settings_by_cmid($cmid);
+        $bookingsettings = singleton_service::get_instance_of_booking_settings_by_cmid($cmid);
 
-        $this->settings = $bosettings->return_settings_as_stdclass();
+        $this->settings = $bookingsettings->return_settings_as_stdclass();
         $this->id = $this->settings->id;
 
         $this->course = get_course($this->cm->course);
@@ -157,6 +157,67 @@ class booking {
     public function get_pagination_setting():int {
         $paginationnum = (int) $this->settings->paginationnum > 0 ? (int) $this->settings->paginationnum : PAGINATIONDEF;
         return $paginationnum;
+    }
+
+    /**
+     * Function to lazyload userlist for autocomplete.
+     *
+     * @param string $query
+     * @return array
+     */
+    public static function load_users(string $query) {
+        global $DB;
+
+        $values = explode(' ', $query);
+
+        $fullsql = $DB->sql_concat('u.firstname', '\'\'', 'u.lastname', '\'\'', 'u.email');
+
+        $sql = "SELECT * FROM (
+                    SELECT u.id, u.firstname, u.lastname, u.email, $fullsql AS fulltextstring
+                    FROM {user} u
+                    WHERE u.deleted = 0
+                ) AS fulltexttable";
+        // Check for u.deleted = 0 is important, so we do not load any deleted users!
+        $params = [];
+        if (!empty($query)) {
+            // We search for every word extra to get better results.
+            $firstrun = true;
+            $counter = 1;
+            foreach ($values as $value) {
+
+                $sql .= $firstrun ? ' WHERE ' : ' AND ';
+                $sql .= " " . $DB->sql_like('fulltextstring', ':param' . $counter, false) . " ";
+                $params['param' . $counter] = "%$value%";
+                $firstrun = false;
+                $counter++;
+            }
+        }
+
+        // We don't return more than 100 records, so we don't need to fetch more from db.
+        $sql .= " limit 102";
+
+        $rs = $DB->get_recordset_sql($sql, $params);
+        $count = 0;
+        $list = [];
+
+        foreach ($rs as $record) {
+            $user = (object)[
+                    'id' => $record->id,
+                    'firstname' => $record->firstname,
+                    'lastname' => $record->lastname,
+                    'email' => $record->email,
+            ];
+
+            $count++;
+            $list[$record->id] = $user;
+        }
+
+        $rs->close();
+
+        return [
+                'warnings' => count($list) > 100 ? get_string('toomanyuserstoshow', 'core', '> 100') : '',
+                'list' => count($list) > 100 ? [] : $list,
+        ];
     }
 
     /**
@@ -443,9 +504,9 @@ class booking {
     public function get_bookingoptions_fields(bool $download = false) {
 
         if ($download) {
-            $fields = explode(',', $this->settings->optionsdownloadfields);
+            $fields = explode(',', $this->settings->optionsdownloadfields ?? BOOKINGOPTION_DEFAULTFIELDS);
         } else {
-            $fields = explode(',', $this->settings->optionsfields);
+            $fields = explode(',', $this->settings->optionsfields ?? BOOKINGOPTION_DEFAULTFIELDS);
         }
 
         $columns = [];
@@ -688,7 +749,7 @@ class booking {
      * @return bool
      */
     public function is_elective() {
-        if ($this->settings->iselective == 1) {
+        if (isset($this->settings->iselective) && $this->settings->iselective == 1) {
             return true;
         }
         return false;
@@ -700,8 +761,8 @@ class booking {
      * @return bool
      */
     public function uses_credits() {
-        if ($this->settings->iselective == 1
-                && $this->settings->maxcredits > 0) {
+        if (isset($this->settings->iselective) && $this->settings->iselective == 1
+                && isset($this->settings->maxcredits) && $this->settings->maxcredits > 0) {
             return true;
         }
         return false;
@@ -784,7 +845,12 @@ class booking {
             // The "Where"-clause is always added so we have to have something here for the sql to work.
             $where = "1=1 ";
         }
-
+        // Add where condition for searchtext.
+        if (!empty($searchtext)) {
+            $where .= " AND " . $DB->sql_like("text", ":searchtext", false);
+            $params['searchtext'] = $searchtext;
+        }
+        // Add where condition for userid.
         if ($userid !== null) {
             $innerfrom .= " JOIN {booking_answers} ba
                           ON ba.optionid=bo.id ";
@@ -969,6 +1035,10 @@ class booking {
     public static function encode_moodle_url($moodleurl) {
 
         global $CFG;
+
+        // See github issue: https://github.com/Wunderbyte-GmbH/moodle-mod_booking/issues/305.
+        // TODO: We currently encode the whole URL, but we should only encode the params.
+        // Encoding the whole URL makes migration to a new WWWROOT impossible.
 
         $encodedurl = base64_encode($moodleurl->out(false));
         $encodedmoodleurl = new \moodle_url($CFG->wwwroot . '/mod/booking/bookingredirect.php', array(

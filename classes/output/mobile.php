@@ -20,8 +20,8 @@ defined('MOODLE_INTERNAL') || die();
 use context_module;
 use context;
 use mod_booking\booking;
-use mod_booking\booking_option;
 use mod_booking\places;
+use mod_booking\singleton_service;
 use stdClass;
 
 require_once($CFG->dirroot . '/mod/booking/locallib.php');
@@ -131,7 +131,7 @@ class mobile {
 
         $context = context_module::instance($cm->id);
 
-        $booking = new booking($cm->id);
+        $booking = singleton_service::get_instance_of_booking_by_cmid($cm->id);
 
         $paging = $booking->settings->paginationnum;
         if (!isset($whichview)) {
@@ -228,7 +228,7 @@ class mobile {
         $options = array();
 
         foreach ($bookingoptions as $key => $value) {
-            $option = new booking_option($cm->id,
+            $option = singleton_service::get_instance_of_booking_option($cm->id,
                     (is_object($value) ? $value->id : $value));
             $option->get_teachers();
             $options[] = self::prepare_options($option, $booking, $context, $cm, $courseid);

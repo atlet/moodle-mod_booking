@@ -14,6 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+defined('MOODLE_INTERNAL') || die();
+
+global $CFG;
+
+use mod_booking\price;
+use mod_booking\customfield\booking_handler;
+
 /**
  * mod_booking data generator
  *
@@ -22,6 +29,7 @@
  * @copyright 2017 Andraž Prinčič {@link https://www.princic.net}
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 class mod_booking_generator extends testing_module_generator {
 
     /**
@@ -80,7 +88,6 @@ class mod_booking_generator extends testing_module_generator {
      * @return stdClass the booking option object
      */
     public function create_option($record = null) {
-        global $DB;
 
         $record = (array) $record;
 
@@ -99,13 +106,105 @@ class mod_booking_generator extends testing_module_generator {
                     'courseid must be present in phpunit_util::create_option() $record');
         }
 
+        $cmb1 = get_coursemodule_from_instance('booking', $record['bookingid'], $record['courseid']);
+        if (!$context = context_module::instance($cmb1->id)) {
+            throw new moodle_exception('badcontext');
+        }
+
         // Increment the forum subscription count.
         $this->bookingoptions++;
 
         $record = (object) $record;
 
-        // Add the subscription.
-        $record->id = $DB->insert_record('booking_options', $record);
+        // Conversion of strings like ["optiondatestart[0]"]=> int(1690792686) into arrays (by ChatGPT).
+        $optiondatestart = array();
+        $optiondateend = array();
+        foreach ($record as $key => $value) {
+            if (strpos($key, 'optiondatestart') === 0) {
+                // Get the index from the key.
+                preg_match('/optiondatestart\[(\d+)\]/', $key, $matches);
+                $index = $matches[1];
+                $optiondatestart[$index] = $value;
+            } else if (strpos($key, 'optiondateend') === 0) {
+                // Get the index from the key.
+                preg_match('/optiondateend\[(\d+)\]/', $key, $matches);
+                $index = $matches[1];
+                $optiondateend[$index] = $value;
+            }
+        }
+        // Sort the arrays by index.
+        ksort($optiondatestart);
+        ksort($optiondateend);
+
+        // Add optiondates to booking option.
+        if (is_array($optiondatestart) && is_array($optiondateend)) {
+            foreach ($optiondatestart as $i => $startdate) {
+                $record->newoptiondates[] = "$startdate - $optiondateend[$i]";
+            }
+        }
+
+        if ($record->id = booking_update_options($record, $context)) {
+            $record->optionid = $record->id;
+            // Save the prices to option.
+            $price = new price('option', $record->optionid);
+            foreach ($price->pricecategories as $pricecat) {
+                $catname = "pricegroup_".$pricecat->identifier;
+                $record->{$catname} = ["bookingprice_".$pricecat->identifier => (float) $pricecat->defaultvalue];
+            }
+            $price->save_from_form($record);
+            // Save customfield data to option (the id key has to be set to option id).
+            $handler = booking_handler::create();
+            $handler->instance_form_save($record, $record->optionid == -1);
+        }
+
+        return $record;
+    }
+
+    /**
+     * Function to create a dummy pricecategory option.
+     *
+     * @param array|stdClass $record
+     * @return stdClass the booking pricecategory object
+     */
+    public function create_pricecategory($record = null) {
+        global $DB;
+
+        $record = (object) $record;
+
+        $record->id = $DB->insert_record('booking_pricecategories', $record);
+
+        return $record;
+    }
+
+    /**
+     * Function to create a dummy campaign option.
+     *
+     * @param array|stdClass $record
+     * @return stdClass the booking campaign object
+     */
+    public function create_campaign($record = null) {
+        global $DB;
+
+        $record = (object) $record;
+
+        $record->id = $DB->insert_record('booking_campaigns', $record);
+
+        return $record;
+    }
+
+
+    /**
+     * Function to create a dummy semester option.
+     *
+     * @param array|stdClass $record
+     * @return stdClass the booking semester object
+     */
+    public function create_semester($record = null) {
+        global $DB;
+
+        $record = (object) $record;
+
+        $record->id = $DB->insert_record('booking_semesters', $record);
 
         return $record;
     }

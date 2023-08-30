@@ -158,6 +158,25 @@ if ($ADMIN->fulltree) {
                     get_string('turnoffwunderbytelogo', 'mod_booking'),
                     get_string('turnoffwunderbytelogo_desc', 'mod_booking'), 0));
 
+        $options = [
+            1 => "1",
+            2 => "2",
+            3 => "3",
+            4 => "4",
+            5 => "5",
+            6 => "6",
+            7 => "7",
+            8 => "8",
+            9 => "9",
+            10 => "10",
+        ];
+
+        $settings->add(
+            new admin_setting_configselect('booking/collapseshowsettings',
+                get_string('collapseshowsettings', 'mod_booking'),
+                get_string('collapseshowsettings_desc', 'mod_booking'),
+                2, $options));
+
     } else {
         $settings->add(
             new admin_setting_heading('appearancesettings',
@@ -174,14 +193,24 @@ if ($ADMIN->fulltree) {
                 get_string('teachersettings_desc', 'mod_booking')));
 
         $settings->add(
+            new admin_setting_configcheckbox('booking/teacherslinkonteacher',
+                get_string('teacherslinkonteacher', 'mod_booking'),
+                get_string('teacherslinkonteacher_desc', 'mod_booking'), 1));
+
+        $settings->add(
             new admin_setting_configcheckbox('booking/teachersnologinrequired',
-                    get_string('teachersnologinrequired', 'mod_booking'),
-                    get_string('teachersnologinrequired_desc', 'mod_booking'), 0));
+                get_string('teachersnologinrequired', 'mod_booking'),
+                get_string('teachersnologinrequired_desc', 'mod_booking'), 0));
 
         $settings->add(
             new admin_setting_configcheckbox('booking/teachersshowemails',
-                    get_string('teachersshowemails', 'mod_booking'),
-                    get_string('teachersshowemails_desc', 'mod_booking'), 0));
+                get_string('teachersshowemails', 'mod_booking'),
+                get_string('teachersshowemails_desc', 'mod_booking'), 0));
+
+        $settings->add(
+            new admin_setting_configcheckbox('booking/teachersallowmailtobookedusers',
+                get_string('teachersallowmailtobookedusers', 'mod_booking'),
+                get_string('teachersallowmailtobookedusers_desc', 'mod_booking'), 0));
     } else {
         $settings->add(
             new admin_setting_heading('teachersettings',
@@ -318,25 +347,21 @@ if ($ADMIN->fulltree) {
 
     // Choose the user profile field which is used to store each user's price category.
     $userprofilefields = $DB->get_records('user_info_field', null, '', 'id, name, shortname');
-    if (!empty($userprofilefields)) {
-        $userprofilefieldsarray = [];
-        $userprofilefieldsarray[0] = get_string('pricecategoryfieldoff', 'mod_booking');
+    $userprofilefieldsarray = [];
+    $userprofilefieldsarray[0] = get_string('pricecategoryfieldoff', 'mod_booking');
 
+    if (!empty($userprofilefields)) {
         // Create an array of key => value pairs for the dropdown.
         foreach ($userprofilefields as $userprofilefield) {
             $userprofilefieldsarray[$userprofilefield->shortname] = $userprofilefield->name;
         }
-
-        $settings->add(
-            new admin_setting_configselect(
-                'booking/pricecategoryfield',
-                get_string('pricecategoryfield', 'mod_booking'),
-                get_string('pricecategoryfielddesc', 'mod_booking'),
-                0,
-                $userprofilefieldsarray
-            )
-        );
     }
+
+    $settings->add(
+        new admin_setting_configselect('booking/pricecategoryfield',
+            get_string('pricecategoryfield', 'mod_booking'),
+            get_string('pricecategoryfielddesc', 'mod_booking'),
+            0, $userprofilefieldsarray));
 
     // Currency dropdown.
     $currenciesobjects = price::get_possible_currencies();
@@ -357,6 +382,18 @@ if ($ADMIN->fulltree) {
             $currencies
         )
     );
+
+    $settings->add(
+        new admin_setting_configcheckbox('booking/bookwithcreditsactive',
+                get_string('bookwithcreditsactive', 'mod_booking'),
+                get_string('bookwithcreditsactive_desc', 'mod_booking'), 0));
+
+    $settings->add(
+        new admin_setting_configselect('booking/bookwithcreditsprofilefield',
+            get_string('bookwithcreditsprofilefield', 'mod_booking'),
+            get_string('bookwithcreditsprofilefield_desc', 'mod_booking'),
+            0, $userprofilefieldsarray ?? []));
+
 
     // PRO feature: Progress bars.
     if ($proversion) {
@@ -614,21 +651,9 @@ if ($ADMIN->fulltree) {
         )
     );
     $settings->add(
-        new admin_setting_configcheckbox(
-            'booking/attachical',
-            get_string('attachical', 'mod_booking'),
-            get_string('attachicaldesc', 'mod_booking'),
-            0
-        )
-    );
-    $settings->add(
-        new admin_setting_configcheckbox(
-            'booking/multiicalfiles',
-            get_string('multiicalfiles', 'mod_booking'),
-            get_string('multiicalfilesdesc', 'mod_booking'),
-            0
-        )
-    );
+            new admin_setting_configcheckbox('booking/attachicalsessions',
+                    get_string('attachicalsess', 'mod_booking'),
+                    get_string('attachicalsessdesc', 'mod_booking'), 1));
     $settings->add(
         new admin_setting_configcheckbox(
             'booking/attachicalsessions',

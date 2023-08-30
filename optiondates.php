@@ -23,9 +23,10 @@
 
 use local_entities\entitiesrelation_handler;
 use mod_booking\booking_option;
+use mod_booking\booking_utils;
 use mod_booking\calendar;
 use mod_booking\form\optiondatesadd_form;
-use mod_booking\dates_handler;
+use mod_booking\option\dates_handler;
 use mod_booking\singleton_service;
 use mod_booking\teachers_handler;
 
@@ -39,6 +40,7 @@ $optionid = required_param('optionid', PARAM_INT);
 $delete = optional_param('delete', '', PARAM_INT);
 $duplicate = optional_param('duplicate', '', PARAM_INT);
 $edit = optional_param('edit', '', PARAM_INT);
+$split = optional_param('split', false, PARAM_BOOL);
 $url = new moodle_url('/mod/booking/optiondates.php', array('id' => $id, 'optionid' => $optionid));
 $PAGE->set_url($url);
 
@@ -59,65 +61,16 @@ $optionid = $DB->get_field('booking_options', 'id',
 require_capability('mod/booking:updatebooking', $context);
 
 // Get booking, booking option and booking utils, so we can work with booking utils.
-$booking = new mod_booking\booking($cm->id);
-$bookingoption = new booking_option($cm->id, $optionid);
-$bu = new \mod_booking\booking_utils($booking, $bookingoption);
+$booking = singleton_service::get_instance_of_booking_by_cmid($cm->id);
+$bookingoption = singleton_service::get_instance_of_booking_option($cm->id, $optionid);
+$bu = new booking_utils($booking, $bookingoption);
 
 if ($delete != '') {
     $changes = [];
-    // If there is an associated calendar event, delete it first.
     if ($optiondate = $DB->get_record('booking_optiondates', ['id' => $delete])) {
-        $DB->delete_records('event', ['id' => $optiondate->eventid]);
-
-        // Also, clean all associated user records.
-        $records = $DB->get_records('booking_userevents', array('optiondateid' => $delete));
-
-        foreach ($records as $record) {
-            $DB->delete_records('event', array('id' => $record->eventid));
-            $DB->delete_records('booking_userevents', array('id' => $record->id));
-        }
-
-        // Also store the changes so they can be sent in an update mail.
-        $changes[] = ['info' => get_string('changeinfosessiondeleted', 'booking'),
-                      'fieldname' => 'coursestarttime',
-                      'oldvalue' => $optiondate->coursestarttime];
-        $changes[] = ['fieldname' => 'courseendtime',
-                      'oldvalue' => $optiondate->courseendtime];
+        $datehandler = new dates_handler($bookingoption->id, $booking->id);
+        $datehandler->delete_option_date($optiondate);
     }
-
-    // Now we can delete the session.
-    $DB->delete_records('booking_optiondates', array('optionid' => $optionid, 'id' => $delete));
-
-    // We also need to delete the associated records in booking_optiondates_teachers.
-    teachers_handler::remove_teachers_from_deleted_optiondate($delete);
-
-    // If there is an associated entity, delete it too.
-    if (class_exists('local_entities\entitiesrelation_handler')) {
-        $erhandler = new entitiesrelation_handler('mod_booking', 'optiondate');
-        $erhandler->delete_relation($delete);
-    }
-
-    // If there are no sessions left, we switch from multisession to simple option.
-    if (!$DB->get_records('booking_optiondates', ['optionid' => $optionid])) {
-        $bu = new \mod_booking\booking_utils();
-        $bu->booking_show_option_userevents($optionid);
-    }
-
-    booking_updatestartenddate($optionid);
-
-    // Delete associated custom fields.
-    dates_handler::optiondate_deletecustomfields($delete);
-
-    // After deleting, we invalidate caches.
-    booking_option::purge_cache_for_option($optionid);
-
-    // If there have been significant changes, we have to resend an e-mail (containing an updated ical)...
-    // ...and the information about the changes..
-    if (!empty($changes)) {
-        // Set no update to true, so the original.
-        $bu->react_on_changes($cm->id, $context, $optionid, $changes, true);
-    }
-
     redirect($url, get_string('optiondatessuccessfullydelete', 'booking'), 5);
 }
 
@@ -139,15 +92,11 @@ if ($duplicate != '') {
         $record->eventid = 0; // No calendar event found to duplicate.
     }
 
-    $edit = $DB->insert_record('booking_optiondates', $record);
+    $datehandler = new dates_handler($bookingoption->id, $booking->id);
+    $edit = $datehandler->create_option_date($record);
 
     // For more readable code.
     $newoptiondateid = $edit;
-
-    // Add teachers of the booking option to newly created optiondate.
-    teachers_handler::subscribe_existing_teachers_to_new_optiondate($newoptiondateid);
-
-    booking_updatestartenddate($optionid);
 
     // Also duplicate custom fields of the optiondate.
     optiondate_duplicatecustomfields($oldoptiondateid, $newoptiondateid);
@@ -159,12 +108,6 @@ if ($duplicate != '') {
         if ($entityid) {
             $erhandler->save_entity_relation($newoptiondateid, $entityid);
         }
-    }
-
-    // Also create new user events (user calendar entries) for all booked users.
-    $users = $bookingoption->get_all_users_booked();
-    foreach ($users as $user) {
-        new calendar($cm->id, $optionid, $user->id, calendar::TYPEOPTIONDATE, $newoptiondateid, 1);
     }
 }
 
@@ -226,17 +169,14 @@ if ($mform->is_cancelled()) {
     } else {
         // It's a new optiondate (a.k.a. session).
         $changes = [];
-        if ($optiondateid = $DB->insert_record('booking_optiondates', $optiondate)) {
-
-            // Add teachers of the booking option to newly created optiondate.
-            teachers_handler::subscribe_existing_teachers_to_new_optiondate($optiondateid);
-
+        $datehandler = new dates_handler($bookingoption->id, $booking->id);
+        if ($optiondateid = $datehandler->create_option_date($optiondate)) {
             // Add info that a session has been added (do this only at coursestarttime, we don't need it twice).
-            $changes[] = [  'info' => get_string('changeinfosessionadded', 'booking'),
-                            'fieldname' => 'coursestarttime',
-                            'newvalue' => $optiondate->coursestarttime];
-            $changes[] = [  'fieldname' => 'courseendtime',
-                            'newvalue' => $optiondate->courseendtime];
+            $changes[] = ['info' => get_string('changeinfosessionadded', 'booking'),
+                    'fieldname' => 'coursestarttime',
+                    'newvalue' => $optiondate->coursestarttime];
+            $changes[] = ['fieldname' => 'courseendtime',
+                    'newvalue' => $optiondate->courseendtime];
         }
 
         // Retrieve available custom field data.

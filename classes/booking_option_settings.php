@@ -28,7 +28,6 @@ use mod_booking\booking_campaigns\booking_campaign;
 use moodle_exception;
 use stdClass;
 use moodle_url;
-use User;
 
 /**
  * Settings class for booking option instances.
@@ -241,6 +240,14 @@ class booking_option_settings {
     /** @var array $electivecombinations */
     public $electivecombinations = null;
 
+    /** @var string $json Is used to store non performance critical data like booking actions */
+    public $json = null;
+
+    /** @var stdClass $params */
+    public $params = null;
+
+    /** @var bool $campaignisset flag to apply campaigns only once */
+    public $campaignisset = null;
 
     /**
      * Constructor for the booking option settings class.
@@ -364,6 +371,8 @@ class booking_option_settings {
             $this->credits = $dbrecord->credits;
             $this->sortorder = $dbrecord->sortorder;
 
+            $this->json = $dbrecord->json;
+
             // Price formula: absolute value.
             if (isset($dbrecord->priceformulaadd)) {
                 $this->priceformulaadd = $dbrecord->priceformulaadd;
@@ -431,6 +440,8 @@ class booking_option_settings {
                 $this->load_imageurl_from_db($optionid, $dbrecord->bookingid);
                 if (!empty($this->imageurl)) {
                     $dbrecord->imageurl = $this->imageurl;
+                } else {
+                    $dbrecord->imageurl = '';
                 }
             } else {
                 $this->imageurl = $dbrecord->imageurl;
@@ -500,16 +511,25 @@ class booking_option_settings {
                 $this->electivecombinations = $dbrecord->electivecombinations;
             }
 
+            // TODO: This is a performance problem. We need to cache campaigns!
+            // TODO: We need to cache get_all_campaigns too!
             // Check if there are active campaigns.
             // If yes, we need to apply the booking limit factor.
-            $campaigns = campaigns_info::get_all_campaigns();
-            foreach ($campaigns as $camp) {
-                /** @var booking_campaign $campaign */
-                $campaign = $camp;
-                if ($campaign->campaign_is_active($this->id)) {
-                    $dbrecord->maxanswers = $campaign->get_campaign_limit($this->maxanswers);
-                    // Campaign booking limit has been applied.
+            if (!isset($dbrecord->campaignisset)) {
+                $campaigns = campaigns_info::get_all_campaigns();
+                foreach ($campaigns as $camp) {
+                    /** @var booking_campaign $campaign */
+                    $campaign = $camp;
+                    if ($campaign->campaign_is_active($this->id)) {
+                        $dbrecord->maxanswers = $campaign->get_campaign_limit($this->maxanswers);
+                        // Campaign booking limit has been applied.
+                    }
                 }
+                // Campaigns have been applied - let's cache a flag so we do not do it again.
+                $this->campaignisset = true;
+                $dbrecord->campaignisset = true;
+            } else {
+                $this->campaignisset = $dbrecord->campaignisset;
             }
 
             return $dbrecord;
@@ -828,9 +848,9 @@ class booking_option_settings {
      * We will always have them in cache if we have constructed an instance,
      * but just in case we also deal with an empty cache object.
      *
-     * @return stdClass
+     * @return stdClass|null
      */
-    public function return_settings_as_stdclass(): stdClass {
+    public function return_settings_as_stdclass(): ?stdClass {
 
         if (empty($this->id)) {
             return null;
@@ -940,9 +960,9 @@ class booking_option_settings {
             "'\", \"lastname\":\"'",
             "u.lastname",
             "'\", \"name\":\"'",
-            "u.firstname",
-            "' '",
-            'u.lastname',
+            "u.lastname",
+            "', '",
+            'u.firstname',
             "'\"}'"]);
         $where = '';
         $params = [];

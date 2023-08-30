@@ -18,7 +18,6 @@ namespace mod_booking;
 defined('MOODLE_INTERNAL') || die();
 
 use cache_helper;
-use context_module;
 use stdClass;
 use moodle_exception;
 use core_user;
@@ -31,9 +30,8 @@ use mod_booking\booking_settings;
 use mod_booking\booking_option_settings;
 use mod_booking\output\optiondates_only;
 use mod_booking\output\bookingoption_changes;
-use mod_booking\output\bookingoption_description;
+use mod_booking\output\renderer;
 use mod_booking\task\send_confirmation_mails;
-use moodle_url;
 
 require_once($CFG->dirroot.'/user/profile/lib.php');
 
@@ -104,9 +102,6 @@ class message_controller {
     /** @var string $custommessage for custom messages */
     private $custommessage;
 
-    /** @var renderer_base $output*/
-    private $output;
-
     /**
      * Constructor
      * @param int $msgcontrparam message controller param (send now | queue adhoc)
@@ -124,8 +119,9 @@ class message_controller {
         int $optionid, int $userid, int $optiondateid = null, $changes = null,
         string $customsubject = '', string $custommessage = '') {
 
-        global $DB, $USER, $PAGE;
+        global $USER, $PAGE;
 
+        // TODO: This is a bad idea. We need to find out the correct places where we really need to purge!
         // Purge booking instance settings before sending mails to make sure, we use correct data.
         cache_helper::invalidate_by_event('setbackbookinginstances', [$cmid]);
 
@@ -133,13 +129,7 @@ class message_controller {
         // It's no use passing the context object either.
 
         // With shortcodes & webservice we might not have a valid context object.
-        if (!isset($PAGE->context) || !$context = $PAGE->context ?? null) {
-            if (empty($context)) {
-                $PAGE->set_context(context_module::instance($cmid));
-            } else {
-                $PAGE->set_context($context);
-            }
-        }
+        booking_context_helper::fix_booking_page_context($PAGE, $cmid);
 
         if (!$bookingid) {
             $booking = singleton_service::get_instance_of_booking_by_cmid($cmid);
@@ -151,9 +141,15 @@ class message_controller {
         // Settings.
         $this->bookingsettings = singleton_service::get_instance_of_booking_settings_by_cmid($cmid);
         $this->optionsettings = singleton_service::get_instance_of_booking_option_settings($optionid);
-        $this->output = $PAGE->get_renderer('mod_booking');
 
-        if (empty($this->optionsettings->id)) {
+        /** @var renderer $output*/
+        $output = $PAGE->get_renderer('mod_booking');
+
+        // For easy access.
+        $settings = $this->optionsettings;
+        $optionid = $settings->id;
+
+        if (empty($optionid)) {
             debugging('ERROR: Option settings could not be created. Most probably, the option was deleted from DB.',
                 DEBUG_DEVELOPER);
             return;
@@ -177,7 +173,7 @@ class message_controller {
             $this->custommessage = $custommessage;
         }
 
-        // Booking_option instance needed to access functions get_all_users_booked and get_all_users_on_waitinglist.
+        // Booking_option instance.
         $this->option = singleton_service::get_instance_of_booking_option($cmid, $optionid);
 
         // Resolve the correct message fieldname.
@@ -187,139 +183,24 @@ class message_controller {
         if ($userid == $USER->id) {
             $this->user = $USER;
         } else {
-            $this->user = $DB->get_record('user', array('id' => $userid));
+            $this->user = singleton_service::get_instance_of_user($userid);
         }
 
-        // Generate email params.
-        $this->params = $this->get_email_params(($msgcontrparam == MSGCONTRPARAM_SEND_NOW ? true : false));
+        // Generate e-mail placeholder params.
+        $this->params = booking_option::get_placeholder_params($optionid, $userid);
 
-        // Generate the email body.
-        $this->messagebody = $this->get_email_body();
-
-        // For adhoc task mails, we need to prepare data differently.
-        if ($this->msgcontrparam == MSGCONTRPARAM_QUEUE_ADHOC) {
-            $this->messagedata = $this->get_message_data_queue_adhoc();
-        } else {
-            $this->messagedata = $this->get_message_data_send_now();
-        }
-    }
-
-    /**
-     * Prepares the email parameters.
-     * @return stdClass data to be sent via mail
-     */
-    private function get_email_params($callapi = false): stdClass {
-
-        global $CFG;
-
-        $params = new stdClass();
-
-        $timeformat = get_string('strftimetime', 'langconfig');
-        $dateformat = get_string('strftimedate', 'langconfig');
-
-        $courselink = '';
-        if ($this->optionsettings->courseid) {
-            $courselink = new \moodle_url('/course/view.php', array('id' => $this->optionsettings->courseid));
-            $courselink = \html_writer::link($courselink, $courselink->out());
-        }
-        $bookinglink = new \moodle_url('/mod/booking/view.php', array('id' => $this->cmid));
-        $bookinglink = \html_writer::link($bookinglink, $bookinglink->out());
-
-        // We add the URLs for the user to subscribe to user and course event calendar.
-        $bu = new booking_utils();
-
-        // These links will not be clickable (beacuse they will be copied by users).
-        $params->usercalendarurl = '<a href="#" style="text-decoration:none; color:#000">' .
-        $bu->booking_generate_calendar_subscription_link($this->user, 'user') .
-        '</a>';
-
-        $params->coursecalendarurl = '<a href="#" style="text-decoration:none; color:#000">' .
-        $bu->booking_generate_calendar_subscription_link($this->user, 'courses') .
-        '</a>';
-
-        // Add a placeholder with a link to go to the current booking option.
-        $gotobookingoptionlink = new \moodle_url($CFG->wwwroot . '/mod/booking/view.php', array(
-            'id' => $this->cmid,
-            'optionid' => $this->optionid,
-            'whichview' => 'showonlyone'
-        ));
-        $params->gotobookingoption = \html_writer::link($gotobookingoptionlink, $gotobookingoptionlink->out());
-
-        // Important: We have to delete answers cache before calling $bookinganswer->user_status.
-        $cache = \cache::make('mod_booking', 'bookingoptionsanswers');
-        $data = $cache->delete($this->optionid);
-        $bookinganswer = singleton_service::get_instance_of_booking_answers($this->optionsettings);
-        $params->status = $this->option->get_user_status_string($this->userid, $bookinganswer->user_status($this->userid));
-
-        if ($callapi) {
-            $dataid = file_get_contents('https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=' . rawurlencode($this->userid) . '&choe=UTF-8');
-            $datausername = file_get_contents('https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=' . rawurlencode($this->user->username) . '&choe=UTF-8');
-        } else {
-            $dataid = '';
-            $datausername = '';
-        }
-
-        $base64id = 'data:image/png;base64,' . base64_encode($dataid);
-        $base64username = 'data:image/png;base64,' . base64_encode($datausername);
-
-        $params->qr_id = '<img src="' . $base64id . '" title="Moodle user ID." />';
-        $params->qr_username = '<img src="' . $base64username . '" title="Moodle username." />';
-        $params->participant = fullname($this->user);
-        $params->email = $this->user->email ?? '';
-        $params->title = format_string($this->optionsettings->get_title_with_prefix());
-        $params->duration = $this->bookingsettings->duration;
-        $params->starttime = $this->optionsettings->coursestarttime ?
-            userdate($this->optionsettings->coursestarttime, $timeformat) : '';
-        $params->endtime = $this->optionsettings->courseendtime ?
-            userdate($this->optionsettings->courseendtime, $timeformat) : '';
-        $params->startdate = $this->optionsettings->coursestarttime ?
-            userdate($this->optionsettings->coursestarttime, $dateformat) : '';
-        $params->enddate = $this->optionsettings->courseendtime ?
-            userdate($this->optionsettings->courseendtime, $dateformat) : '';
-        $params->courselink = $courselink;
-        $params->bookinglink = $bookinglink;
-        $params->location = $this->optionsettings->location;
-        $params->institution = $this->optionsettings->institution;
-        $params->address = $this->optionsettings->address;
-        $params->eventtype = $this->bookingsettings->eventtype;
-        $params->shorturl = $this->optionsettings->shorturl;
-        $params->pollstartdate = $this->optionsettings->coursestarttime ?
-            userdate((int) $this->optionsettings->coursestarttime, get_string('pollstrftimedate', 'booking')) : '';
-        if (empty($this->optionsettings->pollurl)) {
-            $params->pollurl = $this->bookingsettings->pollurl;
-        } else {
-            $params->pollurl = $this->optionsettings->pollurl;
-        }
-        if (empty($this->optionsettings->pollurlteachers)) {
-            $params->pollurlteachers = $this->bookingsettings->pollurlteachers;
-        } else {
-            $params->pollurlteachers = $this->optionsettings->pollurlteachers;
-        }
-
-        // Placeholder for the number of booked users.
-        $params->numberparticipants = strval(count($this->option->get_all_users_booked()));
-
-        // Placeholder for the number of users on the waiting list.
-        $params->numberwaitinglist = strval(count($this->option->get_all_users_on_waitinglist()));
-
-        // If there are changes, let's render them.
-        if (!empty($this->changes)) {
-            $data = new bookingoption_changes($this->changes, $this->cmid);
-            $params->changes = $this->output->render_bookingoption_changes($data);
-        }
-
+        // Now we add e-mail specific params.
         switch ($this->msgcontrparam) {
             case MSGCONTRPARAM_SEND_NOW:
             case MSGCONTRPARAM_QUEUE_ADHOC:
+                // We overwrite {bookingdetails} here, so we have a description for e-mails (website description is default).
                 // Add placeholder {bookingdetails} so we can add the detailed option description (similar to calendar, modal...
                 // ... and ical) to mails.
-                $params->bookingdetails = get_rendered_eventdescription($this->optionsettings->id,
-                    $this->cmid, DESCRIPTION_MAIL);
+                $this->params->bookingdetails = get_rendered_eventdescription($optionid, $cmid, DESCRIPTION_MAIL);
                 break;
             case MSGCONTRPARAM_VIEW_CONFIRMATION:
                 // For viewconfirmation.php.
-                $params->bookingdetails = get_rendered_eventdescription($this->optionsettings->id,
-                    $this->cmid, DESCRIPTION_WEBSITE);
+                $this->params->bookingdetails = get_rendered_eventdescription($optionid, $cmid, DESCRIPTION_WEBSITE);
                 break;
             case MSGCONTRPARAM_DO_NOT_SEND:
             default:
@@ -328,83 +209,36 @@ class message_controller {
 
         // Params for session reminders.
         if ($this->messageparam == MSGPARAM_SESSIONREMINDER) {
-
             // For session reminders we only have ONE session.
             $sessions = [];
-            foreach ($this->optionsettings->sessions as $session) {
+            foreach ($settings->sessions as $session) {
                 if (!empty($session->optiondateid) && !empty($this->optiondateid)) {
                     if ($session->optiondateid == $this->optiondateid) {
                         $sessions[] = $session;
                     }
                 }
             }
-
             // Render optiontimes using a template.
-            $data = new optiondates_only($this->optionsettings);
-            $params->dates = $this->output->render_optiondates_only($data);
-
+            $data = new optiondates_only($settings);
+            $this->params->dates = $output->render_optiondates_only($data);
             // Rendered session description.
-            $params->sessiondescription = get_rendered_eventdescription($this->optionid, $this->cmid, DESCRIPTION_CALENDAR);
+            $this->params->sessiondescription = get_rendered_eventdescription($this->optionid, $this->cmid, DESCRIPTION_CALENDAR);
 
         } else {
             // Render optiontimes using a template.
-            $data = new optiondates_only($this->optionsettings);
-            $params->dates = $this->output->render_optiondates_only($data);
+            $data = new optiondates_only($settings);
+            $this->params->dates = $output->render_optiondates_only($data);
         }
 
-        // Add placeholders for additional user fields.
-        if (isset($this->user->username)) {
-            $params->username = $this->user->username;
-        }
-        if (isset($this->user->firstname)) {
-            $params->firstname = $this->user->firstname;
-        }
-        if (isset($this->user->lastname)) {
-            $params->lastname = $this->user->lastname;
-        }
-        if (isset($this->user->department)) {
-            $params->department = $this->user->department;
+        // If there are changes, let's render them.
+        // We need the {changes} placeholder for change notifications.
+        if (!empty($changes)) {
+            $data = new bookingoption_changes($changes, $cmid);
+            $this->params->changes = $output->render_bookingoption_changes($data);
         }
 
-        // Get bookingoption_description instance for rendering certain data.
-        $params->teachers = $this->optionsettings->render_list_of_teachers();
-
-        // Params for individual teachers.
-        $i = 1;
-        foreach ($this->optionsettings->teachers as $teacher) {
-            $params->{"teacher" . $i} = $teacher->firstname . ' ' . $teacher->lastname;
-            $i++;
-        }
-        // If there's only one teacher, we can use either {teacher} or {teacher1}.
-        if (!empty($params->teacher1)) {
-            $params->teacher = $params->teacher1;
-        } else {
-            $params->teacher = '';
-        }
-
-        // Add user profile fields to e-mail params.
-        // If user profile fields are missing, we need to load them correctly.
-        if (empty($this->user->profile)) {
-            $this->user->profile = [];
-            profile_load_data($this->user);
-            foreach ($this->user as $userkey => $uservalue) {
-                if (substr($userkey, 0, 14) == "profile_field_") {
-                    $profilefieldkey = str_replace('profile_field_', '', $userkey);
-                    $this->user->profile[$profilefieldkey] = $uservalue;
-                }
-            }
-        }
-        foreach ($this->user->profile as $profilefieldkey => $profilefieldvalue) {
-            // Ignore fields that use a param name that is already in use.
-            if (!isset($params->{$profilefieldkey})) {
-                // Example: There is a user profile field called "Title".
-                // We can now use the placeholder {Title}. (Keep in mind that this is case-sensitive!).
-                $params->{$profilefieldkey} = $profilefieldvalue;
-            }
-        }
-
-        // Add a param for the user profile picture.
-        if ($usercontext = context_user::instance($this->userid, IGNORE_MISSING)) {
+        // Add a param for the user profile picture so we can show it in e-mails.
+        if ($usercontext = context_user::instance($userid, IGNORE_MISSING)) {
             $fs = get_file_storage();
             $files = $fs->get_area_files($usercontext->id, 'user', 'icon');
             $picturefile = null;
@@ -421,20 +255,21 @@ class message_controller {
                 $picturedata = $picturefile->get_content();
                 $picturebase64 = base64_encode($picturedata);
                 // Now load the HTML of the image into the profilepicture param.
-                $params->profilepicture = '<img src="data:image/image;base64,' . $picturebase64 . '" />';
+                $this->params->profilepicture = '<img src="data:image/image;base64,' . $picturebase64 . '" />';
             } else {
-                $params->profilepicture = '';
+                $this->params->profilepicture = '';
             }
         }
 
-        // Add a param to the option's teachers report (training journal).
-        $teachersreportlink = new \moodle_url('/mod/booking/optiondates_teachers_report.php', [
-            'id' => $this->cmid,
-            'optionid' => $this->optionid,
-        ]);
-        $params->journal = \html_writer::link($teachersreportlink, $teachersreportlink->out());
+        // Generate the email body.
+        $this->messagebody = $this->get_email_body();
 
-        return $params;
+        // For adhoc task mails, we need to prepare data differently.
+        if ($this->msgcontrparam == MSGCONTRPARAM_QUEUE_ADHOC) {
+            $this->messagedata = $this->get_message_data_queue_adhoc();
+        } else {
+            $this->messagedata = $this->get_message_data_send_now();
+        }
     }
 
     /**
@@ -769,385 +604,5 @@ class message_controller {
                 throw new moodle_exception('ERROR: Unknown message parameter!');
         }
         return $fieldname;
-    }
-
-    /**
-     * WE WANT TO GET RID OF THIS MONSTER FUNCTION IN THE FUTURE.
-     * WE CURRENTLY NEED IT TO SUPPORT MULTIPLE ICAL-ATTACHMENTS.
-     * USAGE IN: send_confirmation_mails.php.
-     *
-     * Send an email to a specified user
-     *
-     * @param stdClass $user A {@see $USER} object
-     * @param stdClass $from A {@see $USER} object
-     * @param string $subject plain text subject line of the email
-     * @param string $messagetext plain text version of the message
-     * @param string $messagehtml complete html version of the message (optional)
-     * @param string $attachment a file on the filesystem, either relative to $CFG->dataroot or a full
-     *        path to a file in $CFG->tempdir
-     * @param string $attachname the name of the file (extension indicates MIME)
-     * @param bool $usetrueaddress determines whether $from email address should
-     *        be sent out. Will be overruled by user profile setting for maildisplay
-     * @param string $replyto Email address to reply to
-     * @param string $replytoname Name of reply to recipient
-     * @param int $wordwrapwidth custom word wrap width, default 79
-     * @return bool Returns true if mail was sent OK and false if there was an error.
-     */
-    public static function phpmailer_email_to_user($user, $from, $subject, $messagetext, $messagehtml = '',
-        $attachment = '', $attachname = '', $usetrueaddress = true, $replyto = '', $replytoname = '',
-        $wordwrapwidth = 79) {
-
-        global $CFG, $PAGE, $SITE;
-
-        if (empty($user) || empty($user->id)) {
-            debugging('Can not send email to null user', DEBUG_DEVELOPER);
-            return false;
-        }
-
-        if (empty($user->email)) {
-            debugging('Can not send email to user without email: ' . $user->id, DEBUG_DEVELOPER);
-            return false;
-        }
-
-        if (!empty($user->deleted)) {
-            debugging('Can not send email to deleted user: ' . $user->id, DEBUG_DEVELOPER);
-            return false;
-        }
-
-        /* // phpcs:ignore Squiz.PHP.CommentedOutCode.Found
-        if (defined('BEHAT_SITE_RUNNING')) {
-            // Fake email sending in behat.
-            return true;
-        }
-
-        if (!empty($CFG->noemailever)) {
-            // Hidden setting for development sites, set in config.php if needed.
-            debugging('Not sending email due to $CFG->noemailever config setting', DEBUG_NORMAL);
-            return true;
-        }
-        */
-
-        if (email_should_be_diverted($user->email)) {
-            $subject = "[DIVERTED {$user->email}] $subject";
-            $user = clone ($user);
-            $user->email = $CFG->divertallemailsto;
-        }
-
-        // Skip mail to suspended users.
-        if ((isset($user->auth) && $user->auth == 'nologin') ||
-            (!empty($user->suspended))) {
-            return true;
-        }
-
-        if (!validate_email($user->email)) {
-            // We can not send emails to invalid addresses - it might create security issue or confuse...
-            // ...the mailer.
-            debugging(
-                    "email_to_user: User $user->id (" . fullname($user) .
-                    ") email ($user->email) is invalid! Not sending.");
-            return false;
-        }
-
-        if (over_bounce_threshold($user)) {
-            debugging(
-                    "email_to_user: User $user->id (" . fullname($user) .
-                    ") is over bounce threshold! Not sending.");
-            return false;
-        }
-
-        // TLD .invalid is specifically reserved for invalid domain names.
-        // For More information, see {@link http://tools.ietf.org/html/rfc2606#section-2}.
-        if (substr($user->email, -8) == '.invalid') {
-            debugging(
-                    "email_to_user: User $user->id (" . fullname($user) .
-                    ") email domain ($user->email) is invalid! Not sending.");
-            return true; // This is not an error.
-        }
-
-        // If the user is a remote mnet user, parse the email text for URL to the
-        // wwwroot and modify the url to direct the user's browser to login at their
-        // home site (identity provider - idp) before hitting the link itself.
-        if (is_mnet_remote_user($user)) {
-            require_once($CFG->dirroot . '/mnet/lib.php');
-
-            $jumpurl = mnet_get_idp_jump_url($user);
-            $callback = partial('mnet_sso_apply_indirection', $jumpurl);
-
-            $messagetext = preg_replace_callback("%($CFG->wwwroot[^[:space:]]*)%", $callback,
-                    $messagetext);
-            $messagehtml = preg_replace_callback("%href=[\"'`]($CFG->wwwroot[\w_:\?=#&@/;.~-]*)[\"'`]%",
-                    $callback, $messagehtml);
-        }
-        $mail = get_mailer();
-
-        if (!empty($mail->SMTPDebug)) {
-            echo '<pre>' . "\n";
-        }
-
-        $temprecipients = array();
-        $tempreplyto = array();
-
-        // Make sure that we fall back onto some reasonable no-reply address.
-        $noreplyaddressdefault = 'noreply@' . get_host_from_url($CFG->wwwroot);
-        $noreplyaddress = empty($CFG->noreplyaddress) ? $noreplyaddressdefault : $CFG->noreplyaddress;
-
-        if (!validate_email($noreplyaddress)) {
-            debugging('email_to_user: Invalid noreply-email ' . s($noreplyaddress));
-            $noreplyaddress = $noreplyaddressdefault;
-        }
-
-        // Make up an email address for handling bounces.
-        if (!empty($CFG->handlebounces)) {
-            $modargs = 'B' . base64_encode(pack('V', $user->id)) . substr(md5($user->email), 0, 16);
-            $mail->Sender = generate_email_processing_address(0, $modargs);
-        } else {
-            $mail->Sender = $noreplyaddress;
-        }
-
-        // Make sure that the explicit replyto is valid, fall back to the implicit one.
-        if (!empty($replyto) && !validate_email($replyto)) {
-            debugging('email_to_user: Invalid replyto-email ' . s($replyto));
-            $replyto = $noreplyaddress;
-        }
-
-        if (is_string($from)) { // So we can pass whatever we want if there is need.
-            $mail->From = $noreplyaddress;
-            $mail->FromName = $from;
-            // Check if using the true address is true, and the email is in the list of allowed domains
-            // for sending email,
-            // and that the senders email setting is either displayed to everyone, or display to only
-            // other users that are enrolled
-            // in a course with the sender.
-        } else if ($usetrueaddress && can_send_from_real_email_address($from, $user)) {
-            if (!validate_email($from->email)) {
-                debugging('email_to_user: Invalid from-email ' . s($from->email) . ' - not sending');
-                // Better not to use $noreplyaddress in this case.
-                return false;
-            }
-            $mail->From = $from->email;
-            $fromdetails = new stdClass();
-            $fromdetails->name = fullname($from);
-            $fromdetails->url = preg_replace('#^https?://#', '', $CFG->wwwroot);
-            $fromdetails->siteshortname = format_string($SITE->shortname);
-            $fromstring = $fromdetails->name;
-            if ($CFG->emailfromvia == EMAIL_VIA_ALWAYS) {
-                $fromstring = get_string('emailvia', 'core', $fromdetails);
-            }
-            $mail->FromName = $fromstring;
-            if (empty($replyto)) {
-                $tempreplyto[] = array($from->email, fullname($from));
-            }
-        } else {
-            $mail->From = $noreplyaddress;
-            $fromdetails = new stdClass();
-            $fromdetails->name = fullname($from);
-            $fromdetails->url = preg_replace('#^https?://#', '', $CFG->wwwroot);
-            $fromdetails->siteshortname = format_string($SITE->shortname);
-            $fromstring = $fromdetails->name;
-            if ($CFG->emailfromvia != EMAIL_VIA_NEVER) {
-                $fromstring = get_string('emailvia', 'core', $fromdetails);
-            }
-            $mail->FromName = $fromstring;
-            if (empty($replyto)) {
-                $tempreplyto[] = array($noreplyaddress, get_string('noreplyname'));
-            }
-        }
-
-        if (!empty($replyto)) {
-            $tempreplyto[] = array($replyto, $replytoname);
-        }
-
-        $temprecipients[] = array($user->email, fullname($user));
-
-        // Set word wrap.
-        $mail->WordWrap = $wordwrapwidth;
-
-        if (!empty($from->customheaders)) {
-            // Add custom headers.
-            if (is_array($from->customheaders)) {
-                foreach ($from->customheaders as $customheader) {
-                    $mail->addCustomHeader($customheader);
-                }
-            } else {
-                $mail->addCustomHeader($from->customheaders);
-            }
-        }
-
-        // If the X-PHP-Originating-Script email header is on then also add an additional
-        // header with details of where exactly in moodle the email was triggered from,
-        // either a call to message_send() or to email_to_user().
-        if (ini_get('mail.add_x_header')) {
-            // phpcs:ignore PHPCompatibility.FunctionUse.ArgumentFunctionsReportCurrentValue.Changed
-            $stack = debug_backtrace(false);
-            $origin = $stack[0];
-
-            foreach ($stack as $depth => $call) {
-                if ($call['function'] == 'message_send') {
-                    $origin = $call;
-                }
-            }
-
-            $originheader = $CFG->wwwroot . ' => ' . gethostname() . ':' .
-                    str_replace($CFG->dirroot . '/', '', $origin['file']) . ':' . $origin['line'];
-            $mail->addCustomHeader('X-Moodle-Originating-Script: ' . $originheader);
-        }
-
-        if (!empty($from->priority)) {
-            $mail->Priority = $from->priority;
-        }
-
-        $renderer = $PAGE->get_renderer('core');
-        $context = array('sitefullname' => $SITE->fullname, 'siteshortname' => $SITE->shortname,
-        'sitewwwroot' => $CFG->wwwroot, 'subject' => $subject, 'to' => $user->email,
-        'toname' => fullname($user), 'from' => $mail->From, 'fromname' => $mail->FromName);
-        if (!empty($tempreplyto[0])) {
-            $context['replyto'] = $tempreplyto[0][0];
-            $context['replytoname'] = $tempreplyto[0][1];
-        }
-        if ($user->id > 0) {
-            $context['touserid'] = $user->id;
-            $context['tousername'] = $user->username;
-        }
-
-        if (!empty($user->mailformat) && $user->mailformat == 1) {
-            // Only process html templates if the user preferences allow html email.
-
-            if ($messagehtml) {
-                // If html has been given then pass it through the template.
-                $context['body'] = $messagehtml;
-                $messagehtml = $renderer->render_from_template('core/email_html', $context);
-            } else {
-                // If no html has been given, BUT there is an html wrapping template then
-                // auto convert the text to html and then wrap it.
-                $autohtml = trim(text_to_html($messagetext));
-                $context['body'] = $autohtml;
-                $temphtml = $renderer->render_from_template('core/email_html', $context);
-                if ($autohtml != $temphtml) {
-                    $messagehtml = $temphtml;
-                }
-            }
-        }
-
-        $context['body'] = $messagetext;
-        $mail->Subject = $renderer->render_from_template('core/email_subject', $context);
-        $mail->FromName = $renderer->render_from_template('core/email_fromname', $context);
-        $messagetext = $renderer->render_from_template('core/email_text', $context);
-
-        // Autogenerate a MessageID if it's missing.
-        if (empty($mail->MessageID)) {
-            $mail->MessageID = generate_email_messageid();
-        }
-
-        if ($messagehtml && !empty($user->mailformat) && $user->mailformat == 1) {
-            // Don't ever send HTML to users who don't want it.
-            $mail->isHTML(true);
-            $mail->Encoding = 'quoted-printable';
-            $mail->Body = $messagehtml;
-            $mail->AltBody = "\n$messagetext\n";
-        } else {
-            $mail->isHTML(false);
-            $mail->Body = "\n$messagetext\n";
-        }
-
-        // Fix: Prevent from adding empty attachments.
-        if (!empty($attachment)) {
-            if (!is_array((array) $attachment) && ($attachment && $attachname)) {
-                $attachment[$attachname] = $attachment;
-            }
-            if (is_array((array) $attachment)) {
-                $attachment = (array) $attachment;
-                foreach ($attachment as $attachname => $attachlocation) {
-                    if (preg_match("~\\.\\.~", $attachlocation)) {
-                        // Security check for ".." in dir path.
-                        $supportuser = core_user::get_support_user();
-                        $temprecipients[] = array($supportuser->email, fullname($supportuser, true));
-                        $mail->addStringAttachment(
-                                'Error in attachment.  User attempted to attach a filename with an unsafe name.',
-                                'error.txt', '8bit', 'text/plain');
-                    } else {
-                        require_once($CFG->libdir . '/filelib.php');
-                        $mimetype = mimeinfo('type', $attachname);
-
-                        $attachmentpath = $attachlocation;
-
-                        // Before doing the comparison, make sure that the paths are correct (Windows uses
-                        // slashes in the other direction).
-                        $attachpath = str_replace('\\', '/', $attachmentpath);
-                        // Make sure both variables are normalised before comparing.
-                        $temppath = str_replace('\\', '/', realpath($CFG->tempdir));
-
-                        // If the attachment is a full path to a file in the tempdir, use it as is,
-                        // otherwise assume it is a relative path from the dataroot (for backwards
-                        // compatibility reasons).
-                        if (strpos($attachpath, $temppath) !== 0) {
-                            $attachmentpath = $CFG->dataroot . '/' . $attachmentpath;
-                        }
-
-                        $mail->addAttachment($attachmentpath, $attachname, 'base64', $mimetype);
-                    }
-                }
-            }
-        }
-
-        // Check if the email should be sent in an other charset then the default UTF-8.
-        if ((!empty($CFG->sitemailcharset) || !empty($CFG->allowusermailcharset))) {
-
-            // Use the defined site mail charset or eventually the one preferred by the recipient.
-            $charset = $CFG->sitemailcharset;
-            if (!empty($CFG->allowusermailcharset)) {
-                if ($useremailcharset = get_user_preferences('mailcharset', '0', $user->id)) {
-                    $charset = $useremailcharset;
-                }
-            }
-
-            // Convert all the necessary strings if the charset is supported.
-            $charsets = get_list_of_charsets();
-            unset($charsets['UTF-8']);
-            if (in_array($charset, $charsets)) {
-                $mail->CharSet = $charset;
-                $mail->FromName = core_text::convert($mail->FromName, 'utf-8', strtolower($charset));
-                $mail->Subject = core_text::convert($mail->Subject, 'utf-8', strtolower($charset));
-                $mail->Body = core_text::convert($mail->Body, 'utf-8', strtolower($charset));
-                $mail->AltBody = core_text::convert($mail->AltBody, 'utf-8', strtolower($charset));
-
-                foreach ($temprecipients as $key => $values) {
-                    $temprecipients[$key][1] = core_text::convert($values[1], 'utf-8',
-                            strtolower($charset));
-                }
-                foreach ($tempreplyto as $key => $values) {
-                    $tempreplyto[$key][1] = core_text::convert($values[1], 'utf-8', strtolower(
-                            $charset));
-                }
-            }
-        }
-
-        foreach ($temprecipients as $values) {
-            $mail->addAddress($values[0], $values[1]);
-        }
-        foreach ($tempreplyto as $values) {
-            $mail->addReplyTo($values[0], $values[1]);
-        }
-
-        if ($mail->send()) {
-            set_send_count($user);
-            if (!empty($mail->SMTPDebug)) {
-                echo '</pre>';
-            }
-            return true;
-        } else {
-            // Trigger event for failing to send email.
-            $event = \core\event\email_failed::create(
-                    array('context' => context_system::instance(), 'userid' => $from->id,
-                        'relateduserid' => $user->id,
-                        'other' => array('subject' => $subject, 'message' => $messagetext,
-                            'errorinfo' => $mail->ErrorInfo)));
-            $event->trigger();
-
-            if (!empty($mail->SMTPDebug)) {
-                echo '</pre>';
-            }
-
-            return false;
-        }
     }
 }

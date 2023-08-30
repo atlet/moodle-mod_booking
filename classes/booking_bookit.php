@@ -19,11 +19,11 @@ namespace mod_booking;
 use cache;
 use context_module;
 use context_system;
-use mod_bigbluebuttonbn\settings;
 use mod_booking\bo_availability\bo_info;
 use mod_booking\output\bookingoption_description;
 use mod_booking\output\bookit_button;
 use mod_booking\output\prepagemodal;
+use mod_booking\output\renderer;
 use mod_booking\subbookings\subbookings_info;
 use moodle_exception;
 
@@ -213,7 +213,7 @@ class booking_bookit {
      */
     public static function bookit(string $area, int $itemid, int $userid = 0, string $data = '') {
 
-        global $USER;
+        global $USER, $CFG;
 
         // Make sure the user has the right to book in principle.
         $context = context_system::instance();
@@ -222,6 +222,8 @@ class booking_bookit {
             && $userid != $USER->id
             && !has_capability('mod/booking:bookforothers', $context)) {
             throw new moodle_exception('norighttoaccess', 'mod_booking');
+        } else if (empty($userid)) {
+            $userid = $USER->id;
         }
 
         if ($area === 'option') {
@@ -239,12 +241,24 @@ class booking_bookit {
             // Therefore, we have to override it to make this functionality useful.
             // If the id is 1, this means that only the bookit button is blocking, this means we are allowed to book.
 
+            /* TODO: Refactor this.
+             First, we need a switch.
+             Second the reaction code should be included in the condition classes themselves, to improve maintainability. */
             if ($id < 1) {
                 $isavailable = true;
             } else if ($id === BO_COND_BOOKITBUTTON) {
 
                 $cache = cache::make('mod_booking', 'confirmbooking');
                 $cachekey = $userid . "_" . $settings->id . "_bookit";
+                $now = time();
+                $cache->set($cachekey, $now);
+
+                $isavailable = false;
+
+            } else if ($id === BO_COND_BOOKWITHCREDITS) {
+
+                $cache = cache::make('mod_booking', 'confirmbooking');
+                $cachekey = $userid . "_" . $settings->id . "_bookwithcredits";
                 $now = time();
                 $cache->set($cachekey, $now);
 
@@ -257,6 +271,39 @@ class booking_bookit {
                 $cachekey = $userid . "_" . $settings->id . '_bookit';
                 $cache->delete($cachekey);
 
+                // This means we can actuall book.
+                $isavailable = true;
+
+            } else if ($id === BO_COND_CONFIRMBOOKWITHCREDITS) {
+
+                // Make sure cache is not blocking anymore.
+                $cache = cache::make('mod_booking', 'confirmbooking');
+                $cachekey = $userid . "_" . $settings->id . '_bookwithcredits';
+                $cache->delete($cachekey);
+
+                // Now, before actually booking, we also need to substract the credit from the concerned user.
+                // Get the used custom profile field.
+                if (!$profilefield = get_config('booking', 'bookwithcreditsprofilefield')) {
+                    throw new moodle_exception('nocreditsfielddefined', 'mod_booking');
+                }
+
+                if ($USER->id != $userid) {
+                    $user = singleton_service::get_instance_of_user($userid);
+                } else {
+                    $user = $USER;
+                }
+
+                if ($user->profile[$profilefield] < $settings->credits) {
+                    throw new moodle_exception('notenoughcredits', 'mod_booking');
+                }
+
+                $user->profile[$profilefield] = $user->profile[$profilefield] - $settings->credits;
+
+                // We require this file only if we really do need it.
+                require_once("$CFG->dirroot/user/profile/lib.php");
+                profile_save_custom_fields($userid, [$profilefield => $user->profile[$profilefield]]);
+
+                // This means we can actuall book.
                 $isavailable = true;
 
             } else if ($id === BO_COND_ALREADYBOOKED || $id === BO_COND_ONWAITINGLIST) {
@@ -491,12 +538,9 @@ class booking_bookit {
         $booking = singleton_service::get_instance_of_booking_by_optionid($itemid);
 
         // With shortcodes & webservice we might not have a valid context object.
-        if (!isset($PAGE->context) || !$context = $PAGE->context ?? null) {
-            if (empty($context)) {
-                $PAGE->set_context(context_module::instance($booking->cmid));
-            }
-        }
+        booking_context_helper::fix_booking_page_context($PAGE, $booking->cmid);
 
+        /** @var renderer $output */
         $output = $PAGE->get_renderer('mod_booking');
         $data = new bookingoption_description($itemid, null, DESCRIPTION_WEBSITE, false, null, $user);
         $description = $output->render_bookingoption_description_cartitem($data);

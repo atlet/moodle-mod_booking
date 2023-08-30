@@ -63,7 +63,7 @@ class shortcodes {
             $perpage = 1000;
         }
 
-        $table = self::init_table_for_courses();
+        $table = self::init_table_for_courses(null, $course->shortname);
 
         $wherearray['recommendedin'] = "%$course->shortname%";
 
@@ -93,19 +93,9 @@ class shortcodes {
             $optionsfields = $possibleoptions;
         }
 
-        view::apply_standard_params_for_bookingtable($table, $optionsfields, false, false, false);
+        view::apply_standard_params_for_bookingtable($table, $optionsfields, true, true, true);
 
         unset($table->subcolumns['rightside']);
-
-        // phpcs:disable
-        // So we don't need to configure manually.
-        //$table->use_pages = false;
-        //$table->cardsort = true;
-        //self::set_table_options_from_arguments($table, $args);
-        //self::generate_table_for_list($table, $args);
-        //$table->infinitescroll = 60;
-        //$table->tabletemplate = 'mod_booking/table_list';
-        // phpcs:enable
 
         $out = $table->outhtml($perpage, true);
 
@@ -115,12 +105,13 @@ class shortcodes {
     /**
      * Base function for standard table configuration
      *
-     * @param booking $booking
+     * @param ?booking $booking
+     * @param ?string $uniquetablename
      * @return bookingoptions_wbtable
      */
-    private static function init_table_for_courses($booking = null) {
+    private static function init_table_for_courses($booking = null, $uniquetablename = null) {
 
-        $tablename = bin2hex(random_bytes(12));
+        $tablename = $uniquetablename ?? bin2hex(random_bytes(12));
 
         $table = new bookingoptions_wbtable($tablename, $booking);
 
@@ -170,30 +161,6 @@ class shortcodes {
         }
 
         return $booking;
-    }
-
-    private static function set_table_options_from_arguments(&$table, $args) {
-
-        // phpcs:ignore
-        // $table->set_display_options($args);
-
-        if (!empty($args['filter'])) {
-            self::define_filtercolumns($table);
-        }
-
-        if (!empty($args['search'])) {
-            $table->define_fulltextsearchcolumns(['titleprefix', 'text', 'description', 'location', 'teacherobjects']);
-        }
-
-        if (!empty($args['sort'])) {
-            $table->define_sortablecolumns([
-                'titleprefix' => get_string('titleprefix', 'mod_booking'),
-                'text' => get_string('coursename', 'mod_booking'),
-                'location' => get_string('location', 'mod_booking'),
-            ]);
-        } else {
-            $table->sortable(true, 'text');
-        }
     }
 
     /**

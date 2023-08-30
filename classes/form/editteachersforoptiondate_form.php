@@ -172,14 +172,32 @@ class editteachersforoptiondate_form extends \core_form\dynamic_form {
      * The form definition.
      */
     public function definition() {
-        global $DB, $COURSE;
+        global $DB, $COURSE, $OUTPUT;
 
         $mform = $this->_form;
 
         $cmid = $this->_ajaxformdata['cmid'];
         $optionid = $this->_ajaxformdata['optionid'];
         $optiondateid = $this->_ajaxformdata['optiondateid'];
-        $teachers = explode(',', $this->_ajaxformdata['teachers']);
+        $teacheridstring = $this->_ajaxformdata['teachers'];
+        $teacherids = explode(',', $teacheridstring);
+        $teacherids = array_filter($teacherids, 'is_numeric'); // Eliminate 'undefined' in case if no teacher.
+
+        $list = [];
+        // Process only if teachers assigned.
+        if (!empty($teacherids)) {
+            list ($insql, $inparams) = $DB->get_in_or_equal($teacherids, SQL_PARAMS_NAMED);
+
+            $sql = "SELECT id, firstname, lastname, email FROM {user} WHERE id $insql";
+            $teachers = $DB->get_records_sql($sql, $inparams);
+
+            foreach ($teachers as $teacher) {
+                $list[$teacher->id] =
+                    $OUTPUT->render_from_template(
+                        'mod_booking/form-user-selector-suggestion',
+                        ['email' => [(array)$teacher]]);
+            }
+        }
 
         $mform->addElement('hidden', 'cmid', $cmid);
         $mform->setType('cmid', PARAM_INT);
@@ -190,12 +208,14 @@ class editteachersforoptiondate_form extends \core_form\dynamic_form {
         $mform->addElement('hidden', 'optiondateid', $optiondateid);
         $mform->setType('optiondateid', PARAM_INT);
 
-        $mform->addElement('hidden', 'teachers', $teachers);
+        $mform->addElement('hidden', 'teachers', $teacheridstring);
         $mform->setType('teachers', PARAM_RAW);
 
         $options = [
             'tags' => false,
-            'multiple' => true
+            'multiple' => true,
+            'noselectionstring' => '',
+            'ajax' => 'mod_booking/form_users_selector',
         ];
         /**
          * Andraž - I fixed this, so now it showns only enroled users. IT has no sense to show all users from Moodle...if you have a lot of users the settings page freezes.

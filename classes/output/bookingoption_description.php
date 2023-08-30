@@ -26,12 +26,10 @@ namespace mod_booking\output;
 
 use context_module;
 use html_writer;
-use mod_booking\bo_availability\bo_info;
 use mod_booking\booking;
-use mod_booking\booking_answers;
 use mod_booking\booking_bookit;
-use mod_booking\booking_option;
-use mod_booking\dates_handler;
+use mod_booking\booking_context_helper;
+use mod_booking\option\dates_handler;
 use mod_booking\price;
 use mod_booking\singleton_service;
 use moodle_url;
@@ -156,10 +154,6 @@ class bookingoption_description implements renderable, templatable {
 
         global $CFG, $PAGE, $USER;
 
-        // Performance: Last param is set to true so users won't be retrieved from DB.
-        // phpcs:ignore Squiz.PHP.CommentedOutCode.Found,moodle.Commenting.InlineComment.NotCapital
-        // $bookingoption = new booking_option($booking->cm->id, $optionid, [], 0, 0, true);
-
         // Booking answers class uses caching.
         $settings = singleton_service::get_instance_of_booking_option_settings($optionid);
         $cmid = $settings->cmid;
@@ -258,15 +252,10 @@ class bookingoption_description implements renderable, templatable {
             }
         }
 
-        // Description from booking option settings formatted as HTML.
         // With shortcodes & webservice we might not have a valid context object.
-        if (!isset($PAGE->context) || !$context = $PAGE->context ?? null) {
-            if (empty($context)) {
-                $PAGE->set_context(context_module::instance($cmid));
-            } else {
-                $PAGE->set_context($context);
-            }
-        }
+        booking_context_helper::fix_booking_page_context($PAGE, $cmid);
+
+        // Description from booking option settings formatted as HTML.
         $this->description = format_text($settings->description, FORMAT_HTML);
 
         // Do the same for internal annotation.

@@ -1,3 +1,105 @@
+## Version 8.0.31 (2023082301)
+**New features:**
+* New feature: Custom forms for individual booking options (via availability condition) - e.g. for individual booking policies.
+
+**Improvements:**
+* Improvement: Better icon for "create options from optiondates" functionality.
+
+**Bugfixes:**
+* Bugfix: Fix add to cart when overbooking.
+* Bugfix: Fix DB for new json column in table booking_options.
+
+## Version 8.0.30 (2023082200)
+**Improvements:**
+* Improvement: Remove unused code artifacts for cleaner code.
+* Improvement: Use singleton service for get_all_users_booked and make sure we always use the correct user id.
+* Improvement: Create truly unique identifier and CSV import fixes for identifier.
+
+**Bugfixes:**
+* Bugfix: Make sure identifier of booking options is REALLY unique.
+* Bugfix: Create entity relations for each optiondate with importer.
+* Bugfix: Fix waiting list bug which deleted users if option was fully booked.
+* Bugfix: Check if identifier is really unique in webservice importer.
+
+## Version 8.0.29 (2023081600)
+**Bugfixes:**
+* Bugfix: Fix exception with $PAGE context modification and move function to new booking_context_helper class.
+
+## Version 8.0.28 (2023081100)
+**Improvements:**
+* Improvement: Support mulitple teacheremails in csv import, separated by comma.
+* Improvement: Always use singleton_service instead of instantiation for booking_option.
+* Improvement: Always use singleton_service instead of direct instantiation for booking instances.
+* Improvement: Better strings for feedback URL (pollurl) and teacher's feedback URL (pollurlteachers).
+
+**Bugfixes:**
+* Bugfix: Fix bug where customfields were not shown anymore.
+* Bugfix: Fix page context modifications.
+
+## Version 8.0.27 (2023080700)
+**Bugfixes:**
+* Bugfix: Allow loading of already loaded item (in case cache was invalidated)
+* Bugfix: Fix semester caching and import of semester-based option date series.
+
+## Version 8.0.24 (2023072101)
+**Improvements:**
+* Improvement: Cache a flag to check if we already have applied campaigns, so we don't do it several times.
+
+**Bugfixes:**
+* Bugfix: Closes #44 (local_shopping_cart bug) "Adhoc tasks fails on testing site".
+* Bugfix: get_in_or_equal needs an array as input param.
+
+## Version 8.0.23 (2023072100)
+**New features:**
+* New feature: Entity import now works with both full name or entity id.
+
+**Improvements:**
+* Improvement: Stop creating placeholder params from view.php for better performance and move the function to booking_option class.
+* Improvement: Code quality: missing isset checks for iselective and maxcredits.
+* Improvement: Decision: we only show entity full name in location field.
+* Improvement: Renamed get_entity_by_id to get_entities_by_id (there can be more than one because of join with address table).
+
+**Bugfixes:**
+* Bugfix: Fixed initialization of pricecategoryfield setting if user profile fields were missing.
+* Bugfix: Wrong check for is_elective().
+
+## Version 8.0.22 (2023071700)
+**Bugfixes:**
+* Bugfix: Added string for message provider
+* Bugfix: Fixed CSV Importer vor bookingopeningtime & bookingclosingtime
+
+## Version 8.0.21 (2023071200)
+**New features:**
+* New feature: New settings to show teacher pages for not logged-in users and to show teacher e-mails to everyone.
+* New feature: Turn off waiting list globally by config setting.
+* New feature: New possibility to book with credits.
+* New feature: Send direct mails via mail client to all booked users.
+
+**Improvements:**
+* Improvement: Cashier is now able to overbook booking options for other users (not herself).
+* Improvement: Code quality: commented out deprecated functions.
+* Improvement: Filter in Wunderbyte table inactive on loading.
+* Improvement: Code quality: Rename col_text_link to musi_bookingoption_menu and move it to local_musi.
+* Improvement: Use singleton service to retrieve users.
+* Improvement: Better strings for book with credits settings.
+* Improvement: Also allow access to connected Moodle course for teachers with 'mod/booking:limitededitownoption' capability.
+
+**Bugfixes:**
+* Bugfix: Fix error with missing username or email in message_controller.
+* Bugfix: Fix wrong userid when cashier books for others with prepage modals.
+* Bugfix: Fix the following error for subbooking: "Exception - Warning: Undefined property:
+  stdClass::$id in [dirroot]/mod/booking/classes/subbookings/sb_types/subbooking_additionalperson.php on line 173"
+* Bugfix: Fixed availability problem with subbookings that lead to unexpected errors with availability conditions.
+* Bugfix: Fix prepage modal bug with subbookings and rename not_blocked to has_soft_subbookings.
+* Bugfix: Normal subbookings are not overridable as they need to do a "soft block" so they appear in prepage modals.
+* Bugfix: Make sure empty url does not trigger db request.
+* Bugfix: Fix override conditions logic.
+* Bugfix: With override conditions we need to check the ORIGINAL value!
+
+**Tests:**
+* Behat: 3 scenarios have been added to cover turning off branding and make teacher pages (teacher.php and teachers.php) available to not logged-in users and force the display of teacher e-mail addresses
+* GitHub: fix of the Moodle CodeChecker errors.
+* Behat: new scenario Add single subbooking option for a booking option as a teacher
 
 ## Version 8.0.20 (2023062600)
 **Improvements:**
