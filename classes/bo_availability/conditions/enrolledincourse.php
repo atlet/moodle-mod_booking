@@ -190,7 +190,7 @@ class enrolledincourse implements bo_condition {
                 }
             }
 
-            $mform->addElement('checkbox', 'restrictwithenrolledincourse',
+            $mform->addElement('advcheckbox', 'bo_cond_enrolledincourse_restrict',
                     get_string('bo_cond_enrolledincourse', 'mod_booking'));
 
             $enrolledincourseoptions = [
@@ -199,11 +199,11 @@ class enrolledincourse implements bo_condition {
             ];
             $mform->addElement('autocomplete', 'bo_cond_enrolledincourse_courseids',
                 get_string('course_s', 'mod_booking'), $coursesarray, $enrolledincourseoptions);
-            $mform->hideIf('bo_cond_enrolledincourse_courseids', 'restrictwithenrolledincourse', 'notchecked');
+            $mform->hideIf('bo_cond_enrolledincourse_courseids', 'bo_cond_enrolledincourse_restrict', 'notchecked');
 
             $mform->addElement('checkbox', 'bo_cond_enrolledincourse_overrideconditioncheckbox',
                 get_string('overrideconditioncheckbox', 'mod_booking'));
-            $mform->hideIf('bo_cond_enrolledincourse_overrideconditioncheckbox', 'restrictwithenrolledincourse', 'notchecked');
+            $mform->hideIf('bo_cond_enrolledincourse_overrideconditioncheckbox', 'bo_cond_enrolledincourse_restrict', 'notchecked');
 
             $overrideoperators = [
                 'OR' => get_string('overrideoperator:or', 'mod_booking'),
@@ -218,7 +218,7 @@ class enrolledincourse implements bo_condition {
             $overrideconditionsarray = [];
             foreach ($overrideconditions as $overridecondition) {
                 // We do not combine conditions of same type with each other.
-                if ($overridecondition->id == BO_COND_JSON_ENROLLEDINCOURSE) {
+                if ($overridecondition->id == $this->id) {
                     continue;
                 }
                 // Remove the namespace from classname.
@@ -236,8 +236,12 @@ class enrolledincourse implements bo_condition {
                     $jsonconditions = json_decode($settings->availability);
                     if (!empty($jsonconditions)) {
                         foreach ($jsonconditions as $jsoncondition) {
+                            $currentclassname = $jsoncondition->class;
+                            $currentcondition = new $currentclassname();
                             // Currently conditions of the same type cannot be combined with each other.
-                            if ($jsoncondition->id != BO_COND_JSON_ENROLLEDINCOURSE) {
+                            if ($jsoncondition->id != $this->id
+                                && isset($currentcondition->overridable)
+                                && ($currentcondition->overridable == true)) {
                                 $overrideconditionsarray[$jsoncondition->id] = get_string('bo_cond_' .
                                     $jsoncondition->name, 'mod_booking');
                             }
@@ -245,6 +249,7 @@ class enrolledincourse implements bo_condition {
                     }
                 }
             }
+
             $options = array(
                 'noselectionstring' => get_string('choose...', 'mod_booking'),
                 'tags' => false,
@@ -257,7 +262,7 @@ class enrolledincourse implements bo_condition {
                 'notchecked');
         } else {
             // No PRO license is active.
-            $mform->addElement('static', 'restrictwithenrolledincourse',
+            $mform->addElement('static', 'bo_cond_enrolledincourse_restrict',
                 get_string('bo_cond_enrolledincourse', 'mod_booking'),
                 get_string('proversiononly', 'mod_booking'));
         }
@@ -269,7 +274,7 @@ class enrolledincourse implements bo_condition {
         $formmode = get_user_preferences('optionform_mode');
         if ($formmode !== 'expert') {
             $cfgrestrictwithenrolledincourse = $DB->get_field('booking_optionformconfig', 'active',
-                ['elementname' => 'restrictwithenrolledincourse']);
+                ['elementname' => 'bo_cond_enrolledincourse_restrict']);
             if ($cfgrestrictwithenrolledincourse === "0") {
                 $showhorizontalline = false;
             }
@@ -287,13 +292,13 @@ class enrolledincourse implements bo_condition {
      */
     public function get_condition_object_for_json(stdClass $fromform): stdClass {
         $conditionobject = new stdClass;
-        if (!empty($fromform->restrictwithenrolledincourse)) {
+        if (!empty($fromform->bo_cond_enrolledincourse_restrict)) {
             // Remove the namespace from classname.
             $classname = __CLASS__;
             $classnameparts = explode('\\', $classname);
             $shortclassname = end($classnameparts); // Without namespace.
 
-            $conditionobject->id = BO_COND_JSON_ENROLLEDINCOURSE;
+            $conditionobject->id = $this->id;
             $conditionobject->name = $shortclassname;
             $conditionobject->class = $classname;
             $conditionobject->courseids = $fromform->bo_cond_enrolledincourse_courseids;
@@ -314,7 +319,7 @@ class enrolledincourse implements bo_condition {
      */
     public function set_defaults(stdClass &$defaultvalues, stdClass $acdefault) {
         if (!empty($acdefault->courseids)) {
-            $defaultvalues->restrictwithenrolledincourse = "1";
+            $defaultvalues->bo_cond_enrolledincourse_restrict = "1";
             $defaultvalues->bo_cond_enrolledincourse_courseids = $acdefault->courseids;
         }
         if (!empty($acdefault->overrides)) {

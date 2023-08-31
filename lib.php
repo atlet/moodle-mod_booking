@@ -2940,3 +2940,31 @@ function booking_tool_certificate_fields() {
         get_string('courseenddate', 'mod_booking')
     );
 }
+/*
+ * Helper function to replace special characters within a string.
+ * @param string $text a text string
+ * @return string|string[]|null
+ */
+function clean_string(string $text) {
+    $utf8 = array(
+        '/[áàâãªä]/u'   => 'a',
+        '/[ÁÀÂÃÄ]/u'    => 'A',
+        '/[ÍÌÎÏ]/u'     => 'I',
+        '/[íìîï]/u'     => 'i',
+        '/[éèêë]/u'     => 'e',
+        '/[ÉÈÊË]/u'     => 'E',
+        '/[óòôõºö]/u'   => 'o',
+        '/[ÓÒÔÕÖ]/u'    => 'O',
+        '/[úùûü]/u'     => 'u',
+        '/[ÚÙÛÜ]/u'     => 'U',
+        '/[çćč]/'       => 'c',
+        '/ÇĆČ/'         => 'C',
+        '/ñń/'          => 'n',
+        '/ÑŃ/'          => 'N',
+        '/–/'           => '-', // UTF-8 hyphen to "normal" hyphen.
+        '/[\'’‘‹›‚]/u'  => ' ', // Single quote.
+        '/[\"“”«»„]/u'  => ' ', // Double quote.
+        '/ /'           => ' ', // Nonbreaking space (equiv. to 0x160).
+    );
+    return preg_replace(array_keys($utf8), array_values($utf8), $text);
+}

@@ -193,8 +193,8 @@ class selectusers implements bo_condition {
                 'multiple' => true,
                 'noselectionstring' => get_string('choose...', 'mod_booking'),
                 'valuehtmlcallback' => function($value) {
-                    global $DB, $OUTPUT;
-                    $user = $DB->get_record('user', ['id' => (int)$value], '*', IGNORE_MISSING);
+                    global $OUTPUT;
+                    $user = singleton_service::get_instance_of_user((int)$value);
                     if (!$user || !user_can_view_profile($user)) {
                         return false;
                     }
@@ -204,17 +204,17 @@ class selectusers implements bo_condition {
                 }
             ];
 
-            $mform->addElement('checkbox', 'selectuserscheckbox',
-                    get_string('selectuserscheckbox', 'mod_booking'));
+            $mform->addElement('advcheckbox', 'bo_cond_selectusers_restrict',
+                    get_string('bo_cond_selectusers_restrict', 'mod_booking'));
 
             $mform->addElement('autocomplete', 'bo_cond_selectusers_userids',
                 get_string('bo_cond_selectusers_userids', 'mod_booking'), [], $options);
             $mform->addHelpButton('bo_cond_selectusers_userids', 'bo_cond_selectusers_userids', 'mod_booking');
-            $mform->hideIf('bo_cond_selectusers_userids', 'selectuserscheckbox', 'notchecked');
+            $mform->hideIf('bo_cond_selectusers_userids', 'bo_cond_selectusers_restrict', 'notchecked');
 
             $mform->addElement('checkbox', 'bo_cond_selectusers_overrideconditioncheckbox',
                 get_string('overrideconditioncheckbox', 'mod_booking'));
-            $mform->hideIf('bo_cond_selectusers_overrideconditioncheckbox', 'selectuserscheckbox', 'notchecked');
+            $mform->hideIf('bo_cond_selectusers_overrideconditioncheckbox', 'bo_cond_selectusers_restrict', 'notchecked');
 
             $overrideoperators = [
                 'OR' => get_string('overrideoperator:or', 'mod_booking'),
@@ -229,7 +229,7 @@ class selectusers implements bo_condition {
             $overrideconditionsarray = [];
             foreach ($overrideconditions as $overridecondition) {
                 // We do not combine conditions with each other.
-                if ($overridecondition->id == BO_COND_JSON_SELECTUSERS) {
+                if ($overridecondition->id == $this->id) {
                     continue;
                 }
 
@@ -248,8 +248,12 @@ class selectusers implements bo_condition {
                     $jsonconditions = json_decode($settings->availability);
                     if (!empty($jsonconditions)) {
                         foreach ($jsonconditions as $jsoncondition) {
+                            $currentclassname = $jsoncondition->class;
+                            $currentcondition = new $currentclassname();
                             // Currently conditions of the same type cannot be combined with each other.
-                            if ($jsoncondition->id != BO_COND_JSON_SELECTUSERS) {
+                            if ($jsoncondition->id != $this->id
+                                && isset($currentcondition->overridable)
+                                && ($currentcondition->overridable == true)) {
                                 $overrideconditionsarray[$jsoncondition->id] = get_string('bo_cond_' .
                                     $jsoncondition->name, 'mod_booking');
                             }
@@ -271,7 +275,7 @@ class selectusers implements bo_condition {
         } else {
             // No PRO license is active.
             $mform->addElement('static', 'static:selectusers',
-                get_string('selectuserscheckbox', 'mod_booking'),
+                get_string('bo_cond_selectusers_restrict', 'mod_booking'),
                 get_string('proversiononly', 'mod_booking'));
         }
 
@@ -282,7 +286,7 @@ class selectusers implements bo_condition {
         $formmode = get_user_preferences('optionform_mode');
         if ($formmode !== 'expert') {
             $cfgselectusers = $DB->get_field('booking_optionformconfig', 'active',
-                ['elementname' => 'selectuserscheckbox']);
+                ['elementname' => 'bo_cond_selectusers_restrict']);
             if ($cfgselectusers === "0") {
                 $showhorizontalline = false;
             }
@@ -313,15 +317,15 @@ class selectusers implements bo_condition {
      */
     public function get_condition_object_for_json(stdClass $fromform): stdClass {
 
-        $conditionobject = new stdClass;
+        $conditionobject = new stdClass();
 
-        if (!empty($fromform->selectuserscheckbox)) {
+        if (!empty($fromform->bo_cond_selectusers_restrict)) {
             // Remove the namespace from classname.
             $classname = __CLASS__;
             $classnameparts = explode('\\', $classname);
             $shortclassname = end($classnameparts); // Without namespace.
 
-            $conditionobject->id = BO_COND_JSON_SELECTUSERS;
+            $conditionobject->id = $this->id;
             $conditionobject->name = $shortclassname;
             $conditionobject->class = $classname;
             $conditionobject->userids = $fromform->bo_cond_selectusers_userids;
@@ -343,7 +347,7 @@ class selectusers implements bo_condition {
     public function set_defaults(stdClass &$defaultvalues, stdClass $acdefault) {
 
         if (!empty($acdefault->userids)) {
-            $defaultvalues->selectuserscheckbox = "1";
+            $defaultvalues->bo_cond_selectusers_restrict = "1";
             $defaultvalues->bo_cond_selectusers_userids = $acdefault->userids;
         }
         if (!empty($acdefault->overrides)) {
