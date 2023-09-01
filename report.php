@@ -672,12 +672,12 @@ if (!$tableallbookings->is_downloading()) {
 
         if ($_POST['massactions'] == 'connectedbookings' && $_POST['booktootherbooking'] != "" && ($isteacher
             || has_capability('mod/booking:readresponses', $context))) {
-            if (!isset($_POST['selectoptionid']) || empty($_POST['selectoptionid'])) {
+            if (!isset($_POST['booktootherbooking']) || empty($_POST['booktootherbooking'])) {
                 redirect($url, get_string('selectoptionid', 'booking'), 5);
             }
 
             if (count($allselectedusers) > $bookingoption->calculate_how_many_can_book_to_other(
-                $_POST['selectoptionid']
+                $_POST['booktootherbooking']
             )) {
                 redirect(
                     $url,
@@ -685,7 +685,7 @@ if (!$tableallbookings->is_downloading()) {
                         'toomuchusersbooked',
                         'booking',
                         $bookingoption->calculate_how_many_can_book_to_other(
-                            $_POST['selectoptionid']
+                            $_POST['booktootherbooking']
                         )
                     ),
                     5
@@ -704,14 +704,12 @@ if (!$tableallbookings->is_downloading()) {
                     JOIN {modules} md ON md.id = cm.module
                     JOIN {booking} m ON m.id = cm.instance
                     WHERE md.name = 'booking' AND cm.instance = ?", array($connectedbooking->id));
-            $tmpbooking = singleton_service::get_instance_of_booking_option($tmpcmid->id, $_POST['selectoptionid']);
+            $tmpbooking = singleton_service::get_instance_of_booking_option($tmpcmid->id, $_POST['booktootherbooking']);
 
             foreach ($allselectedusers as $value) {
                 $user = new stdClass();
                 $user->id = $value;
-                if (!$tmpbooking->user_submit_response($user, $optionid)) {
-                    redirect($url, get_string('bookingfulldidntregister', 'mod_booking'), 5);
-                }
+                $tmpbooking->user_submit_response($user, $_POST['booktootherbooking'], 0, false, VERIFIED);
             }
 
             redirect($url, get_string('userssuccessfullybooked', 'booking'), 5);
