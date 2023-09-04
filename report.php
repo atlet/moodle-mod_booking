@@ -709,7 +709,7 @@ if (!$tableallbookings->is_downloading()) {
             foreach ($allselectedusers as $value) {
                 $user = new stdClass();
                 $user->id = $value;
-                $tmpbooking->user_submit_response($user, $_POST['booktootherbooking'], 0, false, VERIFIED);
+                $tmpbooking->user_submit_response($user, $bookingoption->id, 0, false, VERIFIED);
             }
 
             redirect($url, get_string('userssuccessfullybooked', 'booking'), 5);

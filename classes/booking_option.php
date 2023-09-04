@@ -890,7 +890,7 @@ class booking_option {
      * Subscribe a user to a booking option
      *
      * @param stdClass $user
-     * @param int $frombookingid
+     * @param int $frombookingid - this is wrong. It must write on original option to which option we send a user.
      * @param int $substractfromlimit this is used for transferring users from one option to
      *        another
      *        The number of bookings for the user has to be decreased by one, because, the user will
