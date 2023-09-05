@@ -1596,7 +1596,8 @@ class booking_option {
                 'SELECT obo.id, obo.text, obo.titleprefix, oba.id, oba.userid
                   FROM {booking_answers} oba
              LEFT JOIN {booking_options} obo ON obo.id = oba.optionid
-                 WHERE oba.frombookingid = ?',
+                 WHERE oba.frombookingid = ?
+                 AND oba.waitinglist < 5',
                 array($this->optionid));
     }
 
