@@ -569,6 +569,17 @@ class booking_option_settings {
     }
 
     /**
+     * Get custom button name.
+     */
+    public function get_button_name() {
+        global $DB;
+
+        $booking = $DB->get_record('booking', ['id' => $this->bookingid], 'btnbooknowname');
+
+        return $booking->btnbooknowname;
+    }
+
+    /**
      * Function to load multi-sessions customfields from DB.
      *
      * @param int $optionid
