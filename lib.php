@@ -1760,6 +1760,9 @@ function booking_extend_settings_navigation(settings_navigation $settings, navig
                     new moodle_url('/mod/booking/subscribeusers.php',
                             array('id' => $cm->id, 'optionid' => $optionid)),
                             navigation_node::TYPE_CUSTOM, null, 'nav_bookotherusers');
+        }
+
+        if (has_capability ( 'mod/booking:subscribeusers', $context )) {
             $completion = new \completion_info($course);
             if ($completion->is_enabled($cm)) {
                 $navref->add(get_string('bookuserswithoutcompletedactivity', 'booking'),
@@ -1783,7 +1786,7 @@ function booking_extend_settings_navigation(settings_navigation $settings, navig
         } */
 
         if ($booking) {
-            if (has_capability ('mod/booking:readresponses', $context) || booking_check_if_teacher($option)) {
+            if (has_capability ('mod/booking:confirmactivity', $context)) {
                 $completion = new \completion_info($course);
                 if ($booking->enablecompletion > 0 &&
                     ($completion->is_enabled($cm) == COMPLETION_TRACKING_AUTOMATIC ||

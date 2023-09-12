@@ -134,4 +134,20 @@ $capabilities = array(
             'editingteacher' => CAP_ALLOW,
         ]
     ],
+    'mod/booking:confirmactivity' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ]
+    ],
+    'mod/booking:bookuserswithoutcompletedactivity' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ]
+    ],
 );
