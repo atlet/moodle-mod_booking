@@ -1762,7 +1762,7 @@ function booking_extend_settings_navigation(settings_navigation $settings, navig
                             navigation_node::TYPE_CUSTOM, null, 'nav_bookotherusers');
         }
 
-        if (has_capability ( 'mod/booking:subscribeusers', $context )) {
+        if (has_capability ( 'mod/booking:bookuserswithoutcompletedactivity', $context )) {
             $completion = new \completion_info($course);
             if ($completion->is_enabled($cm)) {
                 $navref->add(get_string('bookuserswithoutcompletedactivity', 'booking'),
