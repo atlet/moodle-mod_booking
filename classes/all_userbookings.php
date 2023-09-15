@@ -359,7 +359,7 @@ class all_userbookings extends \table_sql {
         $optgroups = [];
 
         // Issue certificate
-        if (has_capability ( 'mod/booking:readresponses', \context_module::instance($this->cm->id) ) || booking_check_if_teacher ($option )) {
+        if (has_capability ( 'mod/booking:readresponses', \context_module::instance($this->cm->id) )) {
             $certopitons = [];
             if (!empty($this->bookingdata->booking->settings->template)) {
                 $certopitons[] = ['label' => get_string('issuecertificateall', 'booking'), 'value' => 'issuecertificateall'];

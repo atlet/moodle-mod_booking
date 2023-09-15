@@ -80,7 +80,7 @@ class col_availableplaces implements renderable, templatable {
         $context = context_module::instance($cmid);
 
         if (has_capability('mod/booking:updatebooking', $context) || (has_capability('mod/booking:addeditownoption', $context)
-            && booking_check_if_teacher($values))) {
+            && booking_check_if_teacher($values)) || booking_check_if_teacher($values)) {
 
             $this->showmanageresponses = true;
 
