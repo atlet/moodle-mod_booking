@@ -232,7 +232,7 @@ class bookingoption_description implements renderable, templatable {
 
         $context = context_module::instance($cmid);
         if (has_capability('mod/booking:updatebooking', $context) ||
-             has_capability('mod/booking:addeditownoption', $context)) {
+             has_capability('mod/booking:addeditownoption', $context) || booking_check_if_teacher($bookingoption->option)) {
             $this->showmanageresponses = true;
 
             // Add a link to redirect to the booking option.
