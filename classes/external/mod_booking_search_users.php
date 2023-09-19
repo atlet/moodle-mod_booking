@@ -65,7 +65,7 @@ class mod_booking_search_users extends external_api {
      *
      * @return array
      */
-    public static function execute($courseid = 0, $query = ''): array {
+    public static function execute(int $courseid = 0, String $query = ''): array {
         global $DB;
 
         $params = self::validate_parameters(self::execute_parameters(), [
@@ -75,12 +75,12 @@ class mod_booking_search_users extends external_api {
 
         $options = [];
         $options[] = 'ue.status = 0';
-        $options[] = "e.courseid = {$courseid}";
+        $options[] = "e.courseid = {$params['courseid']}";
 
         $ousers = [];
 
-        if (!empty($query)) {
-            $q = explode(' ', $query);
+        if (!empty($params['query'])) {
+            $q = explode(' ', $params['query']);
             foreach ($q as $key => $value) {
                 $ousers[] = "u.firstname LIKE '{$value}%'";
                 $ousers[] = "u.lastname LIKE '{$value}%'";

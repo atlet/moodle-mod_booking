@@ -94,7 +94,7 @@ class teachers_handler {
             'tags' => false,
             'multiple' => true,
             'ajax' => 'mod_booking/users_datasource',
-            'data-courseid' => $COURSE->id,
+            'data-courseid' => (int)$COURSE->id,
             'valuehtmlcallback' => function($value) {
                 global $DB, $OUTPUT;
                 $user = $DB->get_record('user', ['id' => (int)$value], '*', IGNORE_MISSING);

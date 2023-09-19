@@ -65,7 +65,7 @@ define(['jquery', 'core/ajax'], function ($, Ajax) {
             var promise = null;
 
             var el = $(selector),
-                courseid = el.data('courseid');
+            courseid = el.data('courseid');
 
             if (!courseid) {
                 throw new Error('The attribute data-courseid is required on ' + selector);
@@ -74,8 +74,8 @@ define(['jquery', 'core/ajax'], function ($, Ajax) {
             promise = Ajax.call([{
                 methodname: 'mod_booking_search_users',
                 args: {
-                    query: query,
-                    courseid: courseid
+                    courseid: courseid,
+                    query: query
                 }
             }]);
 
