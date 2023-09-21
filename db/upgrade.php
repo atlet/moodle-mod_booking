@@ -3641,6 +3641,22 @@ function xmldb_booking_upgrade($oldversion) {
     }
 
     if ($oldversion != 2022090802) { // Must be deletet once the upgrade ...
+        if ($oldversion < 2022091900) {
+
+            // Define field invisible to be added to booking_options.
+            $table = new xmldb_table('booking_options');
+            $field = new xmldb_field('dayofweek', XMLDB_TYPE_CHAR, '255', null, null, null, '', 'priceformulamultiply');
+
+            // Conditionally launch add field invisible.
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+
+            // Booking savepoint reached.
+            upgrade_mod_savepoint(true, 2022091900, 'booking');
+        }
+
+
         if ($oldversion < 2022091901) {
 
             // Define field 'name' to be added to table booking_holidays.
