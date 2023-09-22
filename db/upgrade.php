@@ -3645,6 +3645,11 @@ function xmldb_booking_upgrade($oldversion) {
 
             $table = new xmldb_table('booking_options');
 
+            $titleprefix = new xmldb_field('titleprefix', XMLDB_TYPE_CHAR, '10', null, null, null, null, 'identifier');
+            if (!$dbman->field_exists($table, $titleprefix)) {
+                $dbman->add_field($table, $titleprefix);
+            }
+
             $priceformulaadd = new xmldb_field('priceformulaadd', XMLDB_TYPE_NUMBER, '10, 2', null, null, null, '0', 'titleprefix');
             if (!$dbman->field_exists($table, $priceformulaadd)) {
                 $dbman->add_field($table, $priceformulaadd);
