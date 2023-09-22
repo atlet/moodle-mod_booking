@@ -3641,6 +3641,33 @@ function xmldb_booking_upgrade($oldversion) {
     }
 
     if ($oldversion != 2022090802) { // Must be deletet once the upgrade ...
+        if ($oldversion < 2022091899) {
+
+            $table = new xmldb_table('booking_options');
+
+            $priceformulaadd = new xmldb_field('priceformulaadd', XMLDB_TYPE_NUMBER, '10, 2', null, null, null, '0', 'titleprefix');
+            if (!$dbman->field_exists($table, $priceformulaadd)) {
+                $dbman->add_field($table, $priceformulaadd);
+            }
+
+            $priceformulamultiply = new xmldb_field(
+                'priceformulamultiply',
+                XMLDB_TYPE_NUMBER,
+                '10, 2',
+                null,
+                null,
+                null,
+                '1',
+                'priceformulaadd'
+            );
+            if (!$dbman->field_exists($table, $priceformulamultiply)) {
+                $dbman->add_field($table, $priceformulamultiply);
+            }
+
+            // Booking savepoint reached.
+            upgrade_mod_savepoint(true, 2022070100, 'booking');
+        }
+
         if ($oldversion < 2022091900) {
 
             // Define field invisible to be added to booking_options.
