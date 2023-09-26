@@ -4677,6 +4677,10 @@ function xmldb_booking_upgrade($oldversion) {
 
         if ($oldversion < 2023041200) {
 
+            // Define field semesterid to be added to booking.
+            $table = new xmldb_table('booking');
+            $field = new xmldb_field('semesterid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'autcrtemplate');
+
             // Define field template to be added to booking.
             $table = new xmldb_table('booking');
             $field = new xmldb_field('template', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0', 'semesterid');
