@@ -4472,6 +4472,20 @@ function xmldb_booking_upgrade($oldversion) {
                 $dbman->add_index($table, $index);
             }
 
+            // Define field optiondateid and its foreign key to be added to booking_customfields.
+            $table = new xmldb_table('booking_customfields');
+            $field = new xmldb_field('optiondateid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'optionid');
+            $key = new xmldb_key('optiondateid', XMLDB_KEY_FOREIGN, ['optiondateid'], 'booking_optiondates', ['id']);
+
+            // Conditionally launch add field optiondateid.
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+
+                // Launch add key optiondateid.
+                $dbman->add_key($table, $key);
+            }
+
+
             $table = new xmldb_table('booking_customfields');
             $index = new xmldb_index('optionid-optiondateid', XMLDB_INDEX_NOTUNIQUE, ['optionid, optiondateid']);
             // Conditionally launch add index.
