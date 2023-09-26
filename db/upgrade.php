@@ -3643,6 +3643,8 @@ function xmldb_booking_upgrade($oldversion) {
 
     if ($oldversion < 2022090802) { // Must be deletet once the upgrade ...
 
+        $table = new xmldb_table('booking_options');
+
         $semesterid = new xmldb_field('semesterid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'parentid');
         $dayofweektime = new xmldb_field('dayofweektime', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'semesterid');
 
