@@ -4499,6 +4499,25 @@ function xmldb_booking_upgrade($oldversion) {
 
         if ($oldversion < 2022122200) {
 
+            // Add new table.
+            $table = new xmldb_table('booking_pricecategories');
+
+            // Adding fields to table.
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null, null);
+            $table->add_field('ordernum', XMLDB_TYPE_INTEGER, '2', null, XMLDB_NOTNULL, null, '0', 'id');
+            $table->add_field('identifier', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null, 'ordernum');
+            $table->add_field('name', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null, 'identifier');
+            $table->add_field('defaultvalue', XMLDB_TYPE_NUMBER, '10, 2', null, null, null, '0', 'name');
+            $table->add_field('disabled', XMLDB_TYPE_INTEGER, '1', null, null, null, '0', 'defaultvalue');
+
+            // Adding keys to table.
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+            // Conditionally launch create table.
+            if (!$dbman->table_exists($table)) {
+                $dbman->create_table($table);
+            }
+
             // Define field pricecatsortorder to be added to booking_pricecategories.
             $table = new xmldb_table('booking_pricecategories');
             $field = new xmldb_field('pricecatsortorder', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'defaultvalue');
