@@ -3794,6 +3794,22 @@ function xmldb_booking_upgrade($oldversion) {
 
         if ($oldversion < 2022100300) {
 
+            // Define table booking_optiondates to be created.
+            $table = new xmldb_table('booking_optiondates');
+
+            // Adding fields to table booking_optiondates.
+            $daystonotify = new xmldb_field('daystonotify', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'courseendtime');
+            $sent = new xmldb_field('sent', XMLDB_TYPE_INTEGER, '1', null, null, null, '0', 'daystonotify');
+
+            // Conditionally launch add field daystonotify.
+            if (!$dbman->field_exists($table, $daystonotify)) {
+                $dbman->add_field($table, $daystonotify);
+            }
+            // Conditionally launch add field sent.
+            if (!$dbman->field_exists($table, $sent)) {
+                $dbman->add_field($table, $sent);
+            }
+
             // Define field reason to be added to booking_optiondates.
             $table = new xmldb_table('booking_optiondates');
             $field = new xmldb_field('reason', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'sent');
