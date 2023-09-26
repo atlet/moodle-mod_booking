@@ -4240,6 +4240,15 @@ function xmldb_booking_upgrade($oldversion) {
                 $dbman->drop_index($table, $index);
             }
 
+            // Define field coursepageshortinfo to be added to booking.
+            $table = new xmldb_table('booking');
+            $field = new xmldb_field('coursepageshortinfo', XMLDB_TYPE_TEXT, null, null, null, null, null, 'showlistoncoursepage');
+
+            // Conditionally launch add field coursepageshortinfo.
+            if (!$dbman->field_exists($table, $field)) {
+                $dbman->add_field($table, $field);
+            }
+
             $table = new xmldb_table('booking');
 
             $field = new xmldb_field(
