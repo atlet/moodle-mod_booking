@@ -3643,6 +3643,19 @@ function xmldb_booking_upgrade($oldversion) {
 
     if ($oldversion < 2022090802) { // Must be deletet once the upgrade ...
 
+        $semesterid = new xmldb_field('semesterid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'parentid');
+        $dayofweektime = new xmldb_field('dayofweektime', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'semesterid');
+
+        // Conditionally launch add field semesterid.
+        if (!$dbman->field_exists($table, $semesterid)) {
+            $dbman->add_field($table, $semesterid);
+        }
+
+        // Conditionally launch add field dayofweektime.
+        if (!$dbman->field_exists($table, $dayofweektime)) {
+            $dbman->add_field($table, $dayofweektime);
+        }
+
         // Define field invisible to be added to booking_options.
         $table = new xmldb_table('booking_options');
         $field = new xmldb_field('invisible', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'dayofweektime');
