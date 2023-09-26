@@ -1830,7 +1830,7 @@ class booking_option {
 
     // Print custom report.
     public function printcustomreport() {
-        global $CFG;
+        global $CFG, $DB;
 
         include_once($CFG->dirroot . '/mod/booking/TinyButStrong/tbs_class.php');
         include_once($CFG->dirroot . '/mod/booking/OpenTBS/tbs_plugin_opentbs.php');
@@ -1879,12 +1879,13 @@ class booking_option {
 
         $users = array();
         foreach ($allusers as $key => $value) {
+            $userObj = $DB->get_record("user", ["id" => $value->userid]);
             $users[] = array(
                 'id' => $value->userid,
-                'firstname' => $value->firstname,
-                'lastname' => $value->lastname,
-                'email' => $value->email,
-                'institution' => $value->institution
+                'firstname' => $userObj->firstname,
+                'lastname' => $userObj->lastname,
+                'email' => $userObj->email,
+                'institution' => $userObj->institution
             );
         }
 
