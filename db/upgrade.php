@@ -4299,6 +4299,23 @@ function xmldb_booking_upgrade($oldversion) {
                 $dbman->add_index($table, $index);
             }
 
+            // Define table booking_category to be created.
+            $table = new xmldb_table('booking_icalsequence');
+
+            // Adding fields to table booking_category.
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('optionid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+            $table->add_field('sequencevalue', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '0');
+
+            // Adding keys to table booking_category.
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+            // Conditionally launch create table for booking_category.
+            if (!$dbman->table_exists($table)) {
+                $dbman->create_table($table);
+            }
+
             // Changing the default of field defaultoptionsort on table booking to text.
             $table = new xmldb_table('booking');
             $field = new xmldb_field('defaultoptionsort', XMLDB_TYPE_CHAR, '255', null, null, null, 'text', 'bookingimagescustomfield');
