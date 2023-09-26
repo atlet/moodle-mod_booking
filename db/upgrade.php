@@ -3631,6 +3631,7 @@ function xmldb_booking_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2022082900, 'booking');
     }
 
+    /* uncomment once it+s upgraded.
     if ($oldversion < 2022090802) {
         // Get rid of the old "unique option names" workaround.
         // We use a separate "identifier" field now.
@@ -3638,9 +3639,9 @@ function xmldb_booking_upgrade($oldversion) {
 
         // Booking savepoint reached.
         upgrade_mod_savepoint(true, 2022090802, 'booking');
-    }
+    }*/
 
-    if ($oldversion != 2022090802) { // Must be deletet once the upgrade ...
+    if ($oldversion < 2022090802) { // Must be deletet once the upgrade ...
 
         $table = new xmldb_table('booking_options');
 
@@ -3674,6 +3675,13 @@ function xmldb_booking_upgrade($oldversion) {
         if (!$dbman->field_exists($table, $priceformulamultiply)) {
             $dbman->add_field($table, $priceformulamultiply);
         }
+
+        // Get rid of the old "unique option names" workaround.
+        // We use a separate "identifier" field now.
+        migrate_booking_option_identifiers_2022090802();
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2022090802, 'booking');
 
         if ($oldversion < 2022091900) {
 
