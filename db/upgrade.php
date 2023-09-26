@@ -3643,6 +3643,15 @@ function xmldb_booking_upgrade($oldversion) {
 
     if ($oldversion < 2022090802) { // Must be deletet once the upgrade ...
 
+        // Define field invisible to be added to booking_options.
+        $table = new xmldb_table('booking_options');
+        $field = new xmldb_field('invisible', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'dayofweektime');
+
+        // Conditionally launch add field invisible.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
         // Define field annotation to be added to booking_options.
         $table = new xmldb_table('booking_options');
         $field = new xmldb_field(
