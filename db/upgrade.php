@@ -4120,6 +4120,23 @@ function xmldb_booking_upgrade($oldversion) {
 
         if ($oldversion < 2022112900) {
 
+            $table = new xmldb_table('booking_prices');
+
+            // Adding fields to table.
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('optionid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0', 'id');
+            $table->add_field('pricecategoryidentifier', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null, 'optionid');
+            $table->add_field('price', XMLDB_TYPE_NUMBER, '10, 2', null, null, null, '0', 'pricecategoryidentifier');
+            $table->add_field('currency', XMLDB_TYPE_CHAR, '10', null, null, null, '', 'price');
+
+            // Adding keys to table.
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+            // Conditionally launch create table.
+            if (!$dbman->table_exists($table)) {
+                $dbman->create_table($table);
+            }
+
             // Rename field optionid on table booking_prices to itemid.
             $table = new xmldb_table('booking_prices');
 
