@@ -4423,6 +4423,24 @@ function xmldb_booking_upgrade($oldversion) {
         }
 
         if ($oldversion < 2022120400) {
+            // Define table booking_optiondates to be created.
+            $table = new xmldb_table('booking_userevents');
+
+            // Adding fields to table booking_category.
+            $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+            $table->add_field('userid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+            $table->add_field('optionid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+            $table->add_field('optiondateid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+            $table->add_field('eventid', XMLDB_TYPE_INTEGER, '10', null, null, null, '0');
+
+            // Adding keys to table booking_category.
+            $table->add_key('primary', XMLDB_KEY_PRIMARY, array('id'));
+
+            // Conditionally launch create table for booking_category.
+            if (!$dbman->table_exists($table)) {
+                $dbman->create_table($table);
+            }
+
             $table = new xmldb_table('booking_userevents');
             $key = new xmldb_key('userid', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
             // Launch add key.
