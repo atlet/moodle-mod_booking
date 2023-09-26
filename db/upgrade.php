@@ -3643,6 +3643,24 @@ function xmldb_booking_upgrade($oldversion) {
 
     if ($oldversion < 2022090802) { // Must be deletet once the upgrade ...
 
+        // Define field annotation to be added to booking_options.
+        $table = new xmldb_table('booking_options');
+        $field = new xmldb_field(
+            'annotation',
+            XMLDB_TYPE_TEXT,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'invisible'
+        );
+
+        // Conditionally launch add field.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
         // Define field identifier to be added to booking_options.
         $table = new xmldb_table('booking_options');
         $identifier = new xmldb_field('identifier', XMLDB_TYPE_CHAR, '255', null, null, null, null, 'annotation');
