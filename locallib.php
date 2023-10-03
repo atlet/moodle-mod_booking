@@ -134,10 +134,14 @@ class booking_potential_user_selector extends booking_user_selector_base {
     /** @var bool $bookanyone */
     public $bookanyone;
 
-    public function __construct($name, $options, $bookanyone = false) {
+    /** @var bool Show only booked users. */
+    public $booked;
+
+    public function __construct($name, $options, $bookanyone = false, $booked = false) {
 
         $this->options = $options;
         $this->bookanyone = $bookanyone;
+        $this->booked = $booked;
         parent::__construct($name, $options);
     }
 
@@ -190,6 +194,15 @@ class booking_potential_user_selector extends booking_user_selector_base {
                 WHERE esql.id > 1
             )";
         }
+        $onlybookied = '';
+        if ($this->booked) {
+            $onlybookied = "AND u.id IN (SELECT ba.userid
+            FROM {booking_answers} ba
+            WHERE ba.bookingid = {$this->options['bookingid']}
+            AND waitinglist <> :statusparamdeleted1)";
+
+            $searchparams['statusparamdeleted1'] = STATUSPARAM_DELETED;
+        }
 
         $sql = " FROM {user} u
         WHERE $searchcondition
@@ -197,6 +210,7 @@ class booking_potential_user_selector extends booking_user_selector_base {
         AND u.deleted = 0
         $enrolledsqlpart
         $groupsql
+        $onlybookied
         AND u.id NOT IN (
             SELECT ba.userid
             FROM {booking_answers} ba

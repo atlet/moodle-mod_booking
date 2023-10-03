@@ -225,7 +225,6 @@ class booking {
      * $this->canbookusers
      */
     public function get_canbook_userids() {
-
         $this->canbookusers = get_enrolled_users($this->context, 'mod/booking:choose', null, 'u.id');
 
         // TODO check if course has guest access if not get all enrolled users and check with...

@@ -38,11 +38,12 @@ $subscribe = optional_param('subscribe', false, PARAM_BOOL);
 $unsubscribe = optional_param('unsubscribe', false, PARAM_BOOL);
 $agree = optional_param('agree', false, PARAM_BOOL);
 $bookanyone = optional_param('bookanyone', false, PARAM_BOOL);
+$booked = optional_param('booked', false, PARAM_BOOL);
 
 list($course, $cm) = get_course_and_cm_from_cmid($id);
 
-(boolean) $subscribesuccess = false;
-(boolean) $unsubscribesuccess = false;
+(bool) $subscribesuccess = false;
+(bool) $unsubscribesuccess = false;
 
 require_login($course, true, $cm);
 
@@ -70,7 +71,7 @@ if (!has_capability('mod/booking:bookforothers', $context)) {
     die();
 }
 
-if (!booking_check_if_teacher ($bookingoption->option)) {
+if (!booking_check_if_teacher($bookingoption->option)) {
     if (!(has_capability('mod/booking:subscribeusers', $context) || has_capability('moodle/site:accessallgroups', $context))) {
         throw new moodle_exception('nopermissions', 'core', $errorurl, get_string('bookotherusers', 'mod_booking'));
     }
@@ -94,9 +95,11 @@ if (!$agree && (!empty($bookingoption->booking->settings->bookingpolicy))) {
     echo $OUTPUT->footer();
     die();
 } else {
-    $subscribeduseroptions = array('bookingid' => $cm->instance,
-                    'accesscontext' => $context, 'optionid' => $optionid, 'cm' => $cm, 'course' => $course,
-                    'potentialusers' => $bookingoption->bookedvisibleusers);
+    $subscribeduseroptions = array(
+        'bookingid' => $cm->instance,
+        'accesscontext' => $context, 'optionid' => $optionid, 'cm' => $cm, 'course' => $course,
+        'potentialusers' => $bookingoption->bookedvisibleusers
+    );
     $potentialuseroptions = $subscribeduseroptions;
 
     // Potential users will be selected on instantiation of booking_potential_user_selector.
@@ -104,7 +107,7 @@ if (!$agree && (!empty($bookingoption->booking->settings->bookingpolicy))) {
 
     $bookingoutput = $PAGE->get_renderer('mod_booking');
     $existingselector = new booking_existing_user_selector('removeselect', $subscribeduseroptions);
-    $subscriberselector = new booking_potential_user_selector('addselect', $potentialuseroptions, $bookanyone);
+    $subscriberselector = new booking_potential_user_selector('addselect', $potentialuseroptions, $bookanyone, $booked);
 
     if (data_submitted()) {
         require_sesskey();
@@ -115,7 +118,8 @@ if (!$agree && (!empty($bookingoption->booking->settings->bookingpolicy))) {
             $notsubscribedusers = array();
 
             if (has_capability('mod/booking:subscribeusers', $context) || (booking_check_if_teacher(
-                    $bookingoption->option))) {
+                $bookingoption->option
+            ))) {
                 foreach ($users as $user) {
                     if (!$bookingoption->user_submit_response($user, 0, 0, false, VERIFIED)) {
                         $subscribesuccess = false;
@@ -124,18 +128,23 @@ if (!$agree && (!empty($bookingoption->booking->settings->bookingpolicy))) {
                     $subscribedusers[] = $user->id;
                 }
                 if ($subscribesuccess) {
-                    redirect($url,
-                            get_string('allusersbooked', 'mod_booking', count($subscribedusers)), 5);
+                    redirect(
+                        $url,
+                        get_string('allusersbooked', 'mod_booking', count($subscribedusers)),
+                        5
+                    );
                 } else {
                     $output = '<br>';
                     if (!empty($notsubscribedusers)) {
                         foreach ($notsubscribedusers as $user) {
                             $result = $DB->get_records_sql(
-                                    'SELECT ba.id answerid, bo.text
+                                'SELECT ba.id answerid, bo.text
                                      FROM {booking_answers} ba
                                      LEFT JOIN {booking_options} bo ON bo.id = ba.optionid
                                      WHERE ba.userid = ? AND ba.waitinglist < ?
-                                     AND ba.bookingid = ?', array($user->id, STATUSPARAM_RESERVED, $bookingoption->booking->id));
+                                     AND ba.bookingid = ?',
+                                array($user->id, STATUSPARAM_RESERVED, $bookingoption->booking->id)
+                            );
                             $output .= "{$user->firstname} {$user->lastname}";
                             if (!empty($result)) {
                                 $r = array();
@@ -143,7 +152,7 @@ if (!$agree && (!empty($bookingoption->booking->settings->bookingpolicy))) {
                                     $r[] = $v->text;
                                 }
                                 $output .= '&nbsp;' . get_string('enrolledinoptions', 'mod_booking') .
-                                         implode(', ', $r);
+                                    implode(', ', $r);
                             }
                             $output .= " <br>";
                         }
@@ -154,20 +163,30 @@ if (!$agree && (!empty($bookingoption->booking->settings->bookingpolicy))) {
                 throw new moodle_exception('invalidaction');
             }
         } else if ($unsubscribe && (has_capability('mod/booking:deleteresponses', $context) ||
-                 (booking_check_if_teacher($bookingoption->option)))) {
+            (booking_check_if_teacher($bookingoption->option)))) {
             $users = $existingselector->get_selected_users();
             $unsubscribesuccess = true;
             foreach ($users as $user) {
                 if (!$bookingoption->user_delete_response($user->id)) {
                     $unsubscribesuccess = false;
-                    throw new moodle_exception('cannotremovesubscriber', 'booking', $url->out(), null,
-                        'Cannot remove subscriber with id ' . $user->id);
+                    throw new moodle_exception(
+                        'cannotremovesubscriber',
+                        'booking',
+                        $url->out(),
+                        null,
+                        'Cannot remove subscriber with id ' . $user->id
+                    );
                 }
             }
         } else if ($unsubscribe && (!has_capability('mod/booking:deleteresponses', $context) ||
-                 (booking_check_if_teacher($bookingoption->option)))) {
-                    throw new moodle_exception('nopermission', 'booking', $url->out(), null,
-                        'Permission to unsubscribe users is missing');
+            (booking_check_if_teacher($bookingoption->option)))) {
+            throw new moodle_exception(
+                'nopermission',
+                'booking',
+                $url->out(),
+                null,
+                'Permission to unsubscribe users is missing'
+            );
         }
         $subscriberselector->invalidate_selected_users();
         $existingselector->invalidate_selected_users();
@@ -182,14 +201,29 @@ echo $OUTPUT->heading(format_string($optionsettings->get_title_with_prefix()), 3
 
 // Switch to turn booking of anyone ON or OFF.
 if (is_siteadmin() && $bookanyone) {
-    $url = new moodle_url('/mod/booking/subscribeusers.php', array('id' => $id, 'optionid' => $optionid,
-        'agree' => $agree, 'bookanyone' => false));
+    $url = new moodle_url('/mod/booking/subscribeusers.php', array(
+        'id' => $id, 'optionid' => $optionid,
+        'agree' => $agree, 'bookanyone' => !$bookanyone, 'booked' => $booked
+    ));
     echo '<a class="btn btn-sm btn-light" href="' . $url . '">' . get_string('bookanyoneswitchoff', 'mod_booking') . '</a>';
     echo '<div class="alert alert-warning p-1 mt-1 text-center">' . get_string('bookanyonewarning', 'mod_booking')  . '</div>';
 } else {
-    $url = new moodle_url('/mod/booking/subscribeusers.php', array('id' => $id, 'optionid' => $optionid,
-        'agree' => $agree, 'bookanyone' => true));
+    $url = new moodle_url('/mod/booking/subscribeusers.php', array(
+        'id' => $id, 'optionid' => $optionid,
+        'agree' => $agree, 'bookanyone' => !$bookanyone, 'booked' => $booked
+    ));
     echo '<a class="btn btn-sm btn-light" href="' . $url . '">' . get_string('bookanyoneswitchon', 'mod_booking') . '</a>';
+}
+
+$url = new moodle_url('/mod/booking/subscribeusers.php', array(
+    'id' => $id, 'optionid' => $optionid,
+    'agree' => $agree, 'bookanyone' => $bookanyone, 'booked' => !$booked
+));
+
+if ($booked) {
+    echo '<a class="btn btn-sm btn-light" href="' . $url . '">' . get_string('showallusers', 'mod_booking') . '</a>';
+} else {
+    echo '<a class="btn btn-sm btn-light" href="' . $url . '">' . get_string('showonlybookedusers', 'mod_booking') . '</a>';
 }
 
 
@@ -199,29 +233,40 @@ $renderer = $PAGE->get_renderer('mod_booking');
 echo $renderer->render_booked_users($data);
 
 
-echo html_writer::tag('div',
-        html_writer::link(
-                new moodle_url('/mod/booking/report.php',
-                        array('id' => $cm->id, 'optionid' => $optionid)),
-                get_string('backtoresponses', 'booking')),
-        array('style' => 'width:100%; font-weight: bold; text-align: right;'));
+echo html_writer::tag(
+    'div',
+    html_writer::link(
+        new moodle_url(
+            '/mod/booking/report.php',
+            array('id' => $cm->id, 'optionid' => $optionid)
+        ),
+        get_string('backtoresponses', 'booking')
+    ),
+    array('style' => 'width:100%; font-weight: bold; text-align: right;')
+);
 
 if ($subscribesuccess || $unsubscribesuccess) {
     if ($subscribesuccess) {
         echo $OUTPUT->container(get_string('allchangessaved', 'booking'), 'important', 'notice');
     }
-    if ($unsubscribesuccess &&
-             (has_capability('mod/booking:deleteresponses', $context) ||
-             (booking_check_if_teacher($bookingoption->option)))) {
+    if (
+        $unsubscribesuccess &&
+        (has_capability('mod/booking:deleteresponses', $context) ||
+            (booking_check_if_teacher($bookingoption->option)))
+    ) {
         echo $OUTPUT->container(get_string('allchangessaved', 'booking'), 'important', 'notice');
     }
 }
 
 if (booking_check_if_teacher($bookingoption->option) && !has_capability(
-        'mod/booking:readallinstitutionusers', $context)) {
-    echo html_writer::tag('div',
+    'mod/booking:readallinstitutionusers',
+    $context
+)) {
+    echo html_writer::tag(
+        'div',
         get_string('onlyusersfrominstitution', 'mod_booking', $bookingoption->option->institution),
-    ['class' => 'alert alert-info']);
+        ['class' => 'alert alert-info']
+    );
 }
 
 echo $bookingoutput->subscriber_selection_form($existingselector, $subscriberselector, $course->id);
@@ -274,7 +319,6 @@ if ($fromform = $mform->get_data()) {
     } catch (moodle_exception $e) {
         debugging('subscribeusers.php: Exception in redirect function.');
     }
-
 } else {
     // This branch is executed if the form is submitted but the data doesn't validate and the form should be redisplayed...
     // ... or on the first display of the form.

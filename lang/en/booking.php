@@ -2417,3 +2417,6 @@ $string['bo_cond_auth_not_available'] = 'You don\'t have permission to book as y
 
 $string['courseenddate'] = 'End date of the course';
 $string['coursestartdate'] = 'Start date of the course';
+
+$string['showallusers'] = "Show all users";
+$string['showonlybookedusers'] = "Show only booked users";
