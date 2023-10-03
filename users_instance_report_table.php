@@ -41,6 +41,8 @@ class users_instance_report_table extends table_sql {
             'fullname',
             'institution',
             'botext',
+            'duration',
+            'alloptionduraiton',
             'coursestarttime',
             'courseendtime'
         ];
@@ -48,6 +50,8 @@ class users_instance_report_table extends table_sql {
             get_string('fullname'),
             get_string('institution', 'mod_booking'),
             get_string('bookingoption', 'mod_booking'),
+            get_string('optionduraiton', 'mod_booking'),
+            get_string('alloptionduraiton', 'mod_booking'),
             get_string('coursestarttime', 'mod_booking'),
             get_string('courseendtime', 'mod_booking')
         ];
@@ -91,5 +95,13 @@ class users_instance_report_table extends table_sql {
 
     function col_fullname($values) {
         return "<a href=\"/user/profile.php?id={$values->uid}\">{$values->firstname} {$values->lastname}</a>";
+    }
+
+    function col_duration($values) {
+        return gmdate('H:i', $values->duration);
+    }
+
+    function col_alloptionduraiton($values) {
+        return gmdate('H:i', $values->alloptionduraiton);
     }
 }

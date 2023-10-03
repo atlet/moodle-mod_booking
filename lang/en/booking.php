@@ -2420,3 +2420,5 @@ $string['coursestartdate'] = 'Start date of the course';
 
 $string['showallusers'] = "Show all users";
 $string['showonlybookedusers'] = "Show only booked users";
+$string['optionduraiton'] = 'Option duration';
+$string['alloptionduraiton'] = 'All options duration';

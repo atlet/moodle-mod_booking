@@ -100,12 +100,12 @@ if ($CFG->version >= 2021051700) {
 $fields = "ba.id,
 ba.userid uid,
 {$mainuserfields}
-, u.institution, bo.id boid, bo.text botext, bo.coursestarttime, bo.courseendtime";
+, u.institution, bo.id boid, bo.text botext, bo.coursestarttime, bo.courseendtime, bo.duration, (SELECT SUM(boo.duration) FROM {booking_answers} baa LEFT JOIN {booking_options} boo ON baa.optionid = boo.id WHERE baa.userid = ba.userid and baa.waitinglist != 5) alloptionduraiton";
 $from = "{booking_answers} ba
         LEFT JOIN {user} u on u.id = ba.userid
         LEFT JOIN {booking_options} bo ON ba.optionid = bo.id";
 
-$where = "ba.bookingid = :bookingid";
+$where = "ba.bookingid = :bookingid AND ba.waitinglist != 5";
 
 $params['bookingid'] = $bookingid;
 
