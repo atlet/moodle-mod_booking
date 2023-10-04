@@ -2778,7 +2778,8 @@ class booking_option {
             'coursestarttime' => ($this->option->coursestarttime == 0 ? '' : userdate($this->option->coursestarttime, get_string('strftimedatetimeshort'))),
             'courseendtime' => ($this->option->courseendtime == 0 ? '' : userdate($this->option->courseendtime, get_string('strftimedatetimeshort'))),
             'coursestartdate' => ($this->option->coursestarttime == 0 ? '' : userdate($this->option->coursestarttime, get_string('pollstrftimedate', 'booking'))),
-            'courseenddate' => ($this->option->courseendtime == 0 ? '' : userdate($this->option->courseendtime, get_string('pollstrftimedate', 'booking')))
+            'courseenddate' => ($this->option->courseendtime == 0 ? '' : userdate($this->option->courseendtime, get_string('pollstrftimedate', 'booking'))),
+            'tnofhours' => 0
         ];
 
         return $data;

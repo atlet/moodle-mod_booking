@@ -2944,6 +2944,14 @@ function booking_tool_certificate_fields() {
         true,
         get_string('courseenddate', 'mod_booking')
     );
+
+    $handler->ensure_field_exists(
+        'tnofhours',
+        'text',
+        get_string('bookingoptionsmenu', 'mod_booking') . ': ' . get_string('tnofhours', 'mod_booking'),
+        true,
+        '02:00'
+    );
 }
 /*
  * Helper function to replace special characters within a string.

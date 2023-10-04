@@ -349,7 +349,8 @@ if (!$tableallbookings->is_downloading()) {
 
             // Issue certificate to all students
             if ($_POST['massactions'] == 'issuecertificateall' && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
-                $allusers = $DB->get_records('booking_answers', array('optionid' => $optionid, 'waitinglist' => 0));
+                $allusers = $DB->get_records_sql("SELECT ba.*, (SELECT COALESCE(SUM(bo.duration), 0) FROM {booking_options} bo LEFT JOIN {booking_answers} baa ON baa.optionid = bo.id WHERE bo.bookingid = ba.bookingid AND baa.userid = ba.userid AND baa.completed = 1) duration FROM {booking_answers} ba WHERE ba.optionid = :optionid AND ba.waitinglist = 0", ['optionid' => $optionid]);
+
                 $issuedata = $bookingoption->get_data_for_certificate();
 
                 $issuedcerts = 0;
@@ -363,6 +364,7 @@ if (!$tableallbookings->is_downloading()) {
 
                         if ($rn < $bookingoption->booking->settings->maxcerts) {
                             if (!is_numeric($user->certificateid)) {
+                                $issuedata['tnofhours'] = gmdate('H:i', $user->duration);
                                 $cid = $template->issue_certificate(
                                     $user->userid,
                                     $bookingoption->booking->settings->expires,
@@ -448,7 +450,7 @@ if (!$tableallbookings->is_downloading()) {
             }
 
             if ($_POST['massactions'] == 'issuecertificateconfirmed' && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
-                $allusers = $DB->get_records('booking_answers', array('optionid' => $optionid, 'completed' => 1));
+                $allusers = $DB->get_records_sql("SELECT ba.*, (SELECT COALESCE(SUM(bo.duration), 0) FROM {booking_options} bo LEFT JOIN {booking_answers} baa ON baa.optionid = bo.id WHERE bo.bookingid = ba.bookingid AND baa.userid = ba.userid AND baa.completed = 1) duration FROM {booking_answers} ba WHERE ba.optionid = :optionid AND ba.waitinglist = 0 AND ba.completed = 1", ['optionid' => $optionid]);
                 $issuedata = $bookingoption->get_data_for_certificate();
 
                 $issuedcerts = 0;
@@ -462,6 +464,7 @@ if (!$tableallbookings->is_downloading()) {
 
                         if ($rn < $bookingoption->booking->settings->maxcerts) {
                             if (!is_numeric($user->certificateid)) {
+                                $issuedata['tnofhours'] = gmdate('H:i', $user->duration);
                                 $cid = $template->issue_certificate(
                                     $user->userid,
                                     $bookingoption->booking->settings->expires,
@@ -556,7 +559,7 @@ if (!$tableallbookings->is_downloading()) {
             if ($_POST['massactions'] == 'issuecertificateselected' && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
                 $issuedata = $bookingoption->get_data_for_certificate();
 
-                $allusers = $DB->get_records_sql("SELECT * FROM {booking_answers} WHERE optionid = :optionid AND userid IN (" . implode(',', $allselectedusers) . ")", ['optionid' => $optionid]);
+                $allusers = $DB->get_records_sql("SELECT ba.*, (SELECT COALESCE(SUM(bo.duration), 0) FROM {booking_options} bo LEFT JOIN {booking_answers} baa ON baa.optionid = bo.id WHERE bo.bookingid = ba.bookingid AND baa.userid = ba.userid AND baa.completed = 1) duration FROM {booking_answers} ba WHERE ba.optionid = :optionid AND ba.userid IN (" . implode(',', $allselectedusers) . ")", ['optionid' => $optionid]);
 
                 $issuedcerts = 0;
                 $notissued = 0;
@@ -569,6 +572,7 @@ if (!$tableallbookings->is_downloading()) {
 
                         if ($rn < $bookingoption->booking->settings->maxcerts) {
                             if (!is_numeric($user->certificateid)) {
+                                $issuedata['tnofhours'] = gmdate('H:i', $user->duration);
                                 $cid = $template->issue_certificate(
                                     $user->userid,
                                     $bookingoption->booking->settings->expires,

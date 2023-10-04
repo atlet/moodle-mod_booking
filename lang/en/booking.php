@@ -154,6 +154,7 @@ $string['daystonotify_help'] = "Will work only if start and end date of option a
 $string['daystonotify2'] = 'Second notification before start of event to notify participants.';
 $string['daystonotifyteachers'] = 'Number of days in advance of the event-start to notify teachers (PRO)';
 $string['bookinganswer_cancelled'] = 'Booking option cancelled for/by user';
+$string['tnofhours'] = 'total number of hours';
 
 // Booking option events.
 $string['bookingoption_cancelled'] = "Booking option cancelled";
