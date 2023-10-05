@@ -364,7 +364,9 @@ if (!$tableallbookings->is_downloading()) {
 
                         if ($rn < $bookingoption->booking->settings->maxcerts) {
                             if (!is_numeric($user->certificateid)) {
-                                $issuedata['tnofhours'] = gmdate('H:i', $user->duration);
+                                $hours = round($user->duration / 3600, 2);
+                                $mins = round($user->duration / 60 % 60, 2);
+                                $issuedata['tnofhours'] = sprintf('%02d:%02d', $hours, $mins);
                                 $cid = $template->issue_certificate(
                                     $user->userid,
                                     $bookingoption->booking->settings->expires,
@@ -464,7 +466,9 @@ if (!$tableallbookings->is_downloading()) {
 
                         if ($rn < $bookingoption->booking->settings->maxcerts) {
                             if (!is_numeric($user->certificateid)) {
-                                $issuedata['tnofhours'] = gmdate('H:i', $user->duration);
+                                $hours = round($user->duration / 3600, 2);
+                                $mins = round($user->duration / 60 % 60, 2);
+                                $issuedata['tnofhours'] = sprintf('%02d:%02d', $hours, $mins);
                                 $cid = $template->issue_certificate(
                                     $user->userid,
                                     $bookingoption->booking->settings->expires,
@@ -572,7 +576,9 @@ if (!$tableallbookings->is_downloading()) {
 
                         if ($rn < $bookingoption->booking->settings->maxcerts) {
                             if (!is_numeric($user->certificateid)) {
-                                $issuedata['tnofhours'] = gmdate('H:i', $user->duration);
+                                $hours = round($user->duration / 3600, 2);
+                                $mins = round($user->duration / 60 % 60, 2);
+                                $issuedata['tnofhours'] = sprintf('%02d:%02d', $hours, $mins);
                                 $cid = $template->issue_certificate(
                                     $user->userid,
                                     $bookingoption->booking->settings->expires,

@@ -98,10 +98,16 @@ class users_instance_report_table extends table_sql {
     }
 
     function col_duration($values) {
-        return gmdate('H:i', $values->duration);
+        $hours = round($values->duration / 3600, 2);
+        $mins = round($values->duration / 60 % 60, 2);
+
+        return sprintf('%02d:%02d', $hours, $mins);
     }
 
     function col_alloptionduraiton($values) {
-        return gmdate('H:i', $values->alloptionduraiton);
+        $hours = round($values->alloptionduraiton / 3600, 2);
+        $mins = round($values->alloptionduraiton / 60 % 60, 2);
+
+        return sprintf('%02d:%02d', $hours, $mins);
     }
 }
