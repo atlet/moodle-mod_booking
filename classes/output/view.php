@@ -563,6 +563,11 @@ class view implements renderable, templatable {
         $columnsleftside[] = 'invisibleoption';
         $columnsleftside[] = 'text';
         $columnsleftside[] = 'action';
+
+        if (in_array('address', $optionsfields)) {
+            $columnsleftside[] = 'address';
+        }
+
         if (in_array('teacher', $optionsfields)) {
             $columnsleftside[] = 'teacher';
         }

@@ -380,6 +380,7 @@ class mod_booking_mod_form extends moodleform_mod {
             'location' => get_string('location', 'mod_booking'),
             'institution' => get_string('institution', 'mod_booking'),
             'minanswers' => get_string('minanswers', 'mod_booking'),
+            'address' => get_string('address', 'mod_booking'),
         ];
 
         $optionsdownloadfields = [
