@@ -205,11 +205,14 @@ class cancelmyself implements bo_condition {
     public function render_button(booking_option_settings $settings,
         int $userid = 0, bool $full = false, bool $not = false, bool $fullwidth = true): array {
 
-        global $USER;
+        global $USER, $DB;
         if ($userid === null) {
             $userid = $USER->id;
         }
-        $label = $this->get_description_string(false);
+
+        $customlabelstring = $DB->get_record('booking', ['id' => $settings->bookingid], 'btncancelname');
+
+        $label = $this->get_description_string(false, $customlabelstring->btncancelname);
 
         return bo_info::render_button($settings, $userid, $label,
             'btn btn-light btn-sm',
@@ -223,8 +226,10 @@ class cancelmyself implements bo_condition {
      * @param bool $full
      * @return string
      */
-    private function get_description_string($isavailable) {
-        return get_string('cancelsign', 'mod_booking') . "&nbsp;" .
-            get_string('cancelmyself', 'mod_booking');
+    private function get_description_string($isavailable, $customlabelstring = '') {
+
+        $label = empty($customlabelstring) ? get_string('cancelmyself', 'mod_booking') : $customlabelstring;
+
+        return get_string('cancelsign', 'mod_booking') . "&nbsp;" . $label;
     }
 }
