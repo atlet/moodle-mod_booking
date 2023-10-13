@@ -2397,6 +2397,7 @@ $string['allcertificatesgenerated'] = '{$a->issuedcerts} certificates have been 
 $string['allcertificatesgeneratedall'] = '{$a->issuedcerts} certificates have been issued to all students. {$a->notissued} students alredy have certificates.';
 $string['allcertificatesgeneratedallteachers'] = '{$a->issuedcerts} certificates have been issued to all teachers. {$a->notissued} teachers alredy have certificates.';
 $string['allcertificatesgeneratedselected'] = '{$a->issuedcerts} certificates have been issued to selected students. {$a->notissued} students alredy have certificates.';
+$string['certificateswillbeissued'] = "Certificates will be issued in background.";
 $string['deletecertificatemessage'] = '{$a->deleted} certificates have been deleted and {$a->notdeleted} students have no certificates to delete.';
 $string['deletecertificatemessageteacher'] = '{$a->deleted} certificates have been deleted and {$a->notdeleted} teachers have no certificates to delete.';
 $string['selectaction'] = "Select action";

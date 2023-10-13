@@ -26,6 +26,7 @@
 use mod_booking\booking_option;
 use mod_booking\output\booked_users;
 use mod_booking\singleton_service;
+use mod_booking\task\issue_certificate;
 
 require_once(__DIR__ . '/../../config.php');
 require_once($CFG->dirroot . '/mod/booking/locallib.php');
@@ -349,42 +350,17 @@ if (!$tableallbookings->is_downloading()) {
 
             // Issue certificate to all students
             if ($_POST['massactions'] == 'issuecertificateall' && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
-                $allusers = $DB->get_records_sql("SELECT ba.*, (SELECT COALESCE(SUM(bo.duration), 0) FROM {booking_options} bo LEFT JOIN {booking_answers} baa ON baa.optionid = bo.id WHERE bo.bookingid = ba.bookingid AND baa.userid = ba.userid AND baa.completed = 1) duration FROM {booking_answers} ba WHERE ba.optionid = :optionid AND ba.waitinglist = 0", ['optionid' => $optionid]);
+                $issuecertificate = new issue_certificate();
+                $issuecertificate->set_custom_data([
+                    'type' => 'issuecertificateall',
+                    'optionid' => $optionid,
+                    'cmid' => $cm->id,
+                    'courseid' => $course->id
+                ]);
 
-                $issuedata = $bookingoption->get_data_for_certificate();
+                \core\task\manager::queue_adhoc_task($issuecertificate);
 
-                $issuedcerts = 0;
-                $notissued = 0;
-
-                if (!empty($bookingoption->booking->settings->template)) {
-                    $template = \tool_certificate\template::instance($bookingoption->booking->settings->template);
-
-                    foreach ($allusers as $user) {
-                        $rn = $DB->count_records_sql("SELECT COUNT(*) FROM  {booking_answers} WHERE bookingid = :bookingid AND userid = :userid AND certificateid IS NOT null", ['bookingid' => $bookingoption->booking->id, 'userid' => $user->userid]);
-
-                        if ($rn < $bookingoption->booking->settings->maxcerts) {
-                            if (!is_numeric($user->certificateid)) {
-                                $issuedata['tnofhours'] = $user->duration / 60 / 60;
-                                $cid = $template->issue_certificate(
-                                    $user->userid,
-                                    $bookingoption->booking->settings->expires,
-                                    $issuedata,
-                                    'mod_booking',
-                                    $course->id
-                                );
-
-                                $DB->execute("UPDATE {booking_answers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => $cid, 'optionid' => $optionid, 'userid' => $user->userid]);
-                                $issuedcerts++;
-                            } else {
-                                $notissued++;
-                            }
-                        } else {
-                            $notissued++;
-                        }
-                    }
-                }
-
-                redirect($url, get_string('allcertificatesgeneratedall', 'booking', ['notissued' => $notissued, 'issuedcerts' => $issuedcerts]), 5);
+                redirect($url, get_string('certificateswillbeissued', 'booking'), 5);
             }
 
             // Issue certificate to all teachers
@@ -450,41 +426,17 @@ if (!$tableallbookings->is_downloading()) {
             }
 
             if ($_POST['massactions'] == 'issuecertificateconfirmed' && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
-                $allusers = $DB->get_records_sql("SELECT ba.*, (SELECT COALESCE(SUM(bo.duration), 0) FROM {booking_options} bo LEFT JOIN {booking_answers} baa ON baa.optionid = bo.id WHERE bo.bookingid = ba.bookingid AND baa.userid = ba.userid AND baa.completed = 1) duration FROM {booking_answers} ba WHERE ba.optionid = :optionid AND ba.waitinglist = 0 AND ba.completed = 1", ['optionid' => $optionid]);
-                $issuedata = $bookingoption->get_data_for_certificate();
+                $issuecertificate = new issue_certificate();
+                $issuecertificate->set_custom_data([
+                    'type' => 'issuecertificateconfirmed',
+                    'optionid' => $optionid,
+                    'cmid' => $cm->id,
+                    'courseid' => $course->id
+                ]);
 
-                $issuedcerts = 0;
-                $notissued = 0;
+                \core\task\manager::queue_adhoc_task($issuecertificate);
 
-                if (!empty($bookingoption->booking->settings->template)) {
-                    $template = \tool_certificate\template::instance($bookingoption->booking->settings->template);
-
-                    foreach ($allusers as $user) {
-                        $rn = $DB->count_records_sql("SELECT COUNT(*) FROM  {booking_answers} WHERE bookingid = :bookingid AND userid = :userid AND certificateid IS NOT null", ['bookingid' => $bookingoption->booking->id, 'userid' => $user->userid]);
-
-                        if ($rn < $bookingoption->booking->settings->maxcerts) {
-                            if (!is_numeric($user->certificateid)) {
-                                $issuedata['tnofhours'] = $user->duration / 60 / 60;
-                                $cid = $template->issue_certificate(
-                                    $user->userid,
-                                    $bookingoption->booking->settings->expires,
-                                    $issuedata,
-                                    'mod_booking',
-                                    $course->id
-                                );
-
-                                $DB->execute("UPDATE {booking_answers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => $cid, 'optionid' => $optionid, 'userid' => $user->userid]);
-                                $issuedcerts++;
-                            } else {
-                                $notissued++;
-                            }
-                        } else {
-                            $notissued++;
-                        }
-                    }
-                }
-
-                redirect($url, get_string('allcertificatesgenerated', 'booking', ['issuedcerts' => $issuedcerts, 'notissued' => $notissued]), 5);
+                redirect($url, get_string('certificateswillbeissued', 'booking'), 5);
             }
 
             if (empty($allselectedusers)) {
@@ -557,41 +509,18 @@ if (!$tableallbookings->is_downloading()) {
             }
 
             if ($_POST['massactions'] == 'issuecertificateselected' && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
-                $issuedata = $bookingoption->get_data_for_certificate();
+                $issuecertificate = new issue_certificate();
+                $issuecertificate->set_custom_data([
+                    'type' => 'issuecertificateselected',
+                    'optionid' => $optionid,
+                    'cmid' => $cm->id,
+                    'courseid' => $course->id,
+                    'allselectedusers' => $allselectedusers
+                ]);
 
-                $allusers = $DB->get_records_sql("SELECT ba.*, (SELECT COALESCE(SUM(bo.duration), 0) FROM {booking_options} bo LEFT JOIN {booking_answers} baa ON baa.optionid = bo.id WHERE bo.bookingid = ba.bookingid AND baa.userid = ba.userid AND baa.completed = 1) duration FROM {booking_answers} ba WHERE ba.optionid = :optionid AND ba.userid IN (" . implode(',', $allselectedusers) . ")", ['optionid' => $optionid]);
+                \core\task\manager::queue_adhoc_task($issuecertificate);
 
-                $issuedcerts = 0;
-                $notissued = 0;
-
-                if (!empty($bookingoption->booking->settings->template)) {
-                    $template = \tool_certificate\template::instance($bookingoption->booking->settings->template);
-
-                    foreach ($allusers as $user) {
-                        $rn = $DB->count_records_sql("SELECT COUNT(*) FROM  {booking_answers} WHERE bookingid = :bookingid AND userid = :userid AND certificateid IS NOT null", ['bookingid' => $bookingoption->booking->id, 'userid' => $user->userid]);
-
-                        if ($rn < $bookingoption->booking->settings->maxcerts) {
-                            if (!is_numeric($user->certificateid)) {
-                                $issuedata['tnofhours'] = $user->duration / 60 / 60;
-                                $cid = $template->issue_certificate(
-                                    $user->userid,
-                                    $bookingoption->booking->settings->expires,
-                                    $issuedata,
-                                    'mod_booking',
-                                    $course->id
-                                );
-
-                                $DB->execute("UPDATE {booking_answers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => $cid, 'optionid' => $optionid, 'userid' => $user->userid]);
-                                $issuedcerts++;
-                            } else {
-                                $notissued++;
-                            }
-                        } else {
-                            $notissued++;
-                        }
-                    }
-                }
-                redirect($url, get_string('allcertificatesgeneratedselected', 'booking', ['issuedcerts' => $issuedcerts, 'notissued' => $notissued]), 5);
+                redirect($url, get_string('certificateswillbeissued', 'booking'), 5);
             }
 
             if ($_POST['massactions'] == 'deletecertificate' && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
