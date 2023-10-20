@@ -58,9 +58,9 @@ class bookings extends external_api {
      */
     public static function execute_parameters(): external_function_parameters {
         return new external_function_parameters([
-            'courseid' => new external_value(PARAM_TEXT, 'Course id', (bool) VALUE_DEFAULT, '0'),
-            'printusers' => new external_value(PARAM_TEXT, 'Print user profiles', (bool) VALUE_DEFAULT, '0'),
-            'days' => new external_value(PARAM_TEXT, 'How old bookings to retrive - in days.', (bool) VALUE_DEFAULT, '0')
+            'courseid' => new external_value(PARAM_INT, 'Course id', (bool) VALUE_DEFAULT, 0),
+            'printusers' => new external_value(PARAM_INT, 'Print user profiles', (bool) VALUE_DEFAULT, 0),
+            'days' => new external_value(PARAM_INT, 'How old bookings to retrive - in days.', (bool) VALUE_DEFAULT, 0)
             ]
         );
     }
@@ -70,7 +70,7 @@ class bookings extends external_api {
      *
      * @return array
      */
-    public static function execute($courseid = '0', $printusers = '0', $days = '0'): array {
+    public static function execute(int $courseid = 0, int $printusers = 0, int $days = 0): array {
         global $DB, $CFG;
 
         require_once($CFG->dirroot . '/mod/booking/locallib.php');
@@ -97,7 +97,7 @@ class bookings extends external_api {
             $context = context_module::instance($cm->id);
 
             if (strcmp($cm->visible, "1") == 0 || has_capability('mod/booking:bookforothers', $context)) {
-                $bookingdata = singleton_service::get_instance_of_booking_by_cmid((int)$cm->id);
+                $bookingdata = singleton_service::get_instance_of_booking_by_cmid((int) $cm->id);
 
                 if ($bookingdata->settings->showinapi == "1") {
                     $bookingdata->apply_tags();
