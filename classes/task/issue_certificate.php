@@ -39,7 +39,7 @@ class issue_certificate extends \core\task\adhoc_task {
      * @see \core\task\task_base::execute()
      */
     public function execute() {
-        global $CFG, $DB;
+        global $DB;
         $taskdata = $this->get_custom_data();
 
         mtrace('issue_certificate task started');
@@ -61,12 +61,11 @@ class issue_certificate extends \core\task\adhoc_task {
                     break;
             }
 
-            $issuedata = $bookingoption->get_data_for_certificate();
-
             $issuedcerts = 0;
             $notissued = 0;
 
             if (!empty($bookingoption->booking->settings->template)) {
+                $issuedata = $bookingoption->get_data_for_certificate();
                 $template = \tool_certificate\template::instance($bookingoption->booking->settings->template);
 
                 foreach ($allusers as $user) {
@@ -98,5 +97,7 @@ class issue_certificate extends \core\task\adhoc_task {
         } else {
             mtrace('issue_certificate no data passed to task');
         }
+
+        mtrace('issue_certificate task finished');
     }
 }
