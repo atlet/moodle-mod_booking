@@ -351,11 +351,13 @@ if (!$tableallbookings->is_downloading()) {
             // Issue certificate to all students
             if ($_POST['massactions'] == 'issuecertificateall' && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
                 $issuecertificate = new issue_certificate();
+                $issuecertificate->set_userid($USER->id);
                 $issuecertificate->set_custom_data([
                     'type' => 'issuecertificateall',
                     'optionid' => $optionid,
                     'cmid' => $cm->id,
-                    'courseid' => $course->id
+                    'courseid' => $course->id,
+                    'context' => $context
                 ]);
 
                 \core\task\manager::queue_adhoc_task($issuecertificate);
@@ -427,11 +429,13 @@ if (!$tableallbookings->is_downloading()) {
 
             if ($_POST['massactions'] == 'issuecertificateconfirmed' && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
                 $issuecertificate = new issue_certificate();
+                $issuecertificate->set_userid($USER->id);
                 $issuecertificate->set_custom_data([
                     'type' => 'issuecertificateconfirmed',
                     'optionid' => $optionid,
                     'cmid' => $cm->id,
-                    'courseid' => $course->id
+                    'courseid' => $course->id,
+                    'context' => $context
                 ]);
 
                 \core\task\manager::queue_adhoc_task($issuecertificate);
@@ -510,12 +514,14 @@ if (!$tableallbookings->is_downloading()) {
 
             if ($_POST['massactions'] == 'issuecertificateselected' && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
                 $issuecertificate = new issue_certificate();
+                $issuecertificate->set_userid($USER->id);
                 $issuecertificate->set_custom_data([
                     'type' => 'issuecertificateselected',
                     'optionid' => $optionid,
                     'cmid' => $cm->id,
                     'courseid' => $course->id,
-                    'allselectedusers' => $allselectedusers
+                    'allselectedusers' => $allselectedusers,
+                    'context' => $context
                 ]);
 
                 \core\task\manager::queue_adhoc_task($issuecertificate);

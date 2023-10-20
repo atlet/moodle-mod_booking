@@ -20,6 +20,7 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->dirroot . '/mod/booking/lib.php');
 
 use mod_booking\singleton_service;
+use context_module;
 
 global $CFG;
 
@@ -39,7 +40,7 @@ class issue_certificate extends \core\task\adhoc_task {
      * @see \core\task\task_base::execute()
      */
     public function execute() {
-        global $DB;
+        global $DB, $USER;
         $taskdata = $this->get_custom_data();
 
         mtrace('issue_certificate task started');
@@ -69,8 +70,8 @@ class issue_certificate extends \core\task\adhoc_task {
                 $template = \tool_certificate\template::instance($bookingoption->booking->settings->template);
 
                 foreach ($allusers as $user) {
-                    $rn = $DB->count_records_sql("SELECT COUNT(*) FROM  {booking_answers} WHERE bookingid = :bookingid AND userid = :userid AND certificateid IS NOT null", ['bookingid' => $bookingoption->booking->id, 'userid' => $user->userid]);
-
+                    $rn = $DB->count_records_sql("SELECT COUNT(*) FROM {booking_answers} WHERE bookingid = :bookingid AND userid = :userid AND certificateid IS NOT null AND waitinglist != 5", ['bookingid' => $bookingoption->booking->id, 'userid' => $user->userid]);
+                    $issued = false;
                     if ($rn < $bookingoption->booking->settings->maxcerts) {
                         if (!is_numeric($user->certificateid)) {
                             $issuedata['tnofhours'] = $user->duration / 60 / 60;
@@ -83,6 +84,7 @@ class issue_certificate extends \core\task\adhoc_task {
                             );
 
                             $DB->execute("UPDATE {booking_answers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => $cid, 'optionid' => $taskdata->optionid, 'userid' => $user->userid]);
+                            $issued = true;
                             $issuedcerts++;
                         } else {
                             $notissued++;
@@ -90,6 +92,18 @@ class issue_certificate extends \core\task\adhoc_task {
                     } else {
                         $notissued++;
                     }
+
+                    $event = \mod_booking\event\issue_certificate::create([
+                        'objectid' => $taskdata->optionid,
+                        'context' => context_module::instance($taskdata->cmid),
+                        'userid' => $USER->id,
+                        'relateduserid' => $user->userid,
+                        'other' => [
+                            'issued' => $issued
+                        ]
+                    ]);
+
+                    $event->trigger();
                 }
             }
 

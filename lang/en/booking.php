@@ -2424,3 +2424,4 @@ $string['showallusers'] = "Show all users";
 $string['showonlybookedusers'] = "Show only booked users";
 $string['optionduraiton'] = 'Option duration';
 $string['alloptionduraiton'] = 'All options duration';
+$string['issue_certificate'] = 'Issue certificate';
