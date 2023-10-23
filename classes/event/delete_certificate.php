@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * The issue_certificate event.
+ * The delete_certificate event.
  *
  * @package mod_booking
  * @copyright 2023 Wunderbyte GmbH <info@wunderbyte.at>
@@ -25,27 +25,27 @@
 namespace mod_booking\event;
 
 /**
- * The issue_certificate event.
+ * The delete_certificate event.
  */
-class issue_certificate extends \core\event\base {
+class delete_certificate extends \core\event\base {
 
     protected function init() {
         $this->data['edulevel'] = self::LEVEL_TEACHING;
-        $this->data['crud'] = 'c';
+        $this->data['crud'] = 'd';
         $this->data['objecttable'] = 'booking_options';
     }
 
     public static function get_name() {
-        return get_string('issue_certificate', 'mod_booking');
+        return get_string('delete_certificate', 'mod_booking');
     }
 
     public function get_description() {
         $not = "";
-        if (!$this->other['issued']) {
+        if (!$this->other['deleted']) {
             $not = "not ";
         }
 
-        return "Teacher with id '{$this->userid}' {$not}issued certificate for user id '{$this->relateduserid}' in option id '{$this->objectid}'.";
+        return "Teacher with id '{$this->userid}' {$not}deleted certificate for user id '{$this->relateduserid}' in option id '{$this->objectid}'.";
     }
 
     public function get_url() {

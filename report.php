@@ -532,7 +532,7 @@ if (!$tableallbookings->is_downloading()) {
             if ($_POST['massactions'] == 'deletecertificate' && (has_capability('mod/booking:readresponses', $context) || $isteacher)) {
                 $issuedata = $bookingoption->get_data_for_certificate();
 
-                $allusers = $DB->get_records_sql("SELECT * FROM {booking_answers} WHERE optionid = :optionid AND userid IN (" . implode(',', $allselectedusers) . ")", ['optionid' => $optionid]);
+                $allusers = $DB->get_records_sql("SELECT * FROM {booking_answers} WHERE optionid = :optionid AND waitinglist != 5 AND userid IN (" . implode(',', $allselectedusers) . ")", ['optionid' => $optionid]);
 
                 $deleted = 0;
                 $notdeleted = 0;
@@ -541,14 +541,30 @@ if (!$tableallbookings->is_downloading()) {
                     $template = \tool_certificate\template::instance($bookingoption->booking->settings->template);
 
                     foreach ($allusers as $user) {
+
+                        $cdeleted = false;
+
                         if (is_numeric($user->certificateid)) {
                             $template->revoke_issue($user->certificateid);
 
-                            $DB->execute("UPDATE {booking_answers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => null, 'optionid' => $optionid, 'userid' => $user->userid]);
+                            $DB->execute("UPDATE {booking_answers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid AND waitinglist != 5", ['cid' => null, 'optionid' => $optionid, 'userid' => $user->userid]);
                             $deleted++;
+                            $cdeleted = true;
                         } else {
                             $notdeleted++;
                         }
+
+                        $event = \mod_booking\event\delete_certificate::create([
+                            'objectid' => $optionid,
+                            'context' => $context,
+                            'userid' => $USER->id,
+                            'relateduserid' => $user->userid,
+                            'other' => [
+                                'deleted' => $cdeleted
+                            ]
+                        ]);
+
+                        $event->trigger();
                     }
                 }
                 redirect($url, get_string('deletecertificatemessage', 'booking', ['deleted' => $deleted, 'notdeleted' => $notdeleted]), 5);
