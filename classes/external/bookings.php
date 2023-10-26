@@ -121,8 +121,7 @@ class bookings extends external_api {
                     $ret['bookingmanagername'] = $manager->firstname;
                     $ret['bookingmanagersurname'] = $manager->lastname;
                     $ret['bookingmanageremail'] = $manager->email;
-                    $ret['myfilemanager'] = external_util::get_area_files($context->id,
-                        'mod_booking', 'myfilemanager', 0, false);
+                    $ret['myfilemanager'] = external_util::get_area_files($context->id, 'mod_booking', 'myfilemanager');
                     $ret['categories'] = array();
                     $ret['options'] = array();
 
