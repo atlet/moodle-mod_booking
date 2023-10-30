@@ -420,8 +420,10 @@ class view implements renderable, templatable {
 
         $booking = singleton_service::get_instance_of_booking_by_cmid($cmid);
 
+        $institutionclean = str_replace(['č', 'ž', 'š', 'Č', 'Ž', 'Š'], ['c', 'z', 's', 'C', 'Z', 'S'], $institution);
+
         // Create the table.
-        $myinstitutiontable = new bookingoptions_wbtable("cmid_{$cmid} myinstitutiontable", $booking);
+        $myinstitutiontable = new bookingoptions_wbtable("cmid_{$cmid}_institution_{$institutionclean} myinstitutiontable", $booking);
 
         $wherearray = [
             'bookingid' => (int) $booking->id,
