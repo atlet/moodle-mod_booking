@@ -50,6 +50,7 @@ $redirecturl = new moodle_url('/mod/booking/report.php', array('id' => $id, 'opt
 $mform = new mod_booking_sendmessage_form();
 
 $PAGE->set_pagelayout('standard');
+$PAGE->activityheader->disable();
 
 $PAGE->set_title(get_string('sendcustommessage', 'booking'));
 
