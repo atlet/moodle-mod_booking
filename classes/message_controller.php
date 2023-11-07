@@ -314,6 +314,13 @@ class message_controller {
             }
         }
 
+        // Replace the placeholders - second time, so also the placeholder in pollurl are replaced.
+        foreach ($this->params as $name => $value) {
+            if (!is_null($value)) { // Since php 8.1.
+                $text = str_replace('{' . $name . '}', $value, $text);
+            }
+        }
+
         return $text;
     }
 
