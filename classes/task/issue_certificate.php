@@ -52,13 +52,13 @@ class issue_certificate extends \core\task\adhoc_task {
 
             switch ($taskdata->type) {
                 case 'issuecertificateall':
-                    $allusers = $DB->get_records_sql("SELECT ba.*, (SELECT COALESCE(SUM(bo.duration), 0) FROM {booking_options} bo LEFT JOIN {booking_answers} baa ON baa.optionid = bo.id WHERE bo.bookingid = ba.bookingid AND baa.userid = ba.userid AND baa.completed = 1) duration FROM {booking_answers} ba WHERE ba.optionid = :optionid AND ba.waitinglist != 5", ['optionid' => $taskdata->optionid]);
+                    $allusers = $DB->get_records_sql("SELECT ba.*, b.duration bookingduration, (SELECT COALESCE(SUM(bo.duration), 0) FROM {booking_options} bo LEFT JOIN {booking_answers} baa ON baa.optionid = bo.id WHERE bo.bookingid = ba.bookingid AND baa.userid = ba.userid AND baa.completed = 1) duration FROM {booking_answers} ba LEFT JOIN {booking} b on b.id = ba.bookingid WHERE ba.optionid = :optionid AND ba.waitinglist != 5", ['optionid' => $taskdata->optionid]);
                     break;
                 case 'issuecertificateconfirmed':
-                    $allusers = $DB->get_records_sql("SELECT ba.*, (SELECT COALESCE(SUM(bo.duration), 0) FROM {booking_options} bo LEFT JOIN {booking_answers} baa ON baa.optionid = bo.id WHERE bo.bookingid = ba.bookingid AND baa.userid = ba.userid AND baa.completed = 1) duration FROM {booking_answers} ba WHERE ba.optionid = :optionid AND ba.waitinglist != 5 AND ba.completed = 1", ['optionid' => $taskdata->optionid]);
+                    $allusers = $DB->get_records_sql("SELECT ba.*, b.duration bookingduration, (SELECT COALESCE(SUM(bo.duration), 0) FROM {booking_options} bo LEFT JOIN {booking_answers} baa ON baa.optionid = bo.id WHERE bo.bookingid = ba.bookingid AND baa.userid = ba.userid AND baa.completed = 1) duration FROM {booking_answers} ba LEFT JOIN {booking} b on b.id = ba.bookingid WHERE ba.optionid = :optionid AND ba.waitinglist != 5 AND ba.completed = 1", ['optionid' => $taskdata->optionid]);
                     break;
                 case 'issuecertificateselected':
-                    $allusers = $DB->get_records_sql("SELECT ba.*, (SELECT COALESCE(SUM(bo.duration), 0) FROM {booking_options} bo LEFT JOIN {booking_answers} baa ON baa.optionid = bo.id WHERE bo.bookingid = ba.bookingid AND baa.userid = ba.userid AND baa.completed = 1) duration FROM {booking_answers} ba WHERE ba.optionid = :optionid AND ba.waitinglist != 5 AND ba.userid IN (" . implode(',', $taskdata->allselectedusers) . ")", ['optionid' => $taskdata->optionid]);
+                    $allusers = $DB->get_records_sql("SELECT ba.*, b.duration bookingduration, (SELECT COALESCE(SUM(bo.duration), 0) FROM {booking_options} bo LEFT JOIN {booking_answers} baa ON baa.optionid = bo.id WHERE bo.bookingid = ba.bookingid AND baa.userid = ba.userid AND baa.completed = 1) duration FROM {booking_answers} ba LEFT JOIN {booking} b on b.id = ba.bookingid WHERE ba.optionid = :optionid AND ba.waitinglist != 5 AND ba.userid IN (" . implode(',', $taskdata->allselectedusers) . ")", ['optionid' => $taskdata->optionid]);
                     break;
             }
 
@@ -75,6 +75,9 @@ class issue_certificate extends \core\task\adhoc_task {
                     if ($rn < $bookingoption->booking->settings->maxcerts) {
                         if (!is_numeric($user->certificateid)) {
                             $issuedata['tnofhours'] = $user->duration / 60 / 60;
+                            if ($user->bookingduration < $issuedata['tnofhours']) {
+                                $issuedata['tnofhours'] = $user->bookingduration;
+                            }
                             $cid = $template->issue_certificate(
                                 $user->userid,
                                 $bookingoption->booking->settings->expires,
