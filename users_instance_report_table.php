@@ -44,7 +44,8 @@ class users_instance_report_table extends table_sql {
             'duration',
             'alloptionduraiton',
             'coursestarttime',
-            'courseendtime'
+            'courseendtime',
+            'bacompleted'
         ];
         $headers = [
             get_string('fullname'),
@@ -53,7 +54,8 @@ class users_instance_report_table extends table_sql {
             get_string('optionduraiton', 'mod_booking'),
             get_string('alloptionduraiton', 'mod_booking'),
             get_string('coursestarttime', 'mod_booking'),
-            get_string('courseendtime', 'mod_booking')
+            get_string('courseendtime', 'mod_booking'),
+            get_string('completed', 'mod_booking')
         ];
 
         $this->define_columns($columns);
@@ -103,5 +105,17 @@ class users_instance_report_table extends table_sql {
 
     function col_alloptionduraiton($values) {
         return $values->alloptionduraiton / 60 / 60;
+    }
+
+    function col_bacompleted($values) {
+        if (!$this->is_downloading()) {
+            $completed = '';
+            if ($values->bacompleted) {
+                $completed = '&#x2713;';
+            }
+            return $completed;
+        } else {
+            return $values->bacompleted;
+        }
     }
 }
