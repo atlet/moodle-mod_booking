@@ -427,6 +427,7 @@ class booking {
             foreach ($disabledusernames as $value) {
                 if (strpos($USER->username, trim($value)) !== false) {
                     $warning = html_writer::tag('p', get_string('banusernameswarning', 'mod_booking'));
+                    return $warning;
                 }
             }
         }
