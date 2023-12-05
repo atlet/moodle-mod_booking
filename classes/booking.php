@@ -411,50 +411,6 @@ class booking {
     }
 
     /**
-     * Display a message about the maximum nubmer of bookings this user is allowed to make.
-     *
-     * @param stdClass $user
-     * @return string
-     */
-    public function show_maxperuser($user) {
-        global $USER;
-
-        $warning = '';
-
-        if (!empty($this->settings->banusernames)) {
-            $disabledusernames = explode(',', $this->settings->banusernames);
-
-            foreach ($disabledusernames as $value) {
-                if (strpos($USER->username, trim($value)) !== false) {
-                    $warning = html_writer::tag('p', get_string('banusernameswarning', 'mod_booking'));
-                    return $warning;
-                }
-            }
-        }
-
-        // Check, if can book based on login method.
-        if (!empty($this->settings->auth)) {
-            if ($this->settings->auth != $USER->auth) {
-                $warning = html_writer::tag('p', get_string('wrongauth', 'mod_booking'));
-                return $warning;
-            }
-        }
-
-        if (!$this->settings->maxperuser) {
-            return $warning; // No per-user limits.
-        }
-
-        $outdata = new stdClass();
-        $outdata->limit = $this->settings->maxperuser;
-        $outdata->count = $this->get_user_booking_count($user);
-        $outdata->eventtype = $this->settings->eventtype;
-
-        $warning .= html_writer::tag('div', get_string('maxperuserwarning', 'mod_booking', $outdata),
-            array ('class' => 'alert alert-warning'));
-        return $warning;
-    }
-
-    /**
      * Determins the number of bookings that a single user has already made in all booking options
      *
      * @param stdClass $user

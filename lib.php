@@ -94,6 +94,7 @@ define('MSGCONTRPARAM_DO_NOT_SEND', 3);
 define('MSGCONTRPARAM_VIEW_CONFIRMATION', 4);
 
 // Define booking availability condition ids.
+define('BO_COND_BANUSERNAMES', 200);
 define('BO_COND_ISLOGGEDINPRICE', 190);
 define('BO_COND_ISLOGGEDIN', 180);
 define('BO_COND_CONFIRMCANCEL', 170);

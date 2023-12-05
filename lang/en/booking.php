@@ -2416,6 +2416,7 @@ $string['authnorestriction'] = 'No restrictions';
 $string['authrestrict'] = 'Restrict access';
 $string['wrongauth'] = 'You don\'t have permission to book as you registered with wrong service.';
 $string['bo_cond_auth_not_available'] = 'You don\'t have permission to book as you registered with wrong service.';
+$string['bo_cond_banusernames_not_available'] = 'You don\'t have permission to book as your username is banned.';
 
 $string['courseenddate'] = 'End date of the course';
 $string['coursestartdate'] = 'Start date of the course';
