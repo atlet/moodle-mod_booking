@@ -104,7 +104,7 @@ class bookings extends external_api {
                     $context = context_module::instance($cm->id);
 
                     $bookingdata->settings->intro = file_rewrite_pluginfile_urls($bookingdata->settings->intro,
-                        'pluginfile.php', $context->id, 'mod_booking', 'intro', 0);
+                        'pluginfile.php', $context->id, 'mod_booking', 'intro', null);
 
                     $manager = $DB->get_record('user', array('username' => $bookingdata->settings->bookingmanager));
 
