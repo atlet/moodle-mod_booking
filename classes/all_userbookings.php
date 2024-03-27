@@ -362,7 +362,7 @@ class all_userbookings extends \table_sql {
         if (has_capability ( 'mod/booking:readresponses', \context_module::instance($this->cm->id) )) {
             $certopitons = [];
             if (!empty($this->bookingdata->booking->settings->template)) {
-                $certopitons[] = ['label' => get_string('issuecertificateall', 'booking'), 'value' => 'issuecertificateall'];
+                //$certopitons[] = ['label' => get_string('issuecertificateall', 'booking'), 'value' => 'issuecertificateall'];
                 $certopitons[] = ['label' => get_string('issuecertificateselected', 'booking'), 'value' => 'issuecertificateselected'];
                 $certopitons[] = ['label' => get_string('issuecertificateconfirmed', 'booking'), 'value' => 'issuecertificateconfirmed'];
 
