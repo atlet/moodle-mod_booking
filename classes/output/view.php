@@ -422,6 +422,9 @@ class view implements renderable, templatable {
 
         $institutionclean = str_replace(['č', 'ž', 'š', 'Č', 'Ž', 'Š'], ['c', 'z', 's', 'C', 'Z', 'S'], $institution);
 
+        // Remove all other problematic characters that are not ASCII alphanumeric characters, underlines or spaces.
+        $institutionclean = preg_replace('#[^a-zA-Z0-9_\s]#', '', $institutionclean);
+
         // Create the table.
         $myinstitutiontable = new bookingoptions_wbtable("cmid_{$cmid}_institution_{$institutionclean} myinstitutiontable", $booking);
 
