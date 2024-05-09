@@ -57,10 +57,11 @@ class bookings extends external_api {
      * @return external_function_parameters
      */
     public static function execute_parameters(): external_function_parameters {
-        return new external_function_parameters([
-            'courseid' => new external_value(PARAM_INT, 'Course id', (bool) VALUE_DEFAULT, 0),
-            'printusers' => new external_value(PARAM_INT, 'Print user profiles', (bool) VALUE_DEFAULT, 0),
-            'days' => new external_value(PARAM_INT, 'How old bookings to retrive - in days.', (bool) VALUE_DEFAULT, 0)
+        return new external_function_parameters(
+            [
+                'courseid' => new external_value(PARAM_INT, 'Course id', (bool) VALUE_DEFAULT, 0),
+                'printusers' => new external_value(PARAM_INT, 'Print user profiles', (bool) VALUE_DEFAULT, 0),
+                'days' => new external_value(PARAM_INT, 'How old bookings to retrive - in days.', (bool) VALUE_DEFAULT, 0)
             ]
         );
     }
@@ -77,8 +78,10 @@ class bookings extends external_api {
 
         $returns = array();
 
-        $params = self::validate_parameters(self::execute_parameters(),
-            ['courseid' => $courseid, 'printusers' => $printusers, 'days' => $days]);
+        $params = self::validate_parameters(
+            self::execute_parameters(),
+            ['courseid' => $courseid, 'printusers' => $printusers, 'days' => $days]
+        );
 
         $bookings = $DB->get_records_select("booking", "course = {$courseid}");
 
@@ -103,8 +106,14 @@ class bookings extends external_api {
                     $bookingdata->apply_tags();
                     $context = context_module::instance($cm->id);
 
-                    $bookingdata->settings->intro = file_rewrite_pluginfile_urls($bookingdata->settings->intro,
-                        'pluginfile.php', $context->id, 'mod_booking', 'intro', null);
+                    $bookingdata->settings->intro = file_rewrite_pluginfile_urls(
+                        $bookingdata->settings->intro,
+                        'pluginfile.php',
+                        $context->id,
+                        'mod_booking',
+                        'intro',
+                        null
+                    );
 
                     $manager = $DB->get_record('user', array('username' => $bookingdata->settings->bookingmanager));
 
@@ -123,6 +132,7 @@ class bookings extends external_api {
                     $ret['bookingmanageremail'] = $manager->email;
                     $ret['myfilemanager'] = external_util::get_area_files($context->id, 'mod_booking', 'myfilemanager');
                     $ret['categories'] = array();
+                    $ret['tags'] = [];
                     $ret['options'] = array();
 
                     if ($bookingdata->settings->categoryid != '0' && $bookingdata->settings->categoryid != '') {
@@ -139,8 +149,21 @@ class bookings extends external_api {
                         }
                     }
 
-                    foreach ($bookingdata->get_all_options(0, 0, '', '*') as $record) {
+                    $tags = \core_tag_tag::get_item_tags(
+                        'mod_booking',
+                        'booking',
+                        $bookingdata->settings->id
+                    );
 
+                    foreach ($tags as $key => $value) {
+                        $tag = array();
+                        $tag['id'] = $value->id;
+                        $tag['name'] = $value->name;
+
+                        $ret['tags'][] = $tag;
+                    }
+
+                    foreach ($bookingdata->get_all_options(0, 0, '', '*') as $record) {
                         $option = array();
                         $option['id'] = $record->id;
                         $option['text'] = $record->text;
@@ -156,8 +179,10 @@ class bookings extends external_api {
                         $option['teachers'] = array();
 
                         if ($printusers) {
-                            $users = $DB->get_records('booking_answers',
-                                array('optionid' => $record->id));
+                            $users = $DB->get_records(
+                                'booking_answers',
+                                array('optionid' => $record->id)
+                            );
                             foreach ($users as $user) {
                                 $tmpuser = array();
                                 $ruser = $DB->get_record('user', array('id' => $user->userid));
@@ -171,8 +196,10 @@ class bookings extends external_api {
                             }
                         }
 
-                        $users = $DB->get_records('booking_teachers',
-                            array('bookingid' => $record->bookingid, 'optionid' => $record->id));
+                        $users = $DB->get_records(
+                            'booking_teachers',
+                            array('bookingid' => $record->bookingid, 'optionid' => $record->id)
+                        );
                         foreach ($users as $user) {
                             $teacher = array();
                             $ruser = $DB->get_record('user', array('id' => $user->userid));
@@ -222,6 +249,12 @@ class bookings extends external_api {
                         array(
                             'id' => new external_value(PARAM_INT, 'Category ID'),
                             'name' => new external_value(PARAM_TEXT, 'Category name')
+                        )
+                    )),
+                    'tags' => new external_multiple_structure(new external_single_structure(
+                        array(
+                            'id' => new external_value(PARAM_INT, 'Tag ID'),
+                            'name' => new external_value(PARAM_TEXT, 'Tag name')
                         )
                     )),
                     'options' => new external_multiple_structure(new external_single_structure(
