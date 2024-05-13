@@ -62,8 +62,8 @@ $from = "{booking_answers} ba
         FROM {modules} m
         WHERE m.name = 'booking'
     ) AND cm.instance = b.id";
-$where = "userid = :userid AND cm.visible = 1 AND bo.invisible = 0";
-$params = ['userid' => $USER->id];
+$where = "userid = :userid AND cm.visible = 1 AND bo.invisible = 0  AND ba.waitinglist < :waitinglist";
+$params = ['userid' => $USER->id, 'waitinglist' => STATUSPARAM_DELETED];
 
 $table->set_sql($fields, $from, $where, $params);
 
