@@ -207,8 +207,8 @@ class booking_option {
             $result = $DB->get_records_sql(
                     'SELECT answers.userid FROM {booking_answers} answers
                     INNER JOIN {booking_answers} parent on parent.userid = answers.userid
-                    WHERE answers.optionid = ? AND parent.optionid = ?',
-                    array($this->optionid, $optionid));
+                    WHERE answers.optionid = ? AND parent.optionid = ? AND answers.waitinglist < ? AND parent.waitinglist < ?',
+                    array($this->optionid, $optionid, STATUSPARAM_DELETED, STATUSPARAM_DELETED));
 
             $alreadybooked = count($result);
 
