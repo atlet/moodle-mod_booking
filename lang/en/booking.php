@@ -559,7 +559,7 @@ $string['waitingtext_help'] = 'Leave this blank to use the site default text. Yo
 <li>{teacherN} - Name of specific teacher, e.g. {teacher1}</li>
 <li>{pollstartdate}</li>
 <li>{qr_id} - Insert QR code with user id</li>
-<li>{qr_username} - Insert QR code with user username</li>
+<li>{} - Insert QR code with user username</li>
 <li>{dates} - Session times</li>
 <li>{shorturl} - Short URL of option</li>
 <li>{usercalendarurl} - Link to subscribe to user calendar (personal events)</li>

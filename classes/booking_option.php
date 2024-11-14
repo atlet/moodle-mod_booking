@@ -45,6 +45,9 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->dirroot . '/calendar/lib.php');
 require_once($CFG->libdir . '/completionlib.php');
+require_once($CFG->dirroot . '/mod/booking/vendor/autoload.php');
+
+use chillerlan\QRCode\{QRCode, QROptions};
 
 /**
  * Managing a single booking option
@@ -1833,7 +1836,7 @@ class booking_option {
         global $CFG, $DB;
 
         include_once($CFG->dirroot . '/mod/booking/TinyButStrong/tbs_class.php');
-        include_once($CFG->dirroot . '/mod/booking/OpenTBS/tbs_plugin_opentbs.php');
+        include_once($CFG->dirroot . '/mod/booking/OpenTBS/tbs_plugin_opentbs.php');        
 
         $tbs = new \clsTinyButStrong;
         $tbs->Plugin(TBS_INSTALL, OPENTBS_PLUGIN);
@@ -2988,9 +2991,9 @@ class booking_option {
 
         $params->qr_id = '<img src="https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=' .
             rawurlencode($userid) . '&choe=UTF-8" title="Link to Google.com" />';
-        $params->qr_username = isset($user->username) ?
-            '<img src="https://chart.googleapis.com/chart?chs=300x300&cht=qr&chl=' .
-            rawurlencode($user->username) . '&choe=UTF-8" title="QR encoded username" />' : '';
+        
+        $params->qr_id = '<img width="300" height="300" src="'.(new QRCode)->render($userid).'" alt="QR encoded user id" />';
+        $params->qr_username = '<img width="300" height="300" src="'.(new QRCode)->render($user->username).'" alt="QR encoded username" />';
 
         $params->participant = fullname($user);
         $params->email = $user->email ?? '';
