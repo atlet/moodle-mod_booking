@@ -2981,6 +2981,10 @@ class booking_option {
             'optionid' => $optionid,
             'whichview' => 'showonlyone'
         ));
+        $confirmationlink = new \moodle_url($CFG->wwwroot . '/mod/booking/viewconfirmation.php', array(
+            'id' => $cmid,
+            'optionid' => $optionid
+        ));
         $params->gotobookingoption = \html_writer::link($gotobookingoptionlink, $gotobookingoptionlink->out());
 
         // Important: We have to delete answers cache before calling $bookinganswer->user_status.
@@ -3090,6 +3094,9 @@ class booking_option {
             'optionid' => $optionid,
         ]);
         $params->journal = \html_writer::link($teachersreportlink, $teachersreportlink->out());
+
+        $confirmationlink = \html_writer::link($confirmationlink, $confirmationlink->out());
+        $params->confirmationlink = $confirmationlink;
 
         return $params;
     }

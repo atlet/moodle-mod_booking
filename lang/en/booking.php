@@ -498,6 +498,7 @@ $string['bookedtext_help'] = 'Leave this blank to use the site default text. You
 <li>{shorturl} - Short URL of option</li>
 <li>{usercalendarurl} - Link to subscribe to user calendar (personal events)</li>
 <li>{coursecalendarurl} - Link to subscribe to course calendar (course events)</li>
+<li>{confirmationlink} - Link to confirmation message.</li>
 </ul>';
 
 $string['userleave_help'] = 'Leave this blank to use the site default text. You can use any of the following placeholders in the text:
@@ -531,6 +532,7 @@ $string['userleave_help'] = 'Leave this blank to use the site default text. You 
 <li>{shorturl} - Short URL of option</li>
 <li>{usercalendarurl} - Link to subscribe to user calendar (personal events)</li>
 <li>{coursecalendarurl} - Link to subscribe to course calendar (course events)</li>
+<li>{confirmationlink} - Link to confirmation message.</li>
 </ul>';
 
 $string['waitingtext_help'] = 'Leave this blank to use the site default text. You can use any of the following placeholders in the text:
@@ -597,6 +599,7 @@ $string['notifyemail_help'] = 'Leave this blank to use the site default text. Yo
 <li>{shorturl} - Short URL of option</li>
 <li>{usercalendarurl} - Link to subscribe to user calendar (personal events)</li>
 <li>{coursecalendarurl} - Link to subscribe to course calendar (course events)</li>
+<li>{confirmationlink} - Link to confirmation message.</li>
 </ul>';
 
 $string['notifyemailteachers_help'] = 'Leave this blank to use the site default text. You can use any of the following placeholders in the text:
@@ -630,6 +633,7 @@ $string['notifyemailteachers_help'] = 'Leave this blank to use the site default 
 <li>{shorturl} - Short URL of option</li>
 <li>{usercalendarurl} - Link to subscribe to user calendar (personal events)</li>
 <li>{coursecalendarurl} - Link to subscribe to course calendar (course events)</li>
+<li>{confirmationlink} - Link to confirmation message.</li>
 </ul>';
 
 $string['statuschangetext_help'] = 'Leave this blank to use the site default text. You can use any of the following placeholders in the text:
@@ -663,6 +667,7 @@ $string['statuschangetext_help'] = 'Leave this blank to use the site default tex
 <li>{shorturl} - Short URL of option</li>
 <li>{usercalendarurl} - Link to subscribe to user calendar (personal events)</li>
 <li>{coursecalendarurl} - Link to subscribe to course calendar (course events)</li>
+<li>{confirmationlink} - Link to confirmation message.</li>
 </ul>';
 
 $string['deletedtext_help'] = 'Leave this blank to use the site default text. You can use any of the following placeholders in the text:
@@ -696,6 +701,7 @@ $string['deletedtext_help'] = 'Leave this blank to use the site default text. Yo
 <li>{shorturl} - Short URL of option</li>
 <li>{usercalendarurl} - Link to subscribe to user calendar (personal events)</li>
 <li>{coursecalendarurl} - Link to subscribe to course calendar (course events)</li>
+<li>{confirmationlink} - Link to confirmation message.</li>
 </ul>';
 
 $string['bookingchangedtext_help'] = 'Enter 0 to turn change notifications off.
@@ -732,6 +738,7 @@ You can use any of the following placeholders in the text:
 <li>{shorturl} - Short URL of option</li>
 <li>{usercalendarurl} - Link to subscribe to user calendar (personal events)</li>
 <li>{coursecalendarurl} - Link to subscribe to course calendar (course events)</li>
+<li>{confirmationlink} - Link to confirmation message.</li>
 </ul>';
 
 $string['pollurltext_help'] = 'Leave this blank to use the site default text. You can use any of the following placeholders in the text:
@@ -765,6 +772,7 @@ $string['pollurltext_help'] = 'Leave this blank to use the site default text. Yo
 <li>{shorturl} - Short URL of option</li>
 <li>{usercalendarurl} - Link to subscribe to user calendar (personal events)</li>
 <li>{coursecalendarurl} - Link to subscribe to course calendar (course events)</li>
+<li>{confirmationlink} - Link to confirmation message.</li>
 </ul>';
 
 $string['pollurlteacherstext_help'] = 'Leave this blank to use the site default text. You can use any of the following placeholders in the text:
@@ -798,6 +806,7 @@ $string['pollurlteacherstext_help'] = 'Leave this blank to use the site default 
 <li>{shorturl} - Short URL of option</li>
 <li>{usercalendarurl} - Link to subscribe to user calendar (personal events)</li>
 <li>{coursecalendarurl} - Link to subscribe to course calendar (course events)</li>
+<li>{confirmationlink} - Link to confirmation message.</li>
 </ul>';
 
 $string['activitycompletiontext_help'] = 'Leave this blank to use the site default text. You can use any of the following placeholders in the text:
@@ -831,6 +840,7 @@ $string['activitycompletiontext_help'] = 'Leave this blank to use the site defau
 <li>{shorturl} - Short URL of option</li>
 <li>{usercalendarurl} - Link to subscribe to user calendar (personal events)</li>
 <li>{coursecalendarurl} - Link to subscribe to course calendar (course events)</li>
+<li>{confirmationlink} - Link to confirmation message.</li>
 </ul>';
 
 $string['notificationtext_help'] = 'Leave this blank to use the site default text. You can use any of the following placeholders in the text:
@@ -864,6 +874,7 @@ $string['notificationtext_help'] = 'Leave this blank to use the site default tex
 <li>{shorturl} - Short URL of option</li>
 <li>{usercalendarurl} - Link to subscribe to user calendar (personal events)</li>
 <li>{coursecalendarurl} - Link to subscribe to course calendar (course events)</li>
+<li>{confirmationlink} - Link to confirmation message.</li>
 </ul>';
 
 $string['placeholders_help'] = 'Leave this blank to use the site default text. You can use any of the following placeholders in the text:
@@ -898,6 +909,7 @@ $string['placeholders_help'] = 'Leave this blank to use the site default text. Y
 <li>{shorturl} - Short URL of option</li>
 <li>{usercalendarurl} - Link to subscribe to user calendar (personal events)</li>
 <li>{coursecalendarurl} - Link to subscribe to course calendar (course events)</li>
+<li>{confirmationlink} - Link to confirmation message.</li>
 </ul>';
 
 $string['helptext:placeholders'] = '<p>
@@ -929,7 +941,7 @@ $string['helptext:placeholders'] = '<p>
         <li>{address}</li>
         <li>{eventtype}</li>
         <li>{teacher} - Name of first teacher</li>
-<li>{teachers} - List of all teachers</li>
+        <li>{teachers} - List of all teachers</li>
         <li>{teacherN} - Name of specific teacher, e.g. {teacher1}</li>
         <li>{pollstartdate}</li>
         <li>{qr_id} - Insert QR code with user id</li>
@@ -938,6 +950,7 @@ $string['helptext:placeholders'] = '<p>
         <li>{shorturl} - Short URL of option</li>
         <li>{usercalendarurl} - Link to subscribe to user calendar (personal events)</li>
         <li>{coursecalendarurl} - Link to subscribe to course calendar (course events)</li>
+        <li>{confirmationlink} - Link to confirmation message.</li>
     </ul>
   </div>
 </div>';
