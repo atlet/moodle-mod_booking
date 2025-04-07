@@ -71,13 +71,13 @@ if ($mform->is_cancelled()) {
     $continue = $OUTPUT->single_button($urlredirect, get_string("continue"), 'get');
     $csvfile = $mform->get_file_content('csvfile');
 
-    if ($importer->process_data($csvfile, $fromform)) {
+    if ($importer->process_data($csvfile, $fromform)) {        
         echo $OUTPUT->notification(get_string('importfinished', 'booking'), 'notifysuccess');
         if (!empty($importer->get_line_errors())) {
             $output = get_string('import_partial', 'mod_booking');
             $output .= html_writer::div($importer->get_line_errors());
             echo $OUTPUT->notification($output);
-        }
+        }        
         echo $continue;
     } else {
         // Not ok, write error.

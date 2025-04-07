@@ -134,6 +134,7 @@ class csv_import {
         $this->additionalfields[] = 'name';
         $this->additionalfields[] = 'startdate';
         $this->additionalfields[] = 'enddate';
+        $this->additionalfields[] = 'completed';
 
         // Optiondates (Multisessionfields have to be added here.
         // Every multisession can have up to three customfields.
@@ -242,7 +243,9 @@ class csv_import {
                         $optionid = $existingoption->id;
                     } else {
                         $this->add_csverror(
-                            "Identifier {$csvrecord['identifier']} is already in use within another booking instance!", $i);
+                            "Identifier {$csvrecord['identifier']} is already in use within another booking instance!",
+                            $i
+                        );
                         $i++;
                         continue;
                     }
@@ -251,9 +254,24 @@ class csv_import {
                     $i++;
                     continue;
                 }
-
             } else {
                 $optionid = false;
+            }
+
+            /**
+             * If there is not an existing option found by identifier, check if there is by name.
+             */
+            if (!$optionid && isset($csvrecord['text'])) {
+                $existingoptions = $DB->get_records('booking_options', [
+                    'text' => $csvrecord['text'],
+                    'bookingid' => $this->booking->id
+                ]);
+
+                if (count($existingoptions) == 1) {
+                    // Exactly one existing option was found.
+                    $existingoption = array_pop($existingoptions);
+                    $optionid = $existingoption->id;
+                }
             }
 
             if ($optionid) {
@@ -276,7 +294,7 @@ class csv_import {
                 // Save validated data to db.
                 $userdata = [];
                 foreach ($csvrecord as $column => $value) {
-                    if ($column == 'useremail' || $column == 'teacheremail' || $column == 'user_username') {
+                    if ($column == 'useremail' || $column == 'teacheremail' || $column == 'user_username' || $column == 'completed') {
                         $userdata[$column] = $value;
                     } else {
                         $this->prepare_data($column, $value, $bookingoption);
@@ -364,11 +382,15 @@ class csv_import {
                         $teacheremail = trim($teacheremail);
 
                         // Now we check if the email exists as a user on the platform.
-                        if (!$teacher = $DB->get_record('user', array('suspended' => 0, 'deleted' => 0, 'confirmed' => 1,
-                            'email' => $teacheremail), 'id', IGNORE_MULTIPLE)) {
+                        if (!$teacher = $DB->get_record('user', array(
+                            'suspended' => 0,
+                            'deleted' => 0,
+                            'confirmed' => 1,
+                            'email' => $teacheremail
+                        ), 'id', IGNORE_MULTIPLE)) {
 
-                                $this->add_csverror(get_string('noteacherfound', 'booking', $i), $i);
-                                continue;
+                            $this->add_csverror(get_string('noteacherfound', 'booking', $i), $i);
+                            continue;
                         }
 
                         // If we can't add the teacher, we add an error.
@@ -419,13 +441,27 @@ class csv_import {
                             not found, couldn't be subscribed to booking option.", $i);
                     }
                 }
+
                 if (isset($userdata['user_username'])) {
-                    $user = $DB->get_record('user', array('suspended' => 0, 'deleted' => 0, 'confirmed' => 1,
-                        'username' => $userdata['user_username']), 'id', IGNORE_MULTIPLE);
+                    $user = $DB->get_record('user', array(
+                        'suspended' => 0,
+                        'deleted' => 0,
+                        'confirmed' => 1,
+                        'username' => $userdata['user_username']
+                    ), 'id', IGNORE_MULTIPLE);
                     if ($user !== false) {
                         $option = singleton_service::get_instance_of_booking_option($this->cmid, $optionid);
-                        $option->user_submit_response($user, 0, 0, false, VERIFIED);
+                        $option->user_submit_response($user, 0, 0, false, VERIFIED);                        
+                    } else {
+                        $useremail = $userdata['user_username'];
+                        $this->add_csverror("The user with the username $useremail was
+                            not found, couldn't be subscribed to booking option '{$bookingoption->text}'.", $i);
                     }
+                }
+
+                if ($user !== false && isset($userdata['completed']) && $userdata['completed'] == 1) {
+                    $option = singleton_service::get_instance_of_booking_option($this->cmid, $optionid);
+                    $option->confirmactivity($user->id);                    
                 }
             }
             $i++; // Increment CSV line counter.
@@ -510,7 +546,7 @@ class csv_import {
                     $bookingoption->startendtimeknown = 1;
                     $bookingoption->$column = $this->get_timestamp($value);
                     break;
-                // For optiondates.
+                    // For optiondates.
                 case preg_match('/ms[1-3]starttime/', $column) ? $column : !$column:
                 case preg_match('/ms[1-3]endtime/', $column) ? $column : !$column:
                     $bookingoption->startendtimeknown = 1;
@@ -567,14 +603,16 @@ class csv_import {
         // Set to false if error occured in csv-line.
         if (empty($csvrecord['text'])) {
             $this->add_csverror('There seems to be an empty line.', $linenumber);
-                    return false;
+            return false;
         }
 
         // Set to false if error occured in csv-line.
         if (isset($csvrecord['coursestarttime'])) {
             if (!is_null($this->formdata->dateparseformat)) {
-                if (!date_create_from_format($this->formdata->dateparseformat, $csvrecord['coursestarttime']) &&
-                    !strtotime($csvrecord['coursestarttime'])) {
+                if (
+                    !date_create_from_format($this->formdata->dateparseformat, $csvrecord['coursestarttime']) &&
+                    !strtotime($csvrecord['coursestarttime'])
+                ) {
                     $this->add_csverror('Startdate had a problem with the date format.', $linenumber);
                     return false;
                 }
@@ -582,8 +620,10 @@ class csv_import {
         }
         if (isset($csvrecord['courseendtime'])) {
             if (!is_null($this->formdata->dateparseformat)) {
-                if (!date_create_from_format($this->formdata->dateparseformat, $csvrecord['courseendtime']) &&
-                    !strtotime($csvrecord['courseendtime'])) {
+                if (
+                    !date_create_from_format($this->formdata->dateparseformat, $csvrecord['courseendtime']) &&
+                    !strtotime($csvrecord['courseendtime'])
+                ) {
                     $this->add_csverror('Enddate hadd a problem with the date format.', $linenumber);
                     return false;
                 }
@@ -591,8 +631,10 @@ class csv_import {
         }
         if (isset($csvrecord['bookingclosingtime'])) {
             if (!is_null($this->formdata->dateparseformat)) {
-                if (!date_create_from_format($this->formdata->dateparseformat, $csvrecord['bookingclosingtime']) &&
-                    !strtotime($csvrecord['bookingclosingtime'])) {
+                if (
+                    !date_create_from_format($this->formdata->dateparseformat, $csvrecord['bookingclosingtime']) &&
+                    !strtotime($csvrecord['bookingclosingtime'])
+                ) {
                     $this->add_csverror('Booking closing time hadd a problem with the date format.', $linenumber);
                     return false;
                 }
@@ -600,8 +642,10 @@ class csv_import {
         }
         if (isset($csvrecord['bookingopeningtime'])) {
             if (!is_null($this->formdata->dateparseformat)) {
-                if (!date_create_from_format($this->formdata->dateparseformat, $csvrecord['bookingopeningtime']) &&
-                    !strtotime($csvrecord['bookingopeningtime'])) {
+                if (
+                    !date_create_from_format($this->formdata->dateparseformat, $csvrecord['bookingopeningtime']) &&
+                    !strtotime($csvrecord['bookingopeningtime'])
+                ) {
                     $this->add_csverror('Booking opening time hadd a problem with the date format.', $linenumber);
                     return false;
                 }

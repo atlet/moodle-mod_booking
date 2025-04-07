@@ -78,17 +78,22 @@ class issue_certificate extends \core\task\adhoc_task {
                             if ($user->bookingduration < $issuedata['tnofhours']) {
                                 $issuedata['tnofhours'] = $user->bookingduration;
                             }
-                            $cid = $template->issue_certificate(
-                                $user->userid,
-                                $bookingoption->booking->settings->expires,
-                                $issuedata,
-                                'mod_booking',
-                                $taskdata->courseid
-                            );
+                            try {
+                                $cid = $template->issue_certificate(
+                                    $user->userid,
+                                    $bookingoption->booking->settings->expires,
+                                    $issuedata,
+                                    'mod_booking',
+                                    $taskdata->courseid
+                                );
 
-                            $DB->execute("UPDATE {booking_answers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => $cid, 'optionid' => $taskdata->optionid, 'userid' => $user->userid]);
-                            $issued = true;
-                            $issuedcerts++;
+                                $DB->execute("UPDATE {booking_answers} SET certificateid = :cid WHERE optionid = :optionid AND userid = :userid", ['cid' => $cid, 'optionid' => $taskdata->optionid, 'userid' => $user->userid]);
+                                $issued = true;
+                                $issuedcerts++;
+                            } catch (\Throwable $th) {
+                                $notissued++;
+                                mtrace("Not issued: {$th->getMessage()}");
+                            }
                         } else {
                             $notissued++;
                         }
