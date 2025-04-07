@@ -37,6 +37,20 @@ class singleton_service {
     // Hold the class instance of the singleton service.
     private static $instance = null;
 
+    // Declare properties to avoid dynamic property creation.
+    private $bookingsettingsbycmid = [];
+    private $bookinganswers = [];
+    private $bookingsbycmid = [];
+    private $bookingsbybookingid = [];
+    private $bookings = [];
+    private $bookingoptions = [];
+    private $bookingoptionsettings = [];
+    private $users = [];
+    private $prices = [];
+    private $pricecategory = [];
+    private $bookingsettingsbybookingid = [];
+    private $renderer = [];
+
     // The constructor is private
     // to prevent initiation with outer code.
     private function __construct() {

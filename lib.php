@@ -19,7 +19,7 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 
 require_once($CFG->libdir . '/filelib.php');
-require_once($CFG->dirroot . '/question/category_class.php');
+//require_once($CFG->dirroot . '/question/category_class.php');
 require_once($CFG->dirroot . '/group/lib.php');
 require_once($CFG->dirroot . '/user/selector/lib.php');
 require_once($CFG->dirroot . '/mod/booking/locallib.php');
