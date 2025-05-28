@@ -15,6 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 namespace mod_booking;
+
 defined('MOODLE_INTERNAL') || die();
 
 use cache_helper;
@@ -33,7 +34,7 @@ use mod_booking\output\bookingoption_changes;
 use mod_booking\output\renderer;
 use mod_booking\task\send_confirmation_mails;
 
-require_once($CFG->dirroot.'/user/profile/lib.php');
+require_once($CFG->dirroot . '/user/profile/lib.php');
 
 /**
  * Manage booking messages which will be sent by email.
@@ -115,9 +116,18 @@ class message_controller {
      * @param string $customsubject subject of custom messages
      * @param string $custommessage body of custom messages
      */
-    public function __construct(int $msgcontrparam, int $messageparam, int $cmid, int $bookingid = null,
-        int $optionid, int $userid, int $optiondateid = null, $changes = null,
-        string $customsubject = '', string $custommessage = '') {
+    public function __construct(
+        int $msgcontrparam,
+        int $messageparam,
+        int $cmid,
+        int $bookingid = null,
+        int $optionid,
+        int $userid,
+        int $optiondateid = null,
+        $changes = null,
+        string $customsubject = '',
+        string $custommessage = ''
+    ) {
 
         global $USER, $PAGE;
 
@@ -150,8 +160,10 @@ class message_controller {
         $optionid = $settings->id;
 
         if (empty($optionid)) {
-            debugging('ERROR: Option settings could not be created. Most probably, the option was deleted from DB.',
-                DEBUG_DEVELOPER);
+            debugging(
+                'ERROR: Option settings could not be created. Most probably, the option was deleted from DB.',
+                DEBUG_DEVELOPER
+            );
             return;
         }
 
@@ -223,7 +235,6 @@ class message_controller {
             $this->params->dates = $output->render_optiondates_only($data);
             // Rendered session description.
             $this->params->sessiondescription = get_rendered_eventdescription($this->optionid, $this->cmid, DESCRIPTION_CALENDAR);
-
         } else {
             // Render optiontimes using a template.
             $data = new optiondates_only($settings);
@@ -281,21 +292,32 @@ class message_controller {
 
         // List of fieldnames that also have a global template (currently 'activitycompletiontext' has no global template).
         $mailtemplatesfieldnames = [
-            'bookedtext', 'waitingtext', 'notifyemail', 'notifyemailteachers', 'statuschangetext', 'userleave',
-            'deletedtext', 'bookingchangedtext', 'pollurltext', 'pollurlteacherstext'
+            'bookedtext',
+            'waitingtext',
+            'notifyemail',
+            'notifyemailteachers',
+            'statuschangetext',
+            'userleave',
+            'deletedtext',
+            'bookingchangedtext',
+            'pollurltext',
+            'pollurlteacherstext'
         ];
 
         if ($this->messageparam == MSGPARAM_CUSTOM_MESSAGE) {
             // For custom messages, we already have a message body.
             $text = $this->custommessage;
-        } else if (isset($this->bookingsettings->mailtemplatessource) && $this->bookingsettings->mailtemplatessource == 1
-            && in_array($this->messagefieldname, $mailtemplatesfieldnames)) {
+        } else if (
+            isset($this->bookingsettings->mailtemplatessource) && $this->bookingsettings->mailtemplatessource == 1
+            && in_array($this->messagefieldname, $mailtemplatesfieldnames)
+        ) {
             // Check if global mail templates are enabled and if the field name also has a global mail template.
             // Get the mail template specified in plugin config.
             $text = get_config('booking', 'global' . $this->messagefieldname);
-
-        } else if (isset($this->bookingsettings->{$this->messagefieldname})
-            && $this->bookingsettings->{$this->messagefieldname} === "0") {
+        } else if (
+            isset($this->bookingsettings->{$this->messagefieldname})
+            && $this->bookingsettings->{$this->messagefieldname} === "0"
+        ) {
             /* NOTE: By entering 0 into a mail template, we can turn the specific mail reminder off.
             This is why we need the === check for the exact string of "0". */
             $text = "0";
@@ -309,6 +331,17 @@ class message_controller {
 
         // Replace the placeholders.
         foreach ($this->params as $name => $value) {
+            if (is_array($value) && isset($value['text'])) {
+                // If the value is an array, we need to use the text property.
+                $value = $value['text'];
+            } else if (is_array($value) && isset($value['name'])) {
+                // If the value is an array, we need to use the name property.
+                $value = $value['name'];
+            } else if (is_array($value)) {
+                // If the value is an array, we need to use the first element.
+                $value = reset($value);
+            }
+
             if (!is_null($value)) { // Since php 8.1.
                 $text = str_replace('{' . $name . '}', $value, $text);
             }
@@ -316,6 +349,17 @@ class message_controller {
 
         // Replace the placeholders - second time, so also the placeholder in pollurl are replaced.
         foreach ($this->params as $name => $value) {
+            if (is_array($value) && isset($value['text'])) {
+                // If the value is an array, we need to use the text property.
+                $value = $value['text'];
+            } else if (is_array($value) && isset($value['name'])) {
+                // If the value is an array, we need to use the name property.
+                $value = $value['name'];
+            } else if (is_array($value)) {
+                // If the value is an array, we need to use the first element.
+                $value = reset($value);
+            }
+
             if (!is_null($value)) { // Since php 8.1.
                 $text = str_replace('{' . $name . '}', $value, $text);
             }
@@ -431,13 +475,14 @@ class message_controller {
 
         // Only send if we have message data and if the user hasn't been deleted.
         // Also, do not send, if the param MSGCONTRPARAM_DO_NOT_SEND has been set.
-        if ($this->msgcontrparam != MSGCONTRPARAM_DO_NOT_SEND
-            && !empty( $this->messagedata ) && !$this->user->deleted) {
+        if (
+            $this->msgcontrparam != MSGCONTRPARAM_DO_NOT_SEND
+            && !empty($this->messagedata) && !$this->user->deleted
+        ) {
 
             if ($this->msgcontrparam == MSGCONTRPARAM_QUEUE_ADHOC) {
 
                 return $this->send_mail_with_adhoc_task();
-
             } else {
 
                 // In all other cases, use message_send.
@@ -486,15 +531,19 @@ class message_controller {
             // If the setting to send a copy to the booking manger has been enabled,
             // then also send a copy to the booking manager.
             // DO NOT send copies of change notifications to booking managers.
-            if (!empty($bookingsettings->copymail) &&
+            if (
+                !empty($bookingsettings->copymail) &&
                 $this->messageparam != MSGPARAM_CHANGE_NOTIFICATION
             ) {
                 // Get booking manager from booking instance settings.
                 $this->messagedata->userto = $bookingsettings->bookingmanageruser;
 
                 if ($this->messageparam == MSGPARAM_CONFIRMATION || $this->messageparam == MSGPARAM_WAITINGLIST) {
-                    $this->messagedata->subject = get_string($this->messagefieldname . 'subjectbookingmanager',
-                        'mod_booking', $this->params);
+                    $this->messagedata->subject = get_string(
+                        $this->messagefieldname . 'subjectbookingmanager',
+                        'mod_booking',
+                        $this->params
+                    );
                 }
 
                 $sendtask = new send_confirmation_mails();
@@ -517,15 +566,16 @@ class message_controller {
         $attachments = null;
         $attachname = '';
 
-        if ($this->messageparam == MSGPARAM_CANCELLED_BY_PARTICIPANT
-            || $this->messageparam == MSGPARAM_CANCELLED_BY_TEACHER_OR_SYSTEM) {
+        if (
+            $this->messageparam == MSGPARAM_CANCELLED_BY_PARTICIPANT
+            || $this->messageparam == MSGPARAM_CANCELLED_BY_TEACHER_OR_SYSTEM
+        ) {
             // Check if setting to send a cancel ical is enabled.
             if (get_config('booking', 'icalcancel')) {
                 $ical = new ical($this->bookingsettings, $this->optionsettings, $this->user, $this->bookingmanager, false);
                 $attachments = $ical->get_attachments(true);
                 $attachname = $ical->get_name();
             }
-
         } else {
             // Generate ical attachments to go with the message. Check if ical attachments enabled.
             if (get_config('booking', 'attachical') || get_config('booking', 'attachicalsessions')) {
@@ -545,7 +595,6 @@ class message_controller {
     public function get_messagebody(): string {
 
         return $this->messagebody;
-
     }
 
     /**
@@ -555,7 +604,6 @@ class message_controller {
     public function get_params(): stdClass {
 
         return $this->params;
-
     }
 
     /**

@@ -6373,5 +6373,16 @@ function xmldb_booking_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2023082301, 'booking');
     }
 
+    if ($oldversion < 2025051200) {        
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('responsesfields', XMLDB_TYPE_TEXT, 'small', null, null, null, null, 'completionmodule');
+        if ($dbman->field_exists($table, $field)) {
+            $dbman->change_field_type($table, $field);
+        }       
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2025051200, 'booking');
+    }
+
     return true;
 }
