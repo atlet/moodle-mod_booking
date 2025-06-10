@@ -56,7 +56,7 @@ class bookingoptions_wbtable extends wunderbyte_table {
     private $buyforuser = null;
 
     /** @var context_module $buyforuser */
-    private $context = null;
+    public $context = null;
 
     /** @var object $cm */
     private $cm = null;
