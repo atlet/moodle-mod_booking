@@ -14,11 +14,4 @@
         <license>LGPL</license>
         <licenseversion>3.0</licenseversion>
     </library>
-    <library>
-        <location>php-qrcode</location>
-        <name>php-qrcode</name>
-        <version>4.3.4.1</version>
-        <license>MIT</license>
-        <licenseversion>1.0</licenseversion>
-    </library>
 </libraries>

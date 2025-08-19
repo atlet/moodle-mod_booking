@@ -126,17 +126,25 @@ $functions = array(
         'ajax' => 1
     ),
     'mod_booking_search_users' => array(
-            'classname' => 'mod_booking\external\mod_booking_search_users',
-            'description' => 'Search a list of all users',
-            'type' => 'read',
-            'capabilities' => '',
-            'ajax' => 1
+        'classname' => 'mod_booking\external\mod_booking_search_users',
+        'description' => 'Search a list of all users',
+        'type' => 'read',
+        'capabilities' => '',
+        'ajax' => 1
     ),
+    'mod_booking_manual_course_selector' => [
+        'classname'   => 'mod_booking\external\manual_course_selector',
+        'methodname'  => 'execute',
+        'classpath'   => '',
+        'description' => 'Return courses for autocomplete',
+        'type'        => 'read',
+        'ajax'        => true,
+    ],
 );
 
 $services = array(
     'Booking module API' => array( // Very important, don't rename or will break local_bookingapi plugin!!!
-        'functions' => array ('mod_booking_bookings', 'mod_booking_categories'),
+        'functions' => array('mod_booking_bookings', 'mod_booking_categories'),
         'restrictedusers' => 0,
         'enabled' => 1,
     )
