@@ -67,6 +67,7 @@ class GoogleUrlApi {
      * @return mixed
      */
     public function send($url, $shorten = true) {
+        global $CFG;
         // Create cURL.
         $ch = curl_init();
         // If we're shortening a URL...
@@ -77,6 +78,9 @@ class GoogleUrlApi {
             curl_setopt($ch, CURLOPT_HTTPHEADER, array("Content-Type: application/json"));
         } else {
             curl_setopt($ch, CURLOPT_URL, $this->apiurl . '&shortUrl=' . $url);
+        }
+        if(!empty($CFG->proxyhost) && !empty($CFG->proxyport)) {
+            curl_setopt($ch, CURLOPT_PROXY, $CFG->proxyhost . ':' . $CFG->proxyport);
         }
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         // Execute the post.
