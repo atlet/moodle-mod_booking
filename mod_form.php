@@ -61,39 +61,55 @@ class mod_booking_mod_form extends moodleform_mod {
         return $options;
     }
 
-    public function add_completion_rules() {
-        $mform = &$this->_form;
+    // Pomaga ustvariti suffixed imena.
+    protected function get_suffixed_name(string $name): string {
+        return $name . $this->get_suffix();
+    }
 
-        $group = array();
-        $group[] = &$mform->createElement(
-            'checkbox',
-            'enablecompletionenabled',
-            '',
-            get_string('enablecompletion', 'booking')
-        );
-        $group[] = $mform->createElement(
-            'text',
-            'enablecompletion',
-            get_string('enablecompletion', 'booking'),
-            array('size' => '1')
-        );
+    public function add_completion_rules() {
+        $mform = $this->_form;
+
+        $group = [
+            $mform->createElement(
+                'checkbox',
+                $this->get_suffixed_name('enablecompletionenabled'),
+                ' ',
+                get_string('enablecompletion', 'booking')
+            ),
+            $mform->createElement(
+                'text',
+                $this->get_suffixed_name('enablecompletion'),
+                ' ',
+                ['size' => 3]
+            ),
+        ];
+
+        $mform->setType('enablecompletion', PARAM_INT);
 
         $mform->addGroup(
             $group,
-            'enablecompletiongroup',
+            $this->get_suffixed_name('enablecompletiongroup'),
             get_string('enablecompletiongroup', 'booking'),
-            array(' '),
+            [' '],
             false
         );
-        $mform->disabledIf('enablecompletion', 'enablecompletionenabled', 'notchecked');
-        $mform->setDefault('enablecompletion', 1);
-        $mform->setType('enablecompletion', PARAM_INT);
 
-        return array('enablecompletiongroup');
+        // Onemogoči vnos, če checkbox ni označen.
+        $mform->disabledIf(
+            $this->get_suffixed_name('enablecompletion'),
+            $this->get_suffixed_name('enablecompletionenabled'),
+            'notchecked'
+        );
+
+        // Vrni IME “top-level” elementa (z SUFFIXOM!), sicer pravilo ne bo registrirano.
+        return [$this->get_suffixed_name('enablecompletiongroup')];
     }
 
     public function completion_rule_enabled($data) {
-        return !empty($data['enablecompletion'] != 0);
+        // Tudi tukaj uporabi suffixed ključe:
+        return !empty($data[$this->get_suffixed_name('enablecompletionenabled')])
+            && !empty($data[$this->get_suffixed_name('enablecompletion')])
+            && (int)$data[$this->get_suffixed_name('enablecompletion')] > 0;
     }
 
     public function definition() {
@@ -228,7 +244,9 @@ class mod_booking_mod_form extends moodleform_mod {
             get_string('bookingattachment', 'booking'),
             null,
             array(
-                'subdirs' => 0, 'maxbytes' => $CFG->maxbytes, 'maxfiles' => 50,
+                'subdirs' => 0,
+                'maxbytes' => $CFG->maxbytes,
+                'maxfiles' => 50,
                 'accepted_types' => array('*')
             )
         );
@@ -360,12 +378,16 @@ class mod_booking_mod_form extends moodleform_mod {
             'city' => new lang_string('city'),
             'department' => new lang_string('department'),
             'courseendtime' => get_string("courseendtime", "booking"),
-            'numrec' => get_string("numrec", "booking"), 'userid' => get_string("userid", "booking"),
-            'username' => get_string("username"), 'firstname' => get_string("firstname"),
-            'lastname' => get_string("lastname"), 'email' => get_string("email"),
+            'numrec' => get_string("numrec", "booking"),
+            'userid' => get_string("userid", "booking"),
+            'username' => get_string("username"),
+            'firstname' => get_string("firstname"),
+            'lastname' => get_string("lastname"),
+            'email' => get_string("email"),
             'completed' => get_string("completed", "mod_booking"),
             'waitinglist' => get_string("waitinglist", "booking"),
-            'status' => get_string('presence', 'mod_booking'), 'groups' => get_string("group"),
+            'status' => get_string('presence', 'mod_booking'),
+            'groups' => get_string("group"),
             'notes' => get_string('notes', 'mod_booking'),
             'idnumber' => get_string("idnumber")
         );
@@ -539,7 +561,9 @@ class mod_booking_mod_form extends moodleform_mod {
             get_string('bookingimages', 'booking'),
             null,
             array(
-                'subdirs' => 0, 'maxbytes' => $CFG->maxbytes, 'maxfiles' => 500,
+                'subdirs' => 0,
+                'maxbytes' => $CFG->maxbytes,
+                'maxfiles' => 500,
                 'accepted_types' => array('image')
             )
         );
@@ -658,20 +682,36 @@ class mod_booking_mod_form extends moodleform_mod {
 
         // Add the fields to allow editing of the default text.
         $editoroptions = array(
-            'subdirs' => false, 'maxfiles' => 0, 'maxbytes' => 0,
-            'trusttext' => false, 'context' => $systemcontext
+            'subdirs' => false,
+            'maxfiles' => 0,
+            'maxbytes' => 0,
+            'trusttext' => false,
+            'context' => $systemcontext
         );
 
         $fieldmapping = (object) array(
-            'status' => '{status}', 'participant' => '{participant}',
-            'title' => '{title}', 'duration' => '{duration}', 'starttime' => '{starttime}',
-            'endtime' => '{endtime}', 'startdate' => '{startdate}', 'enddate' => '{enddate}',
-            'courselink' => '{courselink}', 'bookinglink' => '{bookinglink}',
-            'location' => '{location}', 'institution' => '{institution}', 'address' => '{address}',
-            'eventtype' => '{eventtype}', 'email' => '{email}', 'bookingdetails' => '{bookingdetails}',
-            'gotobookingoption' => '{gotobookingoption}', 'changes' => '{changes}',
-            'usercalendarurl' => '{usercalendarurl}', 'coursecalendarurl' => '{coursecalendarurl}',
-            'numberparticipants' => '{numberparticipants}', 'numberwaitinglist' => '{numberwaitinglist}'
+            'status' => '{status}',
+            'participant' => '{participant}',
+            'title' => '{title}',
+            'duration' => '{duration}',
+            'starttime' => '{starttime}',
+            'endtime' => '{endtime}',
+            'startdate' => '{startdate}',
+            'enddate' => '{enddate}',
+            'courselink' => '{courselink}',
+            'bookinglink' => '{bookinglink}',
+            'location' => '{location}',
+            'institution' => '{institution}',
+            'address' => '{address}',
+            'eventtype' => '{eventtype}',
+            'email' => '{email}',
+            'bookingdetails' => '{bookingdetails}',
+            'gotobookingoption' => '{gotobookingoption}',
+            'changes' => '{changes}',
+            'usercalendarurl' => '{usercalendarurl}',
+            'coursecalendarurl' => '{coursecalendarurl}',
+            'numberparticipants' => '{numberparticipants}',
+            'numberwaitinglist' => '{numberwaitinglist}'
         );
 
         $mform->addElement(
@@ -1023,7 +1063,9 @@ class mod_booking_mod_form extends moodleform_mod {
             get_string('signinlogoheader', 'booking'),
             null,
             array(
-                'subdirs' => 0, 'maxbytes' => $CFG->maxbytes, 'maxfiles' => 1,
+                'subdirs' => 0,
+                'maxbytes' => $CFG->maxbytes,
+                'maxfiles' => 1,
                 'accepted_types' => array('image')
             )
         );
@@ -1034,7 +1076,9 @@ class mod_booking_mod_form extends moodleform_mod {
             get_string('signinlogofooter', 'booking'),
             null,
             array(
-                'subdirs' => 0, 'maxbytes' => $CFG->maxbytes, 'maxfiles' => 1,
+                'subdirs' => 0,
+                'maxbytes' => $CFG->maxbytes,
+                'maxfiles' => 1,
                 'accepted_types' => array('image')
             )
         );
@@ -1449,17 +1493,23 @@ class mod_booking_mod_form extends moodleform_mod {
      * @param array $defaultvalues
      */
     public function data_preprocessing(&$defaultvalues) {
-        global $CFG;
         parent::data_preprocessing($defaultvalues);
+
         $options = array(
-            'subdirs' => false, 'maxfiles' => 50, 'accepted_types' => array('*'),
+            'subdirs' => false,
+            'maxfiles' => 50,
+            'accepted_types' => array('*'),
             'maxbytes' => 0
         );
 
-        $defaultvalues['enablecompletionenabled'] = !empty($defaultvalues['enablecompletion']) ? 1 : 0;
-        if (empty($defaultvalues['enablecompletion'])) {
-            $defaultvalues['enablecompletion'] = 1;
-        }
+        // Checkbox je vklopljen, če je DB vrednost > 0.
+        $defaultvalues[$this->get_suffixed_name('enablecompletionenabled')] =
+            !empty($defaultvalues['enablecompletion']) ? 1 : 0;
+
+        // Privzeta vrednost vnosnega polja.
+        $defaultvalues[$this->get_suffixed_name('enablecompletion')] =
+            !empty($defaultvalues['enablecompletion']) ? (int)$defaultvalues['enablecompletion'] : 1;
+
 
         if ($this->current->instance) {
             $draftitemid = file_get_submitted_draft_itemid('myfilemanager');
@@ -1595,7 +1645,8 @@ class mod_booking_mod_form extends moodleform_mod {
         }
         if (isset($defaultvalues['pollurlteacherstext'])) {
             $defaultvalues['pollurlteacherstext'] = array(
-                'text' => $defaultvalues['pollurlteacherstext'], 'format' => FORMAT_HTML
+                'text' => $defaultvalues['pollurlteacherstext'],
+                'format' => FORMAT_HTML
             );
         }
         if (isset($defaultvalues['activitycompletiontext'])) {
@@ -1670,14 +1721,9 @@ class mod_booking_mod_form extends moodleform_mod {
      */
     public function data_postprocessing($data) {
         parent::data_postprocessing($data);
+        
         $data->expires = $data->expirydatetype == 0 ? 0 : $data->expires;
         $data->texpires = $data->texpirydatetype == 0 ? 0 : $data->texpires;
-        if (!empty($data->completionunlocked)) {
-            $autocompletion = !empty($data->completion) && $data->completion == COMPLETION_TRACKING_AUTOMATIC;
-            if (empty($data->enablecompletionenabled) || !$autocompletion) {
-                $data->enablecompletion = 0;
-            }
-        }
 
         // TODO: Check if it's possible to overwrite instance specific mail templates with global mail templates...
         // TODO: ... if mailtemplatessource is set to 1 on saving.
@@ -1685,10 +1731,33 @@ class mod_booking_mod_form extends moodleform_mod {
 
     public function get_data() {
         $data = parent::get_data();
+
+        if (!$data) {
+            return $data;
+        }
+
         if ($data) {
             $data->bookingpolicyformat = $data->bookingpolicy['format'];
             $data->bookingpolicy = $data->bookingpolicy['text'];
         }
+
+        if (!empty($data->completionunlocked)) {
+            $isauto = !empty($data->{$this->get_suffixed_name('completion')}) &&
+                (int)$data->{$this->get_suffixed_name('completion')} === COMPLETION_TRACKING_AUTOMATIC;
+
+            $enabled = !empty($data->{$this->get_suffixed_name('enablecompletionenabled')});
+            $value   = (int)($data->{$this->get_suffixed_name('enablecompletion')} ?? 0);
+
+            // Končna vrednost za DB polje (nesuffixed):
+            $data->enablecompletion = ($isauto && $enabled && $value > 0) ? $value : 0;
+        }
+
+        // Po želji še pospravi suffixed form-only polja:
+        unset(
+            $data->{$this->get_suffixed_name('enablecompletionenabled')},
+            $data->{$this->get_suffixed_name('enablecompletion')},
+            $data->{$this->get_suffixed_name('enablecompletiongroup')}
+        );
 
         return $data;
     }

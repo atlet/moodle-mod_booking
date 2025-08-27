@@ -6373,15 +6373,30 @@ function xmldb_booking_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2023082301, 'booking');
     }
 
-    if ($oldversion < 2025051200) {        
+    if ($oldversion < 2025051200) {
         $table = new xmldb_table('booking');
         $field = new xmldb_field('responsesfields', XMLDB_TYPE_TEXT, 'small', null, null, null, null, 'completionmodule');
         if ($dbman->field_exists($table, $field)) {
             $dbman->change_field_type($table, $field);
-        }       
+        }
 
         // Booking savepoint reached.
         upgrade_mod_savepoint(true, 2025051200, 'booking');
+    }
+
+    if ($oldversion < 2025082701) {
+
+        // Define field enablecompletionenabled to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('enablecompletionenabled', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enforceteacherorder');
+
+        // Conditionally launch add field enablecompletionenabled.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2025082701, 'booking');
     }
 
     return true;

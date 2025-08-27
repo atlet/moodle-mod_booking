@@ -2439,3 +2439,4 @@ $string['optionduraiton'] = 'Option duration';
 $string['alloptionduraiton'] = 'All options duration';
 $string['issue_certificate'] = 'Issue certificate';
 $string['delete_certificate'] = 'Delete certificate';
+$string['completiondetail_enablecompletion'] = 'Student must have at least {$a} completed booking(s).';
