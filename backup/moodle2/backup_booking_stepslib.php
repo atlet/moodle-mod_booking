@@ -48,7 +48,7 @@ class backup_booking_activity_structure_step extends backup_activity_structure_s
                     'autoenrol', 'bookedtext', 'waitingtext', 'statuschangetext', 'deletedtext', 'bookingchangedtext',
                     'maxperuser', 'sendmailtobooker', 'duration', 'points', 'organizatorname',
                     'pollurl', 'addtogroup', 'categoryid', 'pollurltext', 'eventtype',
-                    'notificationtext', 'userleave', 'enablecompletion', 'pollurlteachers',
+                    'notificationtext', 'userleave', 'enablecompletion', 'enablecompletionenabled', 'pollurlteachers',
                     'pollurlteacherstext', 'activitycompletiontext', 'cancancelbook', 'conectedbooking', 'showinapi',
                     'lblbooking', 'lbllocation', 'lblinstitution', 'lblname', 'lblsurname',
                     'btncacname', 'lblteachname', 'lblsputtname', 'btnbooknowname', 'btncancelname',
