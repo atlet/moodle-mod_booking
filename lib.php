@@ -41,6 +41,10 @@ use mod_booking\utils\wb_payment;
 define('BOOKINGOPTION_DEFAULTFIELDS', "identifier,titleprefix,text,description,teacher,responsiblecontact," .
     "showdates,dayofweektime,location,institution,course,minanswers,bookings");
 
+// View params.
+define('MOD_BOOKING_VIEW_PARAM_LIST', 0); // List view.
+define('MOD_BOOKING_VIEW_PARAM_CARDS', 1); // Cards view.
+
 // Currently up to 9 different price categories can be set.
 define('MAX_PRICE_CATEGORIES', 9);
 
