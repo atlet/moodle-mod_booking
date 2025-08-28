@@ -70,6 +70,9 @@ pwIDAQAB
      * @throws \dml_exception
      */
     public static function pro_version_is_activated() {
+
+        return true; // TEMPORARY OVERRIDE - ALWAYS PRO.
+
         // Get license key which has been set in settings.php.
         $pluginconfig = get_config('booking');
         if (!empty($pluginconfig->licensekey)) {
