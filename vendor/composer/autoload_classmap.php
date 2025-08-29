@@ -7,4 +7,11 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Composer\\InstalledVersions' => $vendorDir . '/composer/InstalledVersions.php',
+    'clsOpenTBS' => $vendorDir . '/tinybutstrong/opentbs/tbs_plugin_opentbs.php',
+    'clsTbsDataSource' => $vendorDir . '/tinybutstrong/tinybutstrong/tbs_class.php',
+    'clsTbsLocator' => $vendorDir . '/tinybutstrong/tinybutstrong/tbs_class.php',
+    'clsTbsXmlCellReader' => $vendorDir . '/tinybutstrong/opentbs/tbs_plugin_opentbs.php',
+    'clsTbsXmlLoc' => $vendorDir . '/tinybutstrong/opentbs/tbs_plugin_opentbs.php',
+    'clsTbsZip' => $vendorDir . '/tinybutstrong/opentbs/tbs_plugin_opentbs.php',
+    'clsTinyButStrong' => $vendorDir . '/tinybutstrong/tinybutstrong/tbs_class.php',
 );

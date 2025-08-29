@@ -1,42 +1,59 @@
-<?php return array (
-  'root' => 
-  array (
-    'pretty_version' => 'dev-develop',
-    'version' => 'dev-develop',
-    'aliases' => 
-    array (
+<?php return array(
+    'root' => array(
+        'pretty_version' => 'dev-dev45',
+        'version' => 'dev-dev45',
+        'type' => 'library',
+        'install_path' => __DIR__ . '/../../',
+        'aliases' => array(),
+        'reference' => '63e46f9994f819888769719f611637bf0d835d94',
+        'name' => '__root__',
+        'dev' => true,
     ),
-    'reference' => '610abf10fecbd4268ac80e7dfd3e9aa4c2990f82',
-    'name' => '__root__',
-  ),
-  'versions' => 
-  array (
-    '__root__' => 
-    array (
-      'pretty_version' => 'dev-develop',
-      'version' => 'dev-develop',
-      'aliases' => 
-      array (
-      ),
-      'reference' => '610abf10fecbd4268ac80e7dfd3e9aa4c2990f82',
+    'versions' => array(
+        '__root__' => array(
+            'pretty_version' => 'dev-dev45',
+            'version' => 'dev-dev45',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../../',
+            'aliases' => array(),
+            'reference' => '63e46f9994f819888769719f611637bf0d835d94',
+            'dev_requirement' => false,
+        ),
+        'chillerlan/php-qrcode' => array(
+            'pretty_version' => '5.0.3',
+            'version' => '5.0.3.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../chillerlan/php-qrcode',
+            'aliases' => array(),
+            'reference' => '42e215640e9ebdd857570c9e4e52245d1ee51de2',
+            'dev_requirement' => false,
+        ),
+        'chillerlan/php-settings-container' => array(
+            'pretty_version' => '3.2.1',
+            'version' => '3.2.1.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../chillerlan/php-settings-container',
+            'aliases' => array(),
+            'reference' => '95ed3e9676a1d47cab2e3174d19b43f5dbf52681',
+            'dev_requirement' => false,
+        ),
+        'tinybutstrong/opentbs' => array(
+            'pretty_version' => 'v1.12.1',
+            'version' => '1.12.1.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../tinybutstrong/opentbs',
+            'aliases' => array(),
+            'reference' => '7525dcfd9d9afb10e46b2afe58c20bedb544afe1',
+            'dev_requirement' => false,
+        ),
+        'tinybutstrong/tinybutstrong' => array(
+            'pretty_version' => 'v3.15.2',
+            'version' => '3.15.2.0',
+            'type' => 'library',
+            'install_path' => __DIR__ . '/../tinybutstrong/tinybutstrong',
+            'aliases' => array(),
+            'reference' => 'c4344b3599570cdf283692b2ad0d4682dc85ae52',
+            'dev_requirement' => false,
+        ),
     ),
-    'chillerlan/php-qrcode' => 
-    array (
-      'pretty_version' => '5.0.2',
-      'version' => '5.0.2.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => 'da5bdb82c8755f54de112b271b402aaa8df53269',
-    ),
-    'chillerlan/php-settings-container' => 
-    array (
-      'pretty_version' => '2.1.6',
-      'version' => '2.1.6.0',
-      'aliases' => 
-      array (
-      ),
-      'reference' => '5553558bd381fce5108c6d0343c12e488cfec6bb',
-    ),
-  ),
 );

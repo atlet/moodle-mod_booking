@@ -19,23 +19,23 @@ A container class for settings objects - decouple configuration logic from your 
 [license]: https://github.com/chillerlan/php-settings-container/blob/main/LICENSE
 [coverage-badge]: https://img.shields.io/codecov/c/github/chillerlan/php-settings-container.svg?logo=codecov
 [coverage]: https://codecov.io/github/chillerlan/php-settings-container
-[codacy-badge]: https://img.shields.io/codacy/grade/bd2467799e2943d2853ce3ebad5af490/v2.x-php7.4?logo=codacy
-[codacy]: https://app.codacy.com/gh/chillerlan/php-settings-container/dashboard?branch=v2.x-php7.4
+[codacy-badge]: https://img.shields.io/codacy/grade/bd2467799e2943d2853ce3ebad5af490/main?logo=codacy
+[codacy]: https://www.codacy.com/gh/chillerlan/php-settings-container/dashboard?branch=main
 [downloads-badge]: https://img.shields.io/packagist/dt/chillerlan/php-settings-container.svg?logo=packagist
 [downloads]: https://packagist.org/packages/chillerlan/php-settings-container/stats
-[gh-action-badge]: https://github.com/chillerlan/php-settings-container/workflows/CI/badge.svg
-[gh-action]: https://github.com/chillerlan/php-settings-container/actions?query=workflow%3A%22CI%22
+[gh-action-badge]: https://img.shields.io/github/actions/workflow/status/chillerlan/php-settings-container/ci.yml?branch=main&logo=github
+[gh-action]: https://github.com/chillerlan/php-settings-container/actions/workflows/ci.yml?query=branch%3Amain
 
 ## Documentation
 
 ### Installation
 **requires [composer](https://getcomposer.org)**
 
-*composer.json* (note: replace `dev-main` with a [version constraint](https://getcomposer.org/doc/articles/versions.md#writing-version-constraints), e.g. `^2.1` - see [releases](https://github.com/chillerlan/php-settings-container/releases) for valid versions)
+*composer.json* (note: replace `dev-main` with a [version constraint](https://getcomposer.org/doc/articles/versions.md#writing-version-constraints), e.g. `^3.0` - see [releases](https://github.com/chillerlan/php-settings-container/releases) for valid versions)
 ```json
 {
 	"require": {
-		"php": "^7.4 || ^8.0",
+		"php": "^8.1",
 		"chillerlan/php-settings-container": "dev-main"
 	}
 }

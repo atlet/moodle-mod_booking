@@ -1833,13 +1833,13 @@ class booking_option {
 
     // Print custom report.
     public function printcustomreport() {
-        global $CFG, $DB;
+        global $CFG, $DB;     
 
-        include_once($CFG->dirroot . '/mod/booking/TinyButStrong/tbs_class.php');
-        include_once($CFG->dirroot . '/mod/booking/OpenTBS/tbs_plugin_opentbs.php');        
+        require_once($CFG->dirroot . '/mod/booking/vendor/tinybutstrong/opentbs/tbs_plugin_opentbs.php');
 
-        $tbs = new \clsTinyButStrong;
-        $tbs->Plugin(TBS_INSTALL, OPENTBS_PLUGIN);
+        $tbs = new \clsTinyButStrong();
+        //$tbs->Plugin(TBS_INSTALL, OPENTBS_PLUGIN);
+        $tbs->Plugin(\TBS_INSTALL, \OPENTBS_PLUGIN); // load the OpenTBS plugin
         $tbs->NoErr = true;
 
         list($course, $cm) = get_course_and_cm_from_cmid($this->booking->cm->id);

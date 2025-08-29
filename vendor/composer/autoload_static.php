@@ -27,6 +27,13 @@ class ComposerStaticInitce5db1b05febd0bf02efed919d24882d
 
     public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
+        'clsOpenTBS' => __DIR__ . '/..' . '/tinybutstrong/opentbs/tbs_plugin_opentbs.php',
+        'clsTbsDataSource' => __DIR__ . '/..' . '/tinybutstrong/tinybutstrong/tbs_class.php',
+        'clsTbsLocator' => __DIR__ . '/..' . '/tinybutstrong/tinybutstrong/tbs_class.php',
+        'clsTbsXmlCellReader' => __DIR__ . '/..' . '/tinybutstrong/opentbs/tbs_plugin_opentbs.php',
+        'clsTbsXmlLoc' => __DIR__ . '/..' . '/tinybutstrong/opentbs/tbs_plugin_opentbs.php',
+        'clsTbsZip' => __DIR__ . '/..' . '/tinybutstrong/opentbs/tbs_plugin_opentbs.php',
+        'clsTinyButStrong' => __DIR__ . '/..' . '/tinybutstrong/tinybutstrong/tbs_class.php',
     );
 
     public static function getInitializer(ClassLoader $loader)
