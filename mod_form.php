@@ -1752,13 +1752,6 @@ class mod_booking_mod_form extends moodleform_mod {
             $data->enablecompletion = ($isauto && $enabled && $value > 0) ? $value : 0;
         }
 
-        // Po želji še pospravi suffixed form-only polja:
-        unset(
-            $data->{$this->get_suffixed_name('enablecompletionenabled')},
-            $data->{$this->get_suffixed_name('enablecompletion')},
-            $data->{$this->get_suffixed_name('enablecompletiongroup')}
-        );
-
         return $data;
     }
 

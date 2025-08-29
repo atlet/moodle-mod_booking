@@ -28,147 +28,165 @@
  * @since      4.5
  */
 
-define(['jquery', 'core/ajax'], function($, ajax) {
+define(['jquery', 'core/ajax', 'core/form-autocomplete', 'editor_tiny/loader'], function ($, ajax, formAutocomplete, loader) {
+
+    /**
+     * Sets the initial values for a Moodle autocomplete widget and synchronizes them with the underlying <select> element.
+     *
+     * This function:
+     * 1. Filters the provided values to match existing <option> values (unless the select is AJAX-only).
+     * 2. Maps values to their corresponding labels from <option> elements, or falls back to using the value as the label.
+     * 3. Locates the related autocomplete input and sets its initial value as a JSON string.
+     * 4. Updates the <select multiple> element to ensure correct POST data.
+     * 5. Re-initializes the autocomplete widget to reflect the new state.
+     * 6. Triggers relevant events to update UI and form state.
+     *
+     * @param {string} selectId - The ID of the <select> element to update.
+     * @param {string[]} values - Array of values to set as selected in the autocomplete and <select> element.
+     */
+    function setAutocompleteValues(selectId, values) {
+        const $select = $('#' + selectId);
+
+        // 1) preveri veljavne option value (če niso AJAX-only).
+        const existing = $select.find('option').map(function () { return this.value; }).get();
+        const wanted = values.filter(v => !existing.length || existing.includes(v));
+
+        // 2) zgradi mapo labelov (če obstajajo optioni) – drugače uporabi fallback label = value.
+        const labelByVal = {};
+        $select.find('option').each(function () {
+            labelByVal[this.value] = $(this).text().trim() || this.value;
+        });
+
+        // 3) najdi povezani INPUT od autocomplete in nastavi data-initial-value
+        const $felem = $select.closest('.felement[data-fieldtype="autocomplete"]');
+        const $input = $felem.find('input[id^="form_autocomplete_input-"][data-fieldtype="autocomplete"]');
+
+        const initial = wanted.map(v => ({
+            value: v,
+            label: labelByVal[v] || v
+        }));
+
+        // Popolnoma počisti obstoječe stanje (tudi bage).
+        clearAutocomplete(selectId);
+
+        // Nastavi initial-value JSON za widget.
+        $input.attr('data-initial-value', JSON.stringify(initial));
+
+        // 4) Vrednosti zapiši tudi v <select multiple> (da bo POST ok).
+        $select.val(wanted);
+        $select.find('option').prop('selected', false);
+        wanted.forEach(v => $select.find(`option[value="${v}"]`).prop('selected', true));
+
+        // 5) Ponovno “enhance-aj” kontrolnik ali poženi njegov init.
+        // Če je že enhancan, ga najprej od-jarmarkiramo:
+        // (preprosto sprožimo njihov init še enkrat nad felement-om)
+        //formAutocomplete.enhance($felem.get(0));
+
+        // 6) In še tipični signali za posodobitev.
+        $select.trigger('change');             // zaradi POST vrednosti
+        $input.trigger('change');              // zaradi oznak
+        $input.trigger('input');               // za prikaz badge-ov
+        $input.blur();                         // zapri menije ipd.
+    }
+
+    /**
+     * Nastavi vrednosti iz obj v ustrezne elemente glede na property.
+     * @param {Object} obj
+     */
+    function setValuesFromObj(obj) {
+        var eventChange = new Event('change');
+
+        Object.keys(obj).forEach(function (key) {
+            var idel = 'id_' + key;
+            var ideljq = '#id_' + key;
+
+            if (key === 'intro') {
+                idel = 'id_introeditor';
+                ideljq = '#id_introeditor';
+            }
+
+            const el = document.getElementById(idel);
+            if (!el) { return; }
+
+            switch (key) {
+                case 'intro':
+                case 'bookedtext':
+                case 'waitingtext':
+                case 'notifyemail':
+                case 'notifyemailteachers':
+                case 'statuschangetext':
+                case 'userleave':
+                case 'deletedtext':
+                case 'bookingchangedtext':
+                case 'pollurltext':
+                case 'pollurlteacherstext':
+                case 'activitycompletiontext':
+                case 'bookingpolicy':
+                case 'beforecompletedtext':
+                case 'aftercompletedtext':
+                case 'beforebookedtext':
+                    loader.getTinyMCE().then(function (tinyMCE) {
+                        const editor = tinyMCE.get(idel); // textarea id brez #
+                        editor.setContent(obj[key]);
+                    });
+                    break;
+                case 'semesterid':
+                case 'eventtype':
+                case 'organizatorname':
+                case 'showviews':
+                case 'optionsfields':
+                case 'optionsdownloadfields':
+                case 'responsesfields':
+                case 'reportfields':
+                case 'signinsheetfields':
+                case 'bookingimagescustomfield':
+                case 'bookingmanager':
+                    setAutocompleteValues(idel, obj[key] ? obj[key].split(',').map(function (v) { return v.trim(); }) : []);
+                    break;
+                // Dodaj ostale posebne primere tukaj
+                default:
+                    // Privzeto nastavi value
+                    $(ideljq).val(obj[key]);
+                    document.getElementById(idel).dispatchEvent(eventChange);
+            }
+        });
+    }
+
+    /**
+     * Clear all selected values from a Moodle autocomplete element.
+     * @param {*} selectId
+     * @returns
+     */
+    function clearAutocomplete(selectId) {
+        const $sel = $('#' + selectId);
+        if (!$sel.length) {return;}
+
+        // počisti vse izbrane option-e
+        $sel.find('option:selected').prop('selected', false);
+
+        // sproži native change, da core/form-autocomplete osveži UI
+        $sel[0].dispatchEvent(new Event('change', { bubbles: true }));
+    }
 
     return {
-        init: function() {
+        init: function () {
 
             // Put whatever you like here. $ is available
             // to you as normal.
-            $("#id_instancetemplateid").change(function() {
-                if ($("#id_instancetemplateid").val() != '') {
-                    ajax
+            $(document).on('change', '[id^=id_instancetemplateid]', function () {
+                const $me = $(this);
+
+                if ($me.val() === '') { return; }
+                ajax
                     .call([{
                         methodname: 'mod_booking_instancetemplate',
-                        args: {
-                            id: $("#id_instancetemplateid").val()
-                        },
-                        done: function(data) {
+                        args: { id: $me.val() },
+                        done: function (data) {
                             var obj = $.parseJSON(data.template);
 
-                            // General
-                            $("#id_name").val(obj.name);
-
-                            // TODO: eventtype does not yet work correctly.
-                            $("#id_eventtype").val(obj.eventtype);
-
-                            $("#id_introeditoreditable").html(obj.intro);
-                            $('#id_duration').val(obj.duration);
-                            $('#id_points').val(obj.points);
-                            $('#id_organizatorname').val(obj.organizatorname);
-                            $('#id_pollurl').val(obj.pollurl);
-                            $('#id_pollurlteachers').val(obj.pollurlteachers);
-                            // TODO: attachment - is this even possible?
-                            // TODO: Views to show in the booking options overview.
-                            $('#id_whichview').val(obj.whichview);
-                            $('#id_defaultoptionsort').val(obj.defaultoptionsort);
-                            $('#id_enablepresence').val(obj.enablepresence);
-                            $('#id_templateid').val(obj.templateid);
-                            $('#id_showlistoncoursepage').val(obj.showlistoncoursepage);
-                            $('#id_coursepageshortinfo').val(obj.coursepageshortinfo);
-                            // Known issue: coursepageshortinfo won't be unhidden when filled from template.
-
-                            // Confirmation e-mail settings
-                            $('#id_sendmail').val(obj.sendmail);
-                            $('#id_copymail').val(obj.copymail);
-                            $('#id_sendmailtobooker').val(obj.sendmailtobooker);
-                            $('#id_daystonotify').val(obj.daystonotify);
-                            $('#id_daystonotify2').val(obj.daystonotify2);
-                            $('#id_daystonotifyteachers').val(obj.daystonotifyteachers);
-                            // TODO: bookingmanager
-                            $('#id_mailtemplatessource').val(obj.mailtemplatessource);
-                            $('#id_bookedtexteditable').html(obj.bookedtext);
-                            $('#id_waitingtexteditable').html(obj.waitingtext);
-                            $('#id_notifyemaileditable').html(obj.notifyemail);
-                            $('#id_notifyemailteacherseditable').html(obj.notifyemailteachers);
-                            $('#id_statuschangetexteditable').html(obj.statuschangetext);
-                            $('#id_userleaveeditable').html(obj.userleave);
-                            $('#id_deletedtexteditable').html(obj.deletedtext);
-                            $('#id_bookingchangedtexteditable').html(obj.bookingchangedtext);
-                            $('#id_pollurltexteditable').html(obj.pollurltext);
-                            $('#id_pollurlteacherstexteditable').html(obj.pollurlteacherstext);
-                            $('#id_activitycompletiontexteditable').html(obj.activitycompletiontext);
-
-                            // Custom labels
-                            $('#id_btncacname').val(obj.btncacname);
-                            $('#id_lblteachname').val(obj.lblteachname);
-                            $('#id_lblsputtname').val(obj.lblsputtname);
-                            $('#id_btnbooknowname').val(obj.btnbooknowname);
-                            $('#id_btncancelname').val(obj.btncancelname);
-                            $('#id_lblbooking').val(obj.lblbooking);
-                            $('#id_lbllocation').val(obj.lbllocation);
-                            $('#id_lblinstitution').val(obj.lblinstitution);
-                            $('#id_lblname').val(obj.lblname);
-                            $('#id_lblsurname').val(obj.lblsurname);
-                            $('#id_booktootherbooking').val(obj.booktootherbooking);
-                            $('#id_lblacceptingfrom').val(obj.lblacceptingfrom);
-                            $('#id_lblnumofusers').val(obj.lblnumofusers);
-
-                            // Miscellaneous settings
-                            $('#id_bookingpolicyeditable').html(obj.bookingpolicy);
-                            $('#id_cancancelbook').val(obj.cancancelbook);
-                            $('#id_allowupdate').val(obj.allowupdate);
-                            $('#id_allowupdatedays').val(obj.allowupdatedays);
-                            $('#id_autoenrol').val(obj.autoenrol);
-                            $('#id_addtogroup').val(obj.addtogroup);
-                            $('#id_maxperuser').val(obj.maxperuser);
-                            $('#id_showinapi').val(obj.showinapi);
-                            $('#id_numgenerator').val(obj.numgenerator);
-                            $('#id_paginationnum').val(obj.paginationnum);
-                            $('#id_banusernames').val(obj.banusernames);
-                            $('#id_completionmodule').val(obj.completionmodule);
-                            $('#id_comments').val(obj.comments);
-                            $('#id_ratings').val(obj.ratings);
-                            $('#id_removeuseronunenrol').val(obj.removeuseronunenrol);
-
-                            // Category
-                            $("#id_categoryid").val(JSON.parse("[" + obj.categoryid + "]"));
-
-                            // TODO: Fields to display in different contexts
-
-                            // Booking option text depending on booking status
-                            $('#id_beforecompletedtexteditable').html(obj.beforecompletedtext);
-                            $('#id_aftercompletedtexteditable').html(obj.aftercompletedtext);
-                            $('#id_beforebookedtexteditable').html(obj.beforebookedtext);
-
-                            // TODO: Sign-In Sheet Configuration
-                            // $("#id_signinsheetfields").val(JSON.parse("[" + obj.signinsheetfields + "]")).change();
-
-                            // TO-DO :Create backup!
-                            // TO-DO: Fields still to add:
-                            // - assesstimefinish
-                            // - assesstimestart
-                            // - course
-                            // - enablecompletion
-                            // - optionsfields
-                            // - optionsdownloadfields
-                            // - reportfields
-                            // - responsesfields
-                            // - scale
-                            // - signinsheetfields
-                            // - timeclose
-                            // - timemodified
-                            // - timeopen
-
-                            // Connected booking
-                            $('#id_conectedbooking').val(obj.conectedbooking);
-
-                            // Teachers
-                            $('#id_teacherroleid').val(obj.teacherroleid);
-
-                            // TODO: Custom report templates
-                            // TODO: Automatic booking option creation
-
-                            // Ratings
-                            $('#id_assessed').val(obj.assessed);
-
-                            // TODO: Common module settings
-                            // TODO: Restrict access (possible?)
-                            // TODO: Activity completion
-                            // TODO: Competencies
+                            setValuesFromObj(obj);
                         }
                     }], true);
-                }
             });
         }
     };
