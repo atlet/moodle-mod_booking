@@ -2448,3 +2448,6 @@ $string['alloptionduraiton'] = 'All options duration';
 $string['issue_certificate'] = 'Issue certificate';
 $string['delete_certificate'] = 'Delete certificate';
 $string['completiondetail_enablecompletion'] = 'Student must have at least {$a} completed booking(s).';
+$string['usetemplate'] = 'Use template';
+$string['templateloaded'] = 'Values from temlate where loaded sucesfully.';
+$string['templateselecterror'] = 'You need to select a template first.';

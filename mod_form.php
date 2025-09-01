@@ -134,12 +134,17 @@ class mod_booking_mod_form extends moodleform_mod {
             $bookininstancetemplates[$value->id] = $value->name;
         }
 
-        $mform->addElement(
-            'select',
-            'instancetemplateid',
-            get_string('populatefromtemplate', 'booking'),
-            $bookininstancetemplates
-        );
+        $mform->registerNoSubmitButton('usetemplate');
+        $templates = [
+            $mform->createElement(
+                'select',
+                'instancetemplateid',
+                get_string('populatefromtemplate', 'booking'),
+                $bookininstancetemplates
+            ),
+            $mform->createElement('submit', 'usetemplate', get_string('usetemplate', 'booking')),
+        ];
+        $mform->addGroup($templates, 'templatesgroup', get_string('populatefromtemplate', 'booking'), [' '], false);
 
         $mform->addElement(
             'text',
@@ -1483,8 +1488,6 @@ class mod_booking_mod_form extends moodleform_mod {
         $this->standard_grading_coursemodule_elements();
         $this->standard_coursemodule_elements();
         $this->add_action_buttons();
-
-        $PAGE->requires->js_call_amd('mod_booking/bookinginstancetemplateselect', 'init');
     }
 
     /**
@@ -1721,7 +1724,7 @@ class mod_booking_mod_form extends moodleform_mod {
      */
     public function data_postprocessing($data) {
         parent::data_postprocessing($data);
-        
+
         $data->expires = $data->expirydatetype == 0 ? 0 : $data->expires;
         $data->texpires = $data->texpirydatetype == 0 ? 0 : $data->texpires;
 
@@ -1840,5 +1843,89 @@ class mod_booking_mod_form extends moodleform_mod {
             }
         }
         return "0";
+    }
+
+    public function definition_after_data() {
+        global $DB;
+        //$mform = $this->_form;
+        $mform = &$this->_form;
+
+        // Če je kliknjen gumb, NE bo prave oddaje — smo še vedno na isti strani.
+        $clicked = optional_param('usetemplate', null, PARAM_BOOL);
+        $templateid = optional_param('instancetemplateid', 0, PARAM_INT);
+
+        if ($clicked && $templateid) {
+            require_sesskey(); // ker gre za POST
+
+            // 1) Preberi predlogo (obstoječo instanco)
+            $tpl = $DB->get_record('booking_instancetemplate', ['id' => $templateid], '*', MUST_EXIST);
+
+            // polja 1:1
+            $exclude = ['id', 'course', 'cmid', 'userid', 'timecreated', 'timemodified'];
+
+            foreach (json_decode($tpl->template, true) as $field => $value) {
+                if (!in_array($field, $exclude)) {
+                    switch ($field) {
+                        case 'intro':
+                            $mform->_submitValues["introeditor"] = [
+                                'text' => $value,
+                                'format' => FORMAT_HTML,
+                            ];
+                            break;
+                        case 'bookedtext':
+                        case 'waitingtext':
+                        case 'notifyemail':
+                        case 'notifyemailteachers':
+                        case 'statuschangetext':
+                        case 'deletedtext':
+                        case 'bookingchangedtext':
+                        case 'pollurltext':
+                        case 'pollurlteacherstext':
+                        case 'activitycompletiontext':
+                        case 'userleave':
+                        case 'beforebookedtext':
+                        case 'beforecompletedtext':
+                        case 'aftercompletedtext':
+                        case 'bookingpolicy':
+                            $mform->_submitValues["{$field}"] = [
+                                'text' => $value,
+                                'format' => FORMAT_HTML,
+                            ];
+                            break;
+                        case 'optionsfields':
+                        case 'optionsdownloadfields':
+                        case 'showviews':
+                        case 'responsesfields':
+                        case 'reportfields':
+                        case 'signinsheetfields':
+                        case 'bookingimagescustomfield':
+                        case 'bookingmanager':
+                            $mform->_submitValues["{$field}"] = explode(',', $value);
+                            break;
+                        default:
+                            $mform->_submitValues["{$field}"] = $value;
+                            break;
+                    }
+                }
+            }
+            //var_dump($data); die();
+            // 3) Če uporabljaš editor/filemanager, pripravi drafterje:
+            //$context = $this->context;
+            //$editoropts = ['maxfiles' => 0, 'context' => $context, 'subdirs' => 0];
+            //$data = file_prepare_standard_editor(
+            //    $data,
+            //    'intro',
+            //    $editoropts,
+            //    $context,
+            //    'mod_booking',
+            //    'intro',
+            //    0 // itemid, običajno 0 za formo pred shranjevanjem
+            //);
+
+            $mform->setDefault('instancetemplateid', $templateid);
+            \core\notification::add(get_string('templateloaded', 'booking'), \core\output\notification::NOTIFY_SUCCESS);
+        } else if ($clicked && !$templateid) {
+            \core\notification::add(get_string('templateselecterror', 'booking'), \core\output\notification::NOTIFY_ERROR);
+        }
     }
 }

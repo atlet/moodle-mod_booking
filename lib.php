@@ -419,7 +419,7 @@ function booking_comment_validate(stdClass $commentparam): bool {
  * @return number $bookingid
  */
 function booking_add_instance($booking) {
-    global $DB, $CFG;
+    global $DB, $CFG;    
 
     $booking->timemodified = time();
 
@@ -595,6 +595,7 @@ function booking_add_instance($booking) {
  */
 function booking_update_instance($booking) {
     global $DB, $CFG;
+
     // We have to prepare the bookingclosingtimes as an $arrray, currently they are in $booking as $key (string).
     $booking->id = $booking->instance;
     $booking->timemodified = time();
