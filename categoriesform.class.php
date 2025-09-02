@@ -68,7 +68,7 @@ class mod_booking_categories_form extends moodleform {
         $mform->addRule('name', null, 'required', null, 'client');
 
         $mform->addElement('hidden', 'courseid');
-        $mform->setType('courseid', PARAM_RAW);
+        $mform->setType('courseid', PARAM_INT);
 
         $mform->addElement('hidden', 'course');
         $mform->setType('course', PARAM_RAW);

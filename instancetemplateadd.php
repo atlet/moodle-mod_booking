@@ -69,6 +69,50 @@ if ($mform->is_cancelled()) {
         $instance = $DB->get_record("course_modules", array('id' => $id), 'instance');
         $booking = $DB->get_record("booking", array('id' => $instance->instance));
 
+        $fs = get_file_storage();
+        $files = $fs->get_area_files($context->id, 'mod_booking', 'myfilemanager', $booking->id, 'sortorder', false);
+
+        $attachments = [];
+        foreach ($files as $file) {
+            $attachments[] = [
+                'filename'   => $file->get_filename(),
+                'filepath'   => $file->get_filepath(),
+                'filesize'   => $file->get_filesize(),
+                'mimetype'   => $file->get_mimetype(),
+                'contenthash' => $file->get_contenthash(),
+                'contextid'  => $file->get_contextid(),
+                'component'  => $file->get_component(),
+                'filearea'   => $file->get_filearea(),
+                'itemid'     => $file->get_itemid(),
+            ];
+        }
+        $booking->myfilemanager = $attachments;
+
+        $cm = get_coursemodule_from_id('booking', $id, 0, false, MUST_EXIST); // $id = cmid
+        $modcontext = \context_module::instance($cm->id);
+
+        // Zajemi common & completion nastavitve iz course_modules.
+        $cmsettings = [
+            'cmidnumber'                   => (string)$cm->idnumber,
+            'visible'                    => (int)$cm->visible,
+            'showdescription'            => (int)$cm->showdescription,
+            'groupmode'                  => (int)$cm->groupmode,
+            'groupingid'                 => (int)$cm->groupingid,
+            'availability'               => (string)$cm->availability,          // JSON
+            'completion'                 => (int)$cm->completion,
+            'completionview'             => (int)$cm->completionview,
+            'completionexpected'         => (int)$cm->completionexpected,
+            'completiongradeitemnumber'  => is_null($cm->completiongradeitemnumber) ? null : (int)$cm->completiongradeitemnumber,
+            'lang'       => (string)($cm->lang ?? ''), 
+        ];
+
+        // Zajemi tage kot array imen (lepše za ser.: stabilno čez env).
+        $tags = \core_tag_tag::get_item_tags_array('mod_booking', 'booking', $booking->id, $modcontext->id);
+
+        // Prilepi v “template payload”
+        $booking->cmsettings = $cmsettings;
+        $booking->tags = $tags;
+
         $newtemplate = new stdClass();
         $newtemplate->name = $data->name;
         $newtemplate->template = json_encode((array) $booking);
@@ -80,7 +124,6 @@ if ($mform->is_cancelled()) {
         // ... with the corresponding message.
         redirect($urlredirect, get_string('instance_not_saved_no_valid_license', 'booking'), 1, notification::NOTIFY_ERROR);
     }
-
 } else {
     echo $OUTPUT->header();
 

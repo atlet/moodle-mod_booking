@@ -30,12 +30,13 @@ $courseid = required_param('courseid', PARAM_INT);
 $cid = optional_param('cid', '', PARAM_INT);
 $delete = optional_param('delete', '', PARAM_INT);
 
+$urloptions = array('courseid' => $courseid);
+
 if ($cid != '') {
-    $url = new moodle_url('/mod/booking/categoryadd.php',
-            array('courseid' => $courseid, 'cid' => $cid));
-} else {
-    $url = new moodle_url('/mod/booking/categoryadd.php', array('courseid' => $courseid));
+    $urloptions['cid'] = $cid;
 }
+
+$url = new moodle_url('/mod/booking/categoryadd.php', $urloptions);
 
 $PAGE->set_url($url);
 
@@ -77,11 +78,14 @@ if ($delete == 1) {
     redirect($redirecturl, $delmessage, 5);
 }
 
-$mform = new mod_booking_categories_form(null, array('courseid' => $courseid, 'cidd' => $cid));
+$mform = new mod_booking_categories_form(null, $urloptions);
 
 $defaultvalues = new stdClass();
 if ($cid != '') {
     $defaultvalues = $DB->get_record('booking_category', array('id' => $cid));
+    if ($defaultvalues === false) {
+        $defaultvalues = new stdClass();
+    }
 }
 
 $defaultvalues->courseid = $courseid;

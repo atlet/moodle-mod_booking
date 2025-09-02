@@ -1863,9 +1863,50 @@ class mod_booking_mod_form extends moodleform_mod {
             // polja 1:1
             $exclude = ['id', 'course', 'cmid', 'userid', 'timecreated', 'timemodified'];
 
-            foreach (json_decode($tpl->template, true) as $field => $value) {
+            $decoded = json_decode($tpl->template, true);
+
+            foreach ($decoded as $field => $value) {
                 if (!in_array($field, $exclude)) {
                     switch ($field) {
+                        case 'myfilemanager':
+                            global $USER;
+                            $draftitemid = file_get_submitted_draft_itemid('myfilemanager');
+
+                            $opts = ['subdirs' => 0, 'maxfiles' => 50, 'accepted_types' => ['*']];
+
+                            // Pripravi PRAZEN draft (target context je kontekst modula, ok; draft bo vseeno v user kontekstu)
+                            file_prepare_draft_area($draftitemid, $this->context->id, 'mod_booking', 'myfilemanager', 0, $opts);
+
+                            $fs = get_file_storage();
+                            $usercontextid = \context_user::instance($USER->id)->id; // ⬅️ to je ključno
+
+                            foreach ($value as $attachment) {
+                                if (!empty($attachment['contenthash'])) {
+                                    // Najdi originalni stored_file
+                                    $oldfile = $fs->get_file(
+                                        (int)$attachment['contextid'],
+                                        $attachment['component'],
+                                        $attachment['filearea'],
+                                        (int)$attachment['itemid'],
+                                        $attachment['filepath'],
+                                        $attachment['filename']
+                                    );
+                                    if ($oldfile) {
+                                        $filerec = [
+                                            'contextid' => $usercontextid,       // ⬅️ user kontekst!
+                                            'component' => 'user',
+                                            'filearea'  => 'draft',
+                                            'itemid'    => $draftitemid,
+                                            'filepath'  => $attachment['filepath'] ?: '/',
+                                            'filename'  => $attachment['filename'],
+                                        ];
+                                        $fs->create_file_from_storedfile($filerec, $oldfile);
+                                    }
+                                }
+                            }
+
+                            $mform->setDefault('myfilemanager', $draftitemid); // ne _submitValues
+                            break;
                         case 'intro':
                             $mform->_submitValues["introeditor"] = [
                                 'text' => $value,
@@ -1908,19 +1949,50 @@ class mod_booking_mod_form extends moodleform_mod {
                     }
                 }
             }
-            //var_dump($data); die();
-            // 3) Če uporabljaš editor/filemanager, pripravi drafterje:
-            //$context = $this->context;
-            //$editoropts = ['maxfiles' => 0, 'context' => $context, 'subdirs' => 0];
-            //$data = file_prepare_standard_editor(
-            //    $data,
-            //    'intro',
-            //    $editoropts,
-            //    $context,
-            //    'mod_booking',
-            //    'intro',
-            //    0 // itemid, običajno 0 za formo pred shranjevanjem
-            //);
+
+            if (!empty($decoded['tags']) && is_array($decoded['tags'])) {
+                // pričakovano je polje imen (['tag1','tag2',...])
+                $mform->setDefault('tags', $decoded['tags']);
+            }
+
+            // b) Common & completion (polja iz course_modules):
+            if (!empty($decoded['cmsettings']) && is_array($decoded['cmsettings'])) {
+                $cmset = $decoded['cmsettings'];
+                $toform = new stdClass();
+
+                // Imena so taka, kot jih pričakuje mod_form:
+                if (isset($cmset['cmidnumber']))          $toform->cmidnumber = (string)$cmset['cmidnumber'];
+                if (isset($cmset['showdescription']))     $toform->showdescription = (int)$cmset['showdescription'];
+
+                if (isset($cmset['groupmode']))           $toform->groupmode = (int)$cmset['groupmode'];
+                if (isset($cmset['groupingid']))          $toform->groupingid = (int)$cmset['groupingid'];
+
+                // Availability UI bere 'availabilityconditionsjson':
+                if (!empty($cmset['availability']))       $toform->availabilityconditionsjson = (string)$cmset['availability'];
+
+                // Vidnost (modvisible element uporablja oba):
+                if (isset($cmset['visible']))             $toform->visible = (int)$cmset['visible'];
+                if (isset($cmset['visibleoncoursepage'])) $toform->visibleoncoursepage = (int)$cmset['visibleoncoursepage'];
+
+                // Completion (generični):
+                if (isset($cmset['completion']))          $toform->completion = (int)$cmset['completion'];
+                if (isset($cmset['completionview']))      $toform->completionview = (int)$cmset['completionview'];
+                if (isset($cmset['completionexpected']))  $toform->completionexpected = (int)$cmset['completionexpected'];
+
+                unset($mform->_submitValues["cmidnumber"]);
+                unset($mform->_submitValues["showdescription"]);
+                unset($mform->_submitValues["groupmode"]);
+                unset($mform->_submitValues["groupingid"]);
+                unset($mform->_submitValues["availability"]);
+                unset($mform->_submitValues["visible"]);
+                unset($mform->_submitValues["visibleoncoursepage"]);
+                unset($mform->_submitValues["completion"]);
+                unset($mform->_submitValues["completionview"]);
+                unset($mform->_submitValues["completionexpected"]);
+
+                // KONČNO: prepiši vrednosti v formo
+                $this->set_data($toform);
+            }
 
             $mform->setDefault('instancetemplateid', $templateid);
             \core\notification::add(get_string('templateloaded', 'booking'), \core\output\notification::NOTIFY_SUCCESS);
