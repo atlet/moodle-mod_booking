@@ -84,7 +84,7 @@ class mod_booking_observer {
      */
     public static function user_enrolment_deleted(\core\event\user_enrolment_deleted $event) {
         global $DB;
-error_log(print_r($event, true));
+
         // 1) Kdo je prizadeti uporabnik?
         // Pri enrol eventih je to običajno relateduserid; fallback na payload ali actor.
         $affecteduserid = $event->relateduserid ?? null;
