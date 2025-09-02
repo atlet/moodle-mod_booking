@@ -21,6 +21,7 @@
  * @copyright 2015 Andraž Prinčič <atletek@gmail.com>
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 use mod_booking\booking_option;
 use mod_booking\booking_rules\rules_info;
 use mod_booking\calendar;
@@ -83,27 +84,63 @@ class mod_booking_observer {
      */
     public static function user_enrolment_deleted(\core\event\user_enrolment_deleted $event) {
         global $DB;
-        $cp = (object) $event->other['userenrolment'];
-        if ($cp->lastenrol) {
-            $sql = 'SELECT bo.id, bo.bookingid
-            FROM {booking_options} bo
-            JOIN {booking} b ON bo.bookingid = b.id
-            WHERE bo.courseid = :courseid
-            AND b.removeuseronunenrol = 1';
-            $params = ['courseid' => $cp->courseid];
-            $options = $DB->get_records_sql($sql, $params);
-            if (!empty($options)) {
-                foreach ($options as $option) {
-                    $bo = booking_option::create_option_from_optionid($option->id, $option->bookingid);
-                    $bo->user_delete_response($cp->userid);
-                }
-                $optionids = array_keys($options);
-                list ($insql, $inparams) = $DB->get_in_or_equal($optionids, SQL_PARAMS_NAMED);
-                $inparams['userid'] = $cp->userid;
-                $DB->delete_records_select('booking_teachers',
-                    "userid = :userid AND optionid $insql", $inparams);
-            }
+error_log(print_r($event, true));
+        // 1) Kdo je prizadeti uporabnik?
+        // Pri enrol eventih je to običajno relateduserid; fallback na payload ali actor.
+        $affecteduserid = $event->relateduserid ?? null;
+        if (!$affecteduserid && !empty($event->other['userenrolment']['userid'])) {
+            $affecteduserid = (int)$event->other['userenrolment']['userid'];
         }
+        if (!$affecteduserid) {
+            // Ni jasno, koga odjaviti – varno prekini.
+            return;
+        }
+
+        // 2) Kateri tečaj?
+        $courseid = (int)$event->courseid;
+        if (!$courseid) {
+            // Brez courseid ne moremo nič.
+            return;
+        }
+
+        // 3) Če želiš čistiti SAMO ob "zadnjem" vpisu, odkomentiraj spodnji blok:
+        /*
+        $cp = (object)($event->other['userenrolment'] ?? []);
+        if (isset($cp->lastenrol) && !$cp->lastenrol) {
+            // Ni bil zadnji vpis v ta tečaj – preskoči (če želiš čistiti le na koncu).
+            return;
+        }
+        */
+
+        // 4) Najdi vse booking options v tem tečaju, kjer je vklopljeno "removeuseronunenrol".
+        $sql = "SELECT bo.id, bo.bookingid
+                  FROM {booking_options} bo
+                  JOIN {booking} b ON b.id = bo.bookingid
+                 WHERE b.course = :courseid
+                   AND b.removeuseronunenrol = 1";
+        $options = $DB->get_records_sql($sql, ['courseid' => $courseid]);
+
+        if (empty($options)) {
+            return; // Ni kaj čistiti.
+        }
+
+        // 5) Pobriši prijave (responses) v vseh najdenih opcijah.
+        foreach ($options as $option) {
+            $bo = booking_option::create_option_from_optionid($option->id, $option->bookingid);
+            // Pobriše vse statuse prijave uporabnika na to opcijo (waiting list, booked ...).
+            $bo->user_delete_response($affecteduserid);
+        }
+
+        // 6) Če je bil uporabnik učitelj na teh opcijah, ga odstrani.
+        $optionids = array_keys($options);
+        list($insql, $inparams) = $DB->get_in_or_equal($optionids, SQL_PARAMS_NAMED);
+        $inparams['userid'] = $affecteduserid;
+
+        $DB->delete_records_select(
+            'booking_teachers',
+            "userid = :userid AND optionid $insql",
+            $inparams
+        );
     }
 
     /**
@@ -196,7 +233,8 @@ class mod_booking_observer {
                 ue.optiondateid IS NULL";
 
                 $allevents = $DB->get_records_sql($sql, [
-                        'optionid' => $optionid]);
+                    'optionid' => $optionid
+                ]);
 
                 // We delete all userevents and return false.
 
@@ -218,8 +256,12 @@ class mod_booking_observer {
             option_optiondate_update_event($option, null, $cmid);
         }
 
-        $allteachers = $DB->get_fieldset_select('booking_teachers', 'userid', 'optionid = :optionid AND calendarid > 0',
-            array( 'optionid' => $event->objectid));
+        $allteachers = $DB->get_fieldset_select(
+            'booking_teachers',
+            'userid',
+            'optionid = :optionid AND calendarid > 0',
+            array('optionid' => $event->objectid)
+        );
         foreach ($allteachers as $key => $value) {
             new calendar($event->contextinstanceid, $event->objectid, $value, calendar::TYPETEACHERUPDATE);
         }
@@ -238,8 +280,13 @@ class mod_booking_observer {
 
         $optionid = $event->other['optionid'];
 
-        new calendar($event->contextinstanceid, $optionid, 0,
-            calendar::TYPEOPTIONDATE, $event->objectid);
+        new calendar(
+            $event->contextinstanceid,
+            $optionid,
+            0,
+            calendar::TYPEOPTIONDATE,
+            $event->objectid
+        );
 
         $cmid = $event->contextinstanceid;
         $bookingoption = singleton_service::get_instance_of_booking_option($cmid, $optionid);
@@ -272,12 +319,10 @@ class mod_booking_observer {
 
             // Send a message to the user who has completed the booking option (or who has been marked for completion).
             $bookingoption->sendmessage_completed($selecteduserid);
-
         } catch (coding_exception | dml_exception $e) {
 
             debugging('Booking option completion message could not be sent. ' .
                 'Exception in function observer.php/bookingoption_completed.');
-
         }
     }
 
@@ -301,13 +346,16 @@ class mod_booking_observer {
                 "SELECT cm.id FROM {course_modules} cm
                 JOIN {modules} md ON md.id = cm.module
                 JOIN {booking} m ON m.id = cm.instance
-                WHERE md.name = 'booking' AND cm.instance = ?", array($value->bookingid)
+                WHERE md.name = 'booking' AND cm.instance = ?",
+                array($value->bookingid)
             );
 
             new calendar($tmpcmid->id, $value->id, 0, calendar::TYPEOPTION);
 
-            $allteachers = $DB->get_records_sql("SELECT userid FROM {booking_teachers} WHERE optionid = ? AND calendarid > 0",
-                array($value->id));
+            $allteachers = $DB->get_records_sql(
+                "SELECT userid FROM {booking_teachers} WHERE optionid = ? AND calendarid > 0",
+                array($value->id)
+            );
 
             foreach ($allteachers as $keyt => $valuet) {
                 new calendar($tmpcmid->id, $value->id, $valuet->userid, calendar::TYPETEACHERUPDATE);
