@@ -55,7 +55,7 @@ interface booking_rule_condition {
      * @param array $ajaxformdata
      * @return void
      */
-    public function add_condition_to_mform(MoodleQuickForm &$mform, array &$ajaxformdata = null);
+    public function add_condition_to_mform(MoodleQuickForm &$mform, array &$ajaxformdata = []);
 
     /**
      * Gets the human-readable name of a rule condition (localized).

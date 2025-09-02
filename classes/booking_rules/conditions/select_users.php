@@ -79,21 +79,21 @@ class select_users implements booking_rule_condition {
     public function add_condition_to_mform(MoodleQuickForm &$mform, array &$ajaxformdata = null) {
         global $DB;
 
-        $users = get_users();
-
-        foreach ($users as $user) {
-            $listofusers[$user->id] = "$user->firstname $user->lastname ($user->email)";
-
-        }
-
-        $options = array(
-            'multiple' => true,
-            'noselectionstring' => get_string('allareas', 'search'),
-        );
-
-        $mform->addElement('autocomplete', 'condition_select_users_userids',
-            get_string('condition_select_users_userids', 'mod_booking'), $listofusers, $options);
-
+        //$users = get_users();
+//
+        //foreach ($users as $user) {
+        //    $listofusers[$user->id] = "$user->firstname $user->lastname ($user->email)";
+//
+        //}
+//
+        //$options = array(
+        //    'multiple' => true,
+        //    'noselectionstring' => get_string('allareas', 'search'),
+        //);
+//
+        //$mform->addElement('autocomplete', 'condition_select_users_userids',
+        //    get_string('condition_select_users_userids', 'mod_booking'), $listofusers, $options);
+//
     }
 
     /**
