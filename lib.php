@@ -419,7 +419,7 @@ function booking_comment_validate(stdClass $commentparam): bool {
  * @return number $bookingid
  */
 function booking_add_instance($booking) {
-    global $DB, $CFG;    
+    global $DB, $CFG;
 
     $booking->timemodified = time();
 
@@ -1832,6 +1832,16 @@ function booking_extend_settings_navigation(settings_navigation $settings, navig
             navigation_node::TYPE_CUSTOM,
             null,
             'nav_users_instance_report'
+        );
+    }
+
+    if ((has_capability('mod/booking:readresponses', $context))) {
+        $navref->add(
+            get_string('issuecerttoall', 'mod_booking'),
+            new moodle_url('/mod/booking/issuecerttoall.php', ['cmid' => $cm->id]),
+            navigation_node::TYPE_CUSTOM,
+            null,
+            'nav_issuecerttoall'
         );
     }
 
