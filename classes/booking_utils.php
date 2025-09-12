@@ -178,9 +178,9 @@ class booking_utils {
      * @return string
      */
     public function get_body($booking, $fieldname, $params, $urlencode = false) {
-        $text = $booking->$fieldname;
+        $text = $booking->{$fieldname};
         foreach ($params as $name => $value) {
-            if (!empty($value) && !empty($text)) {
+            if (!empty($text)) {
                 if ($urlencode) {
                     $text = str_replace('{' . $name . '}', urlencode($value), $text);
                 } else {

@@ -284,11 +284,20 @@ class booking_option {
         $this->option = $tags->option_replace($this->option);
     }
 
-    public function get_url_params() {
+    public function get_url_params() {        
+
+        if (empty($this->option->pollurl)) {
+            $this->option->pollurl = $this->booking->settings->pollurl;
+        }
+
+        if (empty($this->option->pollurlteachers)) {
+            $this->option->pollurlteachers = $this->booking->settings->pollurlteachers;
+        }        
+
         $bu = new booking_utils();
         $params = $bu->generate_params($this->booking->settings, $this->option);
-        $this->option->pollurl = $bu->get_body($params, 'pollurl', $params, true);
-        $this->option->pollurlteachers = $bu->get_body($params, 'pollurlteachers', $params, true);
+        $this->option->pollurl = $bu->get_body($this->option, 'pollurl', $params, true);
+        $this->option->pollurlteachers = $bu->get_body($this->option, 'pollurlteachers', $params, true);
     }
 
     /**

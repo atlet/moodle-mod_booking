@@ -1263,7 +1263,6 @@ $string['searchname'] = 'First name';
 $string['searchsurname'] = 'Last name';
 $string['yes'] = 'Yes';
 $string['no'] = 'No';
-$string['copypollurl'] = 'Copy poll URL';
 $string['gotobooking'] = '&lt;&lt; Bookings';
 $string['nousers'] = 'No users!';
 $string['booktootherbooking'] = 'Book users to other booking';
