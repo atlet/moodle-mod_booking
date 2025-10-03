@@ -350,6 +350,19 @@ class option_form extends moodleform {
             'ajax' => 'mod_booking/manual_course_selector',
             'multiple' => false,
             'noselectionstring' => get_string('donotselectcourse', 'mod_booking'),
+            'valuehtmlcallback' => function ($value) {
+                global $DB, $CFG;
+                if (empty($value)) {
+                    return '';
+                }
+                // Vzemi tečaj in vrni formatirano ime.
+                if ($course = $DB->get_record('course', ['id' => (int)$value], 'id, fullname, shortname', IGNORE_MISSING)) {
+                    require_once($CFG->libdir . '/weblib.php');
+                    return format_string($course->shortname . ' - ' . $course->fullname);
+                }
+                // Fallback – če tečaja ni, pokaži vsaj ID.
+                return s($value);
+            },
         ];
 
         $mform->addElement('autocomplete', 'courseid', get_string("choosecourse", "booking"), [], $options);
