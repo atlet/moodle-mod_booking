@@ -3,10 +3,6 @@
 namespace mod_booking\completion;
 
 use core_completion\activity_custom_completion;
-use cm_info;
-use context_module;
-
-defined('MOODLE_INTERNAL') || die();
 
 /**
  * Custom completion rules for mod_booking (Moodle 4.3+ API).
@@ -58,6 +54,8 @@ class custom_completion extends activity_custom_completion {
      */
     public function get_state(string $rule): int {
         global $DB;
+
+        $this->validate_rule($rule);
 
         if ($rule !== 'enablecompletion') {
             return COMPLETION_INCOMPLETE;
