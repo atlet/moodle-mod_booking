@@ -1015,6 +1015,8 @@ $string['whichviewerror'] = 'You have to include the default view in: Views to s
 $string['showviews'] = 'Views to show in the booking options overview';
 $string['enablepresence'] = 'Enable presence';
 $string['removeuseronunenrol'] = 'Remove user from booking upon unenrolment from associated course?';
+$string['deleteoptionunenrol'] = 'Delete booking option when sole teacher unenrols from course?';
+$string['deleteoptionunenrol_help'] = 'When enabled, if a teacher unenrols from the course and they are the only teacher assigned to a booking option, that booking option will be automatically deleted. The option will NOT be deleted if there are other teachers still assigned to it.';
 $string['certificateid'] = 'Certificate';
 
 // Editoptions.php.

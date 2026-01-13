@@ -58,7 +58,7 @@ class backup_booking_activity_structure_step extends backup_activity_structure_s
                     'scale', 'whichview', 'daystonotify2', 'enablepresence', 'completionmodule', 'responsesfields',
                     'reportfields', 'optionsfields', 'optionsdownloadfields',
                     'beforebookedtext', 'beforecompletedtext', 'aftercompletedtext',
-                    'signinsheetfields', 'comments', 'ratings', 'removeuseronunenrol', 'teacherroleid', 'allowupdatedays',
+                    'signinsheetfields', 'comments', 'ratings', 'removeuseronunenrol', 'deleteoptionunenrol', 'teacherroleid', 'allowupdatedays',
                     'templateid', 'showlistoncoursepage', 'coursepageshortinfo', 'bookingimagescustomfield',
                     'defaultoptionsort', 'showviews', 'customtemplateid', 'autcractive', 'autcrprofile', 'autcrvalue',
                     'autcrtemplate', 'semesterid', 'maxcerts', 'template', 'expires', 'ttemplate', 'texpires', 'tmaxcerts',

@@ -116,6 +116,8 @@
         <FIELD NAME="ratings" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" />
         <FIELD NAME="removeuseronunenrol" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1"
           SEQUENCE="false" COMMENT="Remove user from booking, when it's unenrooled from course." />
+        <FIELD NAME="deleteoptionunenrol" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"
+          SEQUENCE="false" COMMENT="Delete booking option when sole teacher is unenrolled from course." />
         <FIELD NAME="teacherroleid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"
           SEQUENCE="false" />
         <FIELD NAME="allowupdatedays" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"

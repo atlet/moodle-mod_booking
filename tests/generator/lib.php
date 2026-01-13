@@ -143,6 +143,21 @@ class mod_booking_generator extends testing_module_generator {
             }
         }
 
+        // Add teachers if specified.
+        if (isset($record->teacher)) {
+            $teachers = explode(',', $record->teacher);
+            $teacherids = [];
+            foreach ($teachers as $username) {
+                $username = trim($username);
+                if ($user = core_user::get_user_by_username($username)) {
+                    $teacherids[] = $user->id;
+                }
+            }
+            if (!empty($teacherids)) {
+                $record->teachersforoption = $teacherids;
+            }
+        }
+
         if ($record->id = booking_update_options($record, $context)) {
             $record->optionid = $record->id;
             // Save the prices to option.

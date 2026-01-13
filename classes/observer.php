@@ -85,6 +85,8 @@ class mod_booking_observer {
     public static function user_enrolment_deleted(\core\event\user_enrolment_deleted $event) {
         global $DB;
 
+        $logprefix = "[mod_booking] user_enrolment_deleted: ";
+
         // 1) Kdo je prizadeti uporabnik?
         // Pri enrol eventih je to običajno relateduserid; fallback na payload ali actor.
         $affecteduserid = $event->relateduserid ?? null;
@@ -93,6 +95,7 @@ class mod_booking_observer {
         }
         if (!$affecteduserid) {
             // Ni jasno, koga odjaviti – varno prekini.
+            debugging($logprefix . "No affected user ID found, skipping.", DEBUG_DEVELOPER);
             return;
         }
 
@@ -100,17 +103,16 @@ class mod_booking_observer {
         $courseid = (int)$event->courseid;
         if (!$courseid) {
             // Brez courseid ne moremo nič.
+            debugging($logprefix . "No course ID found, skipping.", DEBUG_DEVELOPER);
             return;
         }
 
-        // 3) Če želiš čistiti SAMO ob "zadnjem" vpisu, odkomentiraj spodnji blok:
-        /*
-        $cp = (object)($event->other['userenrolment'] ?? []);
-        if (isset($cp->lastenrol) && !$cp->lastenrol) {
-            // Ni bil zadnji vpis v ta tečaj – preskoči (če želiš čistiti le na koncu).
-            return;
-        }
-        */
+        debugging($logprefix . "User {$affecteduserid} unenrolled from course {$courseid}.", DEBUG_DEVELOPER);
+
+        // 3) NAJPREJ: Če je vklopljeno brisanje opcij ob izpisu edinega mentorja,
+        // poišči opcije, kjer je ta uporabnik edini učitelj, in jih izbriši.
+        // To mora biti PRED brisanjem učitelja iz booking_teachers.
+        self::delete_options_for_sole_teacher($affecteduserid, $courseid);
 
         // 4) Najdi vse booking options v tem tečaju, kjer je vklopljeno "removeuseronunenrol".
         $sql = "SELECT bo.id, bo.bookingid
@@ -121,6 +123,7 @@ class mod_booking_observer {
         $options = $DB->get_records_sql($sql, ['courseid' => $courseid]);
 
         if (empty($options)) {
+            debugging($logprefix . "No booking options with removeuseronunenrol=1 in course {$courseid}.", DEBUG_DEVELOPER);
             return; // Ni kaj čistiti.
         }
 
@@ -131,7 +134,7 @@ class mod_booking_observer {
             $bo->user_delete_response($affecteduserid);
         }
 
-        // 6) Če je bil uporabnik učitelj na teh opcijah, ga odstrani.
+        // 6) Če je bil uporabnik učitelj na teh opcijah, ga odstrani (za opcije, ki niso bile izbrisane).
         $optionids = array_keys($options);
         list($insql, $inparams) = $DB->get_in_or_equal($optionids, SQL_PARAMS_NAMED);
         $inparams['userid'] = $affecteduserid;
@@ -141,6 +144,71 @@ class mod_booking_observer {
             "userid = :userid AND optionid $insql",
             $inparams
         );
+    }
+
+    /**
+     * Delete booking options where the unenrolled user is the sole teacher.
+     *
+     * This must be called BEFORE removing the teacher from booking_teachers table.
+     *
+     * @param int $userid The user ID of the unenrolled teacher.
+     * @param int $courseid The course ID from which the user was unenrolled.
+     * @return void
+     */
+    private static function delete_options_for_sole_teacher(int $userid, int $courseid): void {
+        global $DB;
+
+        $logprefix = "[mod_booking] delete_options_for_sole_teacher: ";
+
+        // Find all booking instances in this course with deleteoptionunenrol enabled.
+        $sql = "SELECT b.id, b.course, cm.id as cmid, b.name
+                  FROM {booking} b
+                  JOIN {course_modules} cm ON cm.instance = b.id
+                  JOIN {modules} m ON m.id = cm.module AND m.name = 'booking'
+                 WHERE b.course = :courseid
+                   AND b.deleteoptionunenrol = 1";
+        $bookings = $DB->get_records_sql($sql, ['courseid' => $courseid]);
+
+        if (empty($bookings)) {
+            debugging($logprefix . "No booking instances with deleteoptionunenrol=1 found in course {$courseid} for user {$userid}.",
+                DEBUG_DEVELOPER);
+            return;
+        }
+
+        debugging($logprefix . "Found " . count($bookings) . " booking instance(s) with deleteoptionunenrol=1 in course {$courseid}.",
+            DEBUG_DEVELOPER);
+
+        foreach ($bookings as $booking) {
+            // Find all booking options where this user is a teacher
+            // and is the ONLY teacher (count of teachers = 1).
+            $sql = "SELECT bo.id, bo.bookingid, bo.text
+                      FROM {booking_options} bo
+                      JOIN {booking_teachers} bt ON bt.optionid = bo.id
+                     WHERE bo.bookingid = :bookingid
+                       AND bt.userid = :userid
+                       AND (SELECT COUNT(*) FROM {booking_teachers} bt2 WHERE bt2.optionid = bo.id) = 1";
+            $optionstodelete = $DB->get_records_sql($sql, [
+                'bookingid' => $booking->id,
+                'userid' => $userid,
+            ]);
+
+            if (empty($optionstodelete)) {
+                debugging($logprefix . "User {$userid} is not a sole teacher of any option in booking '{$booking->name}' (id: {$booking->id}).",
+                    DEBUG_DEVELOPER);
+                continue;
+            }
+
+            debugging($logprefix . "Found " . count($optionstodelete) . " option(s) to delete where user {$userid} is sole teacher.",
+                DEBUG_DEVELOPER);
+
+            foreach ($optionstodelete as $option) {
+                // Delete the booking option.
+                $bo = booking_option::create_option_from_optionid($option->id, $option->bookingid);
+                $bo->delete_booking_option();
+                debugging($logprefix . "Deleted booking option '{$option->text}' (id: {$option->id}) - user {$userid} was sole teacher.",
+                    DEBUG_DEVELOPER);
+            }
+        }
     }
 
     /**

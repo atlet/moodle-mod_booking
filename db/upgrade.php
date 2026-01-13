@@ -6414,5 +6414,20 @@ function xmldb_booking_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2025121901, 'booking');
     }
 
+    if ($oldversion < 2026011301) {
+
+        // Define field deleteoptionunenrol to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('deleteoptionunenrol', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'removeuseronunenrol');
+
+        // Conditionally launch add field deleteoptionunenrol.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2026011301, 'booking');
+    }
+
     return true;
 }

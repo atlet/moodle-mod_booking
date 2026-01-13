@@ -268,6 +268,9 @@ class booking_settings {
     /** @var int $removeuseronunenrol */
     public $removeuseronunenrol = null;
 
+    /** @var int $deleteoptionunenrol */
+    public $deleteoptionunenrol = null;
+
     /** @var int $teacherroleid */
     public $teacherroleid = null;
 
@@ -465,6 +468,7 @@ class booking_settings {
             $this->comments = $dbrecord->comments;
             $this->ratings = $dbrecord->ratings;
             $this->removeuseronunenrol = $dbrecord->removeuseronunenrol;
+            $this->deleteoptionunenrol = $dbrecord->deleteoptionunenrol ?? 0;
             $this->teacherroleid = $dbrecord->teacherroleid;
             $this->allowupdatedays = $dbrecord->allowupdatedays;
             $this->templateid = $dbrecord->templateid;

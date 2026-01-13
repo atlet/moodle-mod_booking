@@ -1002,6 +1002,9 @@ class mod_booking_mod_form extends moodleform_mod {
 
         $mform->addElement('selectyesno', 'removeuseronunenrol', get_string("removeuseronunenrol", "booking"));
 
+        $mform->addElement('selectyesno', 'deleteoptionunenrol', get_string("deleteoptionunenrol", "booking"));
+        $mform->addHelpButton('deleteoptionunenrol', 'deleteoptionunenrol', 'booking');
+
         // Booking option text.
         $mform->addElement(
             'header',
