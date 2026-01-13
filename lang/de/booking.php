@@ -2249,3 +2249,11 @@ $string['nooptionselected'] = 'Keine Buchungsoption ausgewählt';
 $string['creditsmessage'] = 'Noch {$a->creditsleft} von insgesamt {$a->maxcredits} Credits verfügbar.';
 $string['notemplateyet'] = 'Es gibt noch kein Template';
 $string['notbookablecombiantion'] = 'Diese Kombination von Wahlfächern ist nicht erlaubt';
+
+// Prevent overbooking (overlapping options).
+$string['preventoverbooking'] = 'Buchung sich überlappender Optionen verhindern';
+$string['preventoverbooking_help'] = 'Wenn aktiviert, können Benutzer keine Optionen buchen, deren Zeiten (coursestarttime/courseendtime) sich mit bereits gebuchten Optionen in dieser Buchungsinstanz überschneiden.';
+$string['bo_cond_overlapping_available'] = 'Jetzt buchen';
+$string['bo_cond_overlapping_full_available'] = 'Buchung ist möglich';
+$string['bo_cond_overlapping_not_available'] = 'Zeitkonflikt';
+$string['bo_cond_overlapping_full_not_available'] = 'Sie haben bereits eine andere Option während dieses Zeitraums gebucht.';

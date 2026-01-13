@@ -66,6 +66,37 @@ class behat_booking extends behat_base {
     }
 
     /**
+     * Create booking option with specific times in booking instance.
+     *
+     * @Given /^I create booking option "(?P<optionname_string>(?:[^"]|\\")*)" in "(?P<instancename_string>(?:[^"]|\\")*)" starting "(?P<startoffset_string>(?:[^"]|\\")*)" ending "(?P<endoffset_string>(?:[^"]|\\")*)"$/
+     * @param string $optionname
+     * @param string $instancename
+     * @param string $startoffset Relative time offset like "+1 day", "+2 hours"
+     * @param string $endoffset Relative time offset like "+1 day +2 hours", "+3 hours"
+     * @return void
+     */
+    public function i_create_booking_option_with_times($optionname, $instancename, $startoffset, $endoffset) {
+
+        $cm = $this->get_cm_by_booking_name($instancename);
+
+        $booking = singleton_service::get_instance_of_booking_by_cmid($cm->id);
+
+        $record = new stdClass();
+        $record->bookingid = $booking->id;
+        $record->text = $optionname;
+        $record->courseid = $cm->course;
+        $record->description = 'Test description';
+        $record->startendtimeknown = 1;
+        $record->coursestarttime = strtotime($startoffset);
+        $record->courseendtime = strtotime($endoffset);
+
+        $datagenerator = \testing_util::get_data_generator();
+        /** @var mod_booking_generator $plugingenerator */
+        $plugingenerator = $datagenerator->get_plugin_generator('mod_booking');
+        $plugingenerator->create_option($record);
+    }
+
+    /**
      * Get a booking by name.
      *
      * @param string $name booking name.

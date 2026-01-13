@@ -2457,3 +2457,11 @@ $string['issued'] = 'Issued';
 $string['notissued'] = 'Not issued';
 $string['hascert'] = 'Has certificate?';
 $string['queued_issue_all_ok'] = 'Issuing of {$a} teacher certificates has been queued. Progress and results (issued/not issued) will appear in the logs.';
+
+// Prevent overbooking (overlapping options).
+$string['preventoverbooking'] = 'Prevent booking overlapping options';
+$string['preventoverbooking_help'] = 'If enabled, users cannot book options that have overlapping times (coursestarttime/courseendtime) with options they have already booked in this booking instance.';
+$string['bo_cond_overlapping_available'] = 'Book it';
+$string['bo_cond_overlapping_full_available'] = 'Booking is possible';
+$string['bo_cond_overlapping_not_available'] = 'Time conflict';
+$string['bo_cond_overlapping_full_not_available'] = 'You have already booked another option during this time slot.';

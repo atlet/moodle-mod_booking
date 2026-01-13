@@ -6399,5 +6399,20 @@ function xmldb_booking_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2025082701, 'booking');
     }
 
+    if ($oldversion < 2025121901) {
+
+        // Define field preventoverbooking to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('preventoverbooking', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, '0', 'enablecompletionenabled');
+
+        // Conditionally launch add field preventoverbooking.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2025121901, 'booking');
+    }
+
     return true;
 }
