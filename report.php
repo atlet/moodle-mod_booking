@@ -950,13 +950,6 @@ if (!$tableallbookings->is_downloading()) {
 
     echo "<div class='report-actionbuttons-top'>$actionbuttonstop</div>";
 
-    $links = array();
-
-    $links[] = '<a href="#" style="float:right;" id="showHideSearch">' . get_string('search') .
-        '</a>';
-
-    echo implode("<br>", $links);
-
     if ($bookingoption->option->courseid != 0) {
         echo '<br>' . html_writer::start_span('') . get_string('associatedcourse', 'booking') . ': ' . html_writer::link(
             new moodle_url($bookingoption->option->courseurl, array()),
