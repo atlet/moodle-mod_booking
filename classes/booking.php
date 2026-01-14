@@ -649,6 +649,13 @@ class booking {
 
         if ($this->settings->autcractive && !empty($this->settings->autcrprofile)
             && !empty($this->settings->autcrvalue) && !empty($this->settings->autcrtemplate)) {
+
+            // Check if user has the capability to automatically create booking options.
+            $context = \context_module::instance($this->cm->id);
+            if (!has_capability('mod/booking:addinstancefromprofile', $context)) {
+                return;
+            }
+
             $customfields = profile_user_record($USER->id);
 
             if (isset($customfields->{$this->settings->autcrprofile}) &&

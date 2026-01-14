@@ -150,4 +150,14 @@ $capabilities = array(
             'manager' => CAP_ALLOW,
         ]
     ],
+    // Capability to automatically create booking option from user profile.
+    'mod/booking:addinstancefromprofile' => [
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'archetypes' => [
+            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'manager' => CAP_ALLOW,
+        ]
+    ],
 );

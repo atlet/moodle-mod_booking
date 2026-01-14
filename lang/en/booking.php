@@ -2312,6 +2312,9 @@ $string['booking:conditionforms'] = "Submit condition forms like booking policy 
 $string['booking:viewreports'] = 'Allow access for viewing reports';
 $string['booking:manageoptiondates'] = 'Manage option dates';
 $string['booking:limitededitownoption'] = 'Less than addeditownoption, only allows very limited actions';
+$string['booking:confirmactivity'] = 'Confirm activity completion';
+$string['booking:bookuserswithoutcompletedactivity'] = 'Book users without completed activity';
+$string['booking:addinstancefromprofile'] = 'Automatically create booking option from user profile';
 
 // Booking_handler.php.
 $string['error:newcoursecategorycfieldmissing'] = 'You need to create a <a href="{$a->bookingcustomfieldsurl}"
