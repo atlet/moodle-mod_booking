@@ -628,6 +628,7 @@ function booking_update_instance($booking) {
     }
 
     $booking->iselective = !empty($booking->iselective) ? $booking->iselective : 0;
+    $booking->autcractive = !empty($booking->autcractive) ? $booking->autcractive : 0;
 
     if (isset($booking->optionsfields) && is_array($booking->optionsfields) && count($booking->optionsfields) > 0) {
         $booking->optionsfields = implode(',', $booking->optionsfields);
@@ -1827,6 +1828,17 @@ function booking_extend_settings_navigation(settings_navigation $settings, navig
             null,
             'nav_teachers_instance_report'
         );
+
+        // Add link to remove invalid teachers - only if autcractive is enabled.
+        if (!empty($bookingsettings->autcractive) && has_capability('mod/booking:updatebooking', $context)) {
+            $navref->add(
+                get_string('removeinvalidteachers', 'mod_booking'),
+                new moodle_url('/mod/booking/removeinvalidteachers.php', ['id' => $cm->id]),
+                navigation_node::TYPE_CUSTOM,
+                null,
+                'nav_removeinvalidteachers'
+            );
+        }
         $navref->add(
             get_string('users_instance_report', 'mod_booking') . " ($bookingsettings->name)",
             new moodle_url('/mod/booking/users_instance_report.php', ['cmid' => $cm->id]),

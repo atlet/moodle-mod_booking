@@ -2467,3 +2467,14 @@ $string['bo_cond_overlapping_available'] = 'Book it';
 $string['bo_cond_overlapping_full_available'] = 'Booking is possible';
 $string['bo_cond_overlapping_not_available'] = 'Time conflict';
 $string['bo_cond_overlapping_full_not_available'] = 'You have already booked another option during this time slot.';
+
+// Remove invalid teachers.
+$string['removeinvalidteachers'] = 'Remove teachers without permissions';
+$string['removeinvalidteachers_desc'] = 'This feature checks all teachers assigned to booking options and identifies those who no longer have the required profile field value for automatic option creation. You can remove them as teachers or also delete the options they manage.';
+$string['noinvalidteachers'] = 'All teachers have valid permissions. No action needed.';
+$string['invalidteachersfound'] = 'The following teachers no longer have the required profile field value:';
+$string['removeteachersonly'] = 'Remove teachers only';
+$string['removeteachersandoptions'] = 'Remove teachers and delete their options';
+$string['teachersremoved'] = 'Teachers have been successfully removed from their options.';
+$string['teachersandoptionsremoved'] = 'Teachers and their booking options have been successfully removed.';
+$string['bookingoptions'] = 'Booking options';
