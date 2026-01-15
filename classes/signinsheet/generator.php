@@ -141,6 +141,12 @@ class generator {
     public $allfields = array();
 
     /**
+     * custom form field definitions
+     * @var array
+     */
+    public $customformfields = array();
+
+    /**
      * extra columns to display
      * @var array
      */
@@ -204,6 +210,8 @@ class generator {
      * @param \stdClass $pdfoptions
      */
     public function __construct(\mod_booking\booking_option $bookingdata = null, \stdClass $pdfoptions) {
+        global $DB;
+        
         $this->bookingdata = $bookingdata;
         $this->orientation = $pdfoptions->orientation;
         $this->title = $pdfoptions->title;
@@ -249,6 +257,36 @@ class generator {
             }
         }
 
+        // Expand customformdata into individual columns.
+        $customformdatakey = array_search('customformdata', $this->allfields);
+        if ($customformdatakey !== false) {
+            // Get custom form fields from booking instance.
+            $customformfields = [];
+            if (!empty($this->bookingdata->booking->settings->id)) {
+                $booking = $DB->get_record('booking',
+                    ['id' => $this->bookingdata->booking->settings->id],
+                    'customformfields');
+                if (!empty($booking->customformfields)) {
+                    $fields = json_decode($booking->customformfields, true);
+                    if (!empty($fields)) {
+                        // Remove 'customformdata' and replace with individual field columns.
+                        unset($this->allfields[$customformdatakey]);
+                        foreach ($fields as $index => $field) {
+                            // Skip static fields as they don't need columns.
+                            if ($field['type'] !== 'static') {
+                                $this->allfields[] = 'customform_field_' . $index;
+                                $customformfields['customform_field_' . $index] = $field;
+                            }
+                        }
+                        // Re-index array after unset.
+                        $this->allfields = array_values($this->allfields);
+                    }
+                }
+            }
+            // Store custom form field definitions for later use.
+            $this->customformfields = $customformfields;
+        }
+
         for ($i = 1; $i < 4; $i++) {
             $this->extracols[$i] = trim(get_config('booking', 'signinextracols' . $i));
         }
@@ -273,7 +311,14 @@ class generator {
             $addsqlwhere .= " AND u.id IN ($groupsql)";
         }
         $remove = array('signinextracols1', 'signinextracols2', 'signinextracols3', 'fullname',
-            'signature', 'rownumber', 'role');
+            'signature', 'rownumber', 'role', 'customformdata');
+
+        // Also remove all customform_field_* columns from user fields.
+        foreach ($this->allfields as $field) {
+            if (strpos($field, 'customform_field_') === 0) {
+                $remove[] = $field;
+            }
+        }
 
         if ($CFG->version >= 2021051700) {
             // This only works in Moodle 3.11 and later.
@@ -292,7 +337,7 @@ class generator {
         }
 
         $users = $DB->get_records_sql(
-                "SELECT u.id, " . $mainuserfields . $userfields .
+                "SELECT u.id, " . $mainuserfields . $userfields . ", ba.json" .
             " FROM {booking_answers} ba
             LEFT JOIN {user} u ON u.id = ba.userid
             WHERE ba.optionid = :optionid AND ba.waitinglist = 0 " .
@@ -468,7 +513,36 @@ class generator {
                         }
                         break;
                     default:
-                        $name = '';
+                        // Handle customform_field_* dynamically.
+                        if (strpos($value, 'customform_field_') === 0) {
+                            $name = '';
+                            if (!empty($user->json) && !empty($this->customformfields[$value])) {
+                                $jsondata = json_decode($user->json, true);
+                                if (!empty($jsondata['condition_customform'])) {
+                                    $customdata = $jsondata['condition_customform'];
+                                    $fielddef = $this->customformfields[$value];
+
+                                    // Build the actual field name that would be in JSON.
+                                    // Field index maps to the counter in the form (1-based).
+                                    $fieldindex = (int)str_replace('customform_field_', '', $value);
+                                    $fieldname = 'customform_' . $fielddef['type'] . '_' . ($fieldindex + 1);
+
+                                    if (isset($customdata[$fieldname])) {
+                                        $val = $customdata[$fieldname];
+
+                                        // Format value based on type.
+                                        if ($fielddef['type'] === 'advcheckbox') {
+                                            $val = $val ? get_string('yes') : get_string('no');
+                                        } else if ($fielddef['type'] === 'date' && is_numeric($val)) {
+                                            $val = userdate($val, get_string('strftimedate', 'langconfig'));
+                                        }
+                                        $name = $val;
+                                    }
+                                }
+                            }
+                        } else {
+                            $name = '';
+                        }
                 }
                 $this->pdf->Cell($w, 0, $name, 1, (count($this->allfields) == $c ? 1 : 0), '', 0, "",
                         1);
@@ -761,8 +835,17 @@ class generator {
                 case 'role':
                     $name = new \lang_string('role');
                     break;
+                case 'customformdata':
+                    $name = get_string('customformdata', 'mod_booking');
+                    break;
                 default:
-                    $name = $value;
+                    // Handle customform_field_* headers dynamically.
+                    if (strpos($value, 'customform_field_') === 0 && !empty($this->customformfields[$value])) {
+                        $fielddef = $this->customformfields[$value];
+                        $name = $fielddef['label'] ?? $value;
+                    } else {
+                        $name = $value;
+                    }
             }
             $this->pdf->Cell($w, 0, $name, 1, (count($this->allfields) == $c ? 1 : 0), '', 0, '', 1);
         }

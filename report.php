@@ -791,6 +791,26 @@ if (!$tableallbookings->is_downloading()) {
                     $headers[] = get_string('searchwaitinglist', 'mod_booking');
                 }
                 break;
+            case 'customformdata':
+                // Expand customformdata into individual columns.
+                if (!empty($bookingoption->booking->settings->id)) {
+                    $booking = $DB->get_record('booking',
+                        ['id' => $bookingoption->booking->settings->id],
+                        'customformfields');
+                    if (!empty($booking->customformfields)) {
+                        $fields = json_decode($booking->customformfields, true);
+                        if (!empty($fields)) {
+                            foreach ($fields as $index => $field) {
+                                // Skip static fields as they don't contain user data.
+                                if ($field['type'] !== 'static') {
+                                    $columns[] = 'customform_field_' . $index;
+                                    $headers[] = $field['label'] ?? ('Field ' . ($index + 1));
+                                }
+                            }
+                        }
+                    }
+                }
+                break;
         }
     }
     $customfields = '';
@@ -841,6 +861,7 @@ if (!$tableallbookings->is_downloading()) {
             ba.userid,
             ba.waitinglist,
             ba.notes,
+            ba.json,
             ba.certificateid,
             c.code,
             \'\' otheroptions,
@@ -1229,6 +1250,7 @@ if (!$tableallbookings->is_downloading()) {
                     ba.waitinglist AS waitinglist,
                     ba.status,
                     ba.notes,
+                    ba.json,
                     u.idnumber as idnumber
                     {$customfields}";
     $from = '{booking_answers} ba

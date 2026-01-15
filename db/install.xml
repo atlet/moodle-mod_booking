@@ -175,6 +175,8 @@
         <FIELD NAME="preventoverbooking" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0"
           SEQUENCE="false"
           COMMENT="Prevent users from booking overlapping options (same coursestarttime/courseendtime)." />
+        <FIELD NAME="customformfields" TYPE="text" NOTNULL="false" SEQUENCE="false"
+          COMMENT="JSON encoded custom form fields configuration for booking registration." />
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" />

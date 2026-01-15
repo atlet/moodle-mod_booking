@@ -634,6 +634,26 @@ class booking {
                         $headers[] = get_string("idnumber");
                     }
                     break;
+                case 'customformdata':
+                    // Expand customformdata into individual columns.
+                    if (!empty($this->settings->id)) {
+                        $booking = $DB->get_record('booking',
+                            ['id' => $this->settings->id],
+                            'customformfields');
+                        if (!empty($booking->customformfields)) {
+                            $fields = json_decode($booking->customformfields, true);
+                            if (!empty($fields)) {
+                                foreach ($fields as $index => $field) {
+                                    // Skip static fields as they don't contain user data.
+                                    if ($field['type'] !== 'static') {
+                                        $columns[] = 'customform_field_' . $index;
+                                        $headers[] = $field['label'] ?? ('Field ' . ($index + 1));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
             }
         }
         return array($columns, $headers, $userprofilefields);

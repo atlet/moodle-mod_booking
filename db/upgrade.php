@@ -6429,5 +6429,20 @@ function xmldb_booking_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026011301, 'booking');
     }
 
+    if ($oldversion < 2026011401) {
+
+        // Define field customformfields to be added to booking.
+        $table = new xmldb_table('booking');
+        $field = new xmldb_field('customformfields', XMLDB_TYPE_TEXT, null, null, null, null, null, 'preventoverbooking');
+
+        // Conditionally launch add field customformfields.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Booking savepoint reached.
+        upgrade_mod_savepoint(true, 2026011401, 'booking');
+    }
+
     return true;
 }

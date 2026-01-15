@@ -170,6 +170,38 @@ class bo_info {
             $conditions = array_merge($conditions, $availabilityarray);
         }
 
+        // Check if booking instance has custom form fields - if yes, inject customform condition.
+        if (!empty($settings->bookingid)) {
+            global $DB;
+            $booking = $DB->get_record('booking', ['id' => $settings->bookingid], 'customformfields');
+            if (!empty($booking->customformfields)) {
+                $fields = json_decode($booking->customformfields, true);
+                if (!empty($fields)) {
+                    // Check if customform condition already exists in conditions.
+                    $hascustomform = false;
+                    foreach ($conditions as $condition) {
+                        if (is_object($condition) && isset($condition->id) && $condition->id == BO_COND_JSON_CUSTOMFORM) {
+                            $hascustomform = true;
+                            break;
+                        } else if (is_object($condition) && get_class($condition) === 'mod_booking\bo_availability\conditions\customform') {
+                            $hascustomform = true;
+                            break;
+                        }
+                    }
+
+                    // If not already present, create and inject the customform condition.
+                    if (!$hascustomform) {
+                        $customformcondition = new stdClass();
+                        $customformcondition->id = BO_COND_JSON_CUSTOMFORM;
+                        $customformcondition->name = 'customform';
+                        $customformcondition->class = 'mod_booking\\bo_availability\\conditions\\customform';
+                        $customformcondition->fields = json_decode($booking->customformfields);
+                        $conditions[] = $customformcondition;
+                    }
+                }
+            }
+        }
+
         // Resolve optional parameters.
         if (!$userid) {
             $userid = $USER->id;

@@ -118,6 +118,7 @@ class customform_form extends dynamic_form {
      * @return void
      */
     public function definition(): void {
+        global $DB;
 
         $formdata = $this->_ajaxformdata;
         $mform = $this->_form;
@@ -129,43 +130,95 @@ class customform_form extends dynamic_form {
 
         $mform->addElement('hidden', 'id', $id);
 
-        $availability = json_decode($settings->availability);
-
-        // Right now, we can only have one condition of type custom field.
-        foreach ($availability as $condition) {
-            if ($condition->id == BO_COND_JSON_CUSTOMFORM) {
-                $customform = $condition;
+        // Get custom form fields from booking instance.
+        $fields = [];
+        if (!empty($settings->bookingid)) {
+            $booking = $DB->get_record('booking', ['id' => $settings->bookingid], 'customformfields');
+            if (!empty($booking->customformfields)) {
+                $fields = json_decode($booking->customformfields);
             }
         }
 
-        foreach ($customform->formsarray as $formkey => $formvalue) {
-
-            $formelements = [];
-
-            $mform = $this->_form;
-
-            $counter = 1;
-            foreach ($formvalue as $formelementkey => $formelementvalue) {
-
-                // We might need custom solutions, therefore we have the switch here.
-                switch ($formelementvalue->formtype) {
-
-                    case 'static':
-                        $mform->addElement($formelementvalue->formtype, 'customform_element_' . $counter,
-                            '',
-                            $formelementvalue->value);
+        // Fallback: Try to get fields from booking option availability (legacy support).
+        if (empty($fields)) {
+            $availability = json_decode($settings->availability);
+            if (!empty($availability)) {
+                foreach ($availability as $condition) {
+                    if ($condition->id == BO_COND_JSON_CUSTOMFORM && !empty($condition->fields)) {
+                        $fields = $condition->fields;
                         break;
-                    default:
-                        $mform->addElement($formelementvalue->formtype, 'customform_checkbox_' . $counter, '',
-                        $formelementvalue->label ?? "Label " . $counter);
-                        break;
+                    }
                 }
+            }
+        }
 
-                $counter++;
+        if (empty($fields)) {
+            return;
+        }
+
+        // Handle fields array structure.
+        $counter = 1;
+        foreach ($fields as $field) {
+            $fieldname = 'customform_' . $field->type . '_' . $counter;
+
+            switch ($field->type) {
+                case 'static':
+                    $mform->addElement('static', $fieldname, '', $field->value);
+                    break;
+
+                case 'advcheckbox':
+                    $mform->addElement('advcheckbox', $fieldname, '', $field->label);
+                    break;
+
+                case 'shorttext':
+                    $mform->addElement('text', $fieldname, $field->label);
+                    $mform->setType($fieldname, PARAM_TEXT);
+                    if (!empty($field->required)) {
+                        $mform->addRule($fieldname, get_string('required'), 'required', null, 'client');
+                    }
+                    break;
+
+                case 'textarea':
+                    $mform->addElement('textarea', $fieldname, $field->label, ['rows' => 3, 'cols' => 50]);
+                    $mform->setType($fieldname, PARAM_TEXT);
+                    if (!empty($field->required)) {
+                        $mform->addRule($fieldname, get_string('required'), 'required', null, 'client');
+                    }
+                    break;
+
+                case 'select':
+                    $optionsarray = array_filter(explode("\n", $field->options ?? ''));
+                    $optionsarray = array_map('trim', $optionsarray);
+                    $options = ['' => get_string('choose')] + array_combine($optionsarray, $optionsarray);
+                    $mform->addElement('select', $fieldname, $field->label, $options);
+                    if (!empty($field->required)) {
+                        $mform->addRule($fieldname, get_string('required'), 'required', null, 'client');
+                    }
+                    break;
+
+                case 'email':
+                    $mform->addElement('text', $fieldname, $field->label);
+                    $mform->setType($fieldname, PARAM_EMAIL);
+                    if (!empty($field->required)) {
+                        $mform->addRule($fieldname, get_string('required'), 'required', null, 'client');
+                    }
+                    $mform->addRule($fieldname, get_string('invalidemail'), 'email', null, 'client');
+                    break;
+
+                case 'tel':
+                    $mform->addElement('text', $fieldname, $field->label);
+                    $mform->setType($fieldname, PARAM_TEXT);
+                    if (!empty($field->required)) {
+                        $mform->addRule($fieldname, get_string('required'), 'required', null, 'client');
+                    }
+                    break;
+
+                case 'date':
+                    $mform->addElement('date_selector', $fieldname, $field->label);
+                    break;
             }
 
-            $dataarray['data']['formsarray'][] = $formelements;
-
+            $counter++;
         }
     }
 
@@ -176,18 +229,62 @@ class customform_form extends dynamic_form {
      * @return array $errors
      */
     public function validation($data, $files): array {
+        global $DB;
+
         $errors = [];
 
-        // All checkboxes have to be checked right now.
-        // Todo: Make this generic!
-        foreach ($data as $key => $value) {
+        // Get option settings to check required fields.
+        $optionid = $data['id'] ?? 0;
+        if (!empty($optionid)) {
+            $settings = singleton_service::get_instance_of_booking_option_settings((int)$optionid);
 
-            if (strpos($key, 'checkbox') != false) {
+            // Get custom form fields from booking instance.
+            $fields = [];
+            if (!empty($settings->bookingid)) {
+                $booking = $DB->get_record('booking', ['id' => $settings->bookingid], 'customformfields');
+                if (!empty($booking->customformfields)) {
+                    $fields = json_decode($booking->customformfields);
+                }
+            }
+
+            // Fallback: Try to get fields from booking option availability (legacy support).
+            if (empty($fields)) {
+                $availability = json_decode($settings->availability);
+                if (!empty($availability)) {
+                    foreach ($availability as $condition) {
+                        if ($condition->id == BO_COND_JSON_CUSTOMFORM && !empty($condition->fields)) {
+                            $fields = $condition->fields;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // Validate required fields.
+            if (!empty($fields)) {
+                $counter = 1;
+                foreach ($fields as $field) {
+                    $fieldname = 'customform_' . $field->type . '_' . $counter;
+
+                    // Required checkbox must be checked.
+                    if ($field->type === 'advcheckbox' && !empty($field->required)) {
+                        if (empty($data[$fieldname])) {
+                            $errors[$fieldname] = get_string('customformnotchecked', 'mod_booking');
+                        }
+                    }
+
+                    $counter++;
+                }
+            }
+        }
+
+        // Legacy: All checkboxes must be checked.
+        foreach ($data as $key => $value) {
+            if (strpos($key, 'customform_checkbox_') !== false) {
                 if ($value != 1) {
                     $errors[$key] = get_string('customformnotchecked', 'mod_booking');
                 }
             }
-
         }
 
         return $errors;

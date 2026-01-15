@@ -344,7 +344,8 @@ class mod_booking_mod_form extends moodleform_mod {
             'city' => new lang_string('city'),
             'department' => new lang_string('department'),
             'notes' => get_string('notes', 'mod_booking'),
-            'certificateid' => get_string('certificateid', 'booking')
+            'certificateid' => get_string('certificateid', 'booking'),
+            'customformdata' => get_string('customformdata', 'mod_booking')
         );
 
         $reportfields = array(
@@ -367,7 +368,8 @@ class mod_booking_mod_form extends moodleform_mod {
             'status' => get_string('presence', 'mod_booking'),
             'groups' => get_string("group"),
             'notes' => get_string('notes', 'mod_booking'),
-            'idnumber' => get_string("idnumber")
+            'idnumber' => get_string("idnumber"),
+            'customformdata' => get_string('customformdata', 'mod_booking')
         );
 
         $optionsfields = [
@@ -412,6 +414,7 @@ class mod_booking_mod_form extends moodleform_mod {
             'department' => new lang_string('department'),
             'address' => new lang_string('address'),
             'role' => new lang_string('role'),
+            'customformdata' => get_string('customformdata', 'mod_booking')
         );
 
         for ($i = 1; $i < 4; $i++) {
@@ -504,6 +507,96 @@ class mod_booking_mod_form extends moodleform_mod {
         );
         $defaults = array_keys($signinsheetfields);
         $mform->setDefault('signinsheetfields', $defaults);
+
+        // Custom form fields for booking registration.
+        $mform->addElement(
+            'header',
+            'customformfieldsheader',
+            get_string('customformfields', 'mod_booking')
+        );
+        $mform->addHelpButton('customformfieldsheader', 'customformfields', 'mod_booking');
+
+        // All available form element types.
+        $formelementsarray = [
+            0 => get_string('noelement', 'mod_booking'),
+            'static' => get_string('displaytext', 'mod_booking'),
+            'advcheckbox' => get_string('checkbox', 'mod_booking'),
+            'shorttext' => get_string('shorttext', 'mod_booking'),
+            'textarea' => get_string('textarea', 'mod_booking'),
+            'select' => get_string('select', 'mod_booking'),
+            'email' => get_string('emailfield', 'mod_booking'),
+            'tel' => get_string('phonefield', 'mod_booking'),
+            'date' => get_string('datefield', 'mod_booking'),
+        ];
+
+        // Define repeatable elements for custom form fields.
+        $repeatarray = [];
+
+        $repeatarray[] = $mform->createElement(
+            'select',
+            'customformfield_type',
+            get_string('customformfieldtype', 'mod_booking'),
+            $formelementsarray
+        );
+
+        $repeatarray[] = $mform->createElement(
+            'text',
+            'customformfield_label',
+            get_string('bo_cond_customform_label', 'mod_booking'),
+            ['size' => '50']
+        );
+
+        $repeatarray[] = $mform->createElement(
+            'textarea',
+            'customformfield_value',
+            get_string('bo_cond_customform_value', 'mod_booking'),
+            ['rows' => 2, 'cols' => 50]
+        );
+
+        $repeatarray[] = $mform->createElement(
+            'textarea',
+            'customformfield_options',
+            get_string('fieldoptions', 'mod_booking'),
+            ['rows' => 3, 'cols' => 50]
+        );
+
+        $repeatarray[] = $mform->createElement(
+            'advcheckbox',
+            'customformfield_required',
+            get_string('fieldrequired', 'mod_booking')
+        );
+
+        $repeatarray[] = $mform->createElement('html', '<hr class="w-75 my-3"/>');
+
+        // Options for repeated elements.
+        $repeatoptions = [];
+        $repeatoptions['customformfield_label']['type'] = PARAM_TEXT;
+        $repeatoptions['customformfield_value']['type'] = PARAM_RAW;
+        $repeatoptions['customformfield_options']['type'] = PARAM_RAW;
+
+        // Determine initial number of fields based on saved data.
+        $repeatno = 1;
+        if (!empty($this->current->id)) {
+            $bookingrecord = $DB->get_record('booking', ['id' => $this->current->id], 'customformfields');
+            if (!empty($bookingrecord->customformfields)) {
+                $existingfields = json_decode($bookingrecord->customformfields, true);
+                if (!empty($existingfields)) {
+                    $repeatno = count($existingfields);
+                }
+            }
+        }
+
+        $this->repeat_elements(
+            $repeatarray,
+            $repeatno,
+            $repeatoptions,
+            'customformfield_repeats',
+            'customformfield_add',
+            1,
+            get_string('addfield', 'mod_booking'),
+            true,
+            'customformfield_delete'
+        );
 
         // Upload general images which need to have the same name as the value of a certain customfield.
         // These images will be used as a fallback for each option which has no image of its own.
@@ -1665,6 +1758,22 @@ class mod_booking_mod_form extends moodleform_mod {
                 'format' => FORMAT_HTML
             );
         }
+
+        // Load custom form fields from JSON.
+        if (!empty($defaultvalues['customformfields'])) {
+            $fields = json_decode($defaultvalues['customformfields'], true);
+            if (is_array($fields)) {
+                $i = 0;
+                foreach ($fields as $field) {
+                    $defaultvalues['customformfield_type'][$i] = $field['type'] ?? 0;
+                    $defaultvalues['customformfield_label'][$i] = $field['label'] ?? '';
+                    $defaultvalues['customformfield_value'][$i] = $field['value'] ?? '';
+                    $defaultvalues['customformfield_options'][$i] = $field['options'] ?? '';
+                    $defaultvalues['customformfield_required'][$i] = !empty($field['required']) ? 1 : 0;
+                    $i++;
+                }
+            }
+        }
     }
 
     public function validation($data, $files) {
@@ -1732,6 +1841,34 @@ class mod_booking_mod_form extends moodleform_mod {
         if ($data) {
             $data->bookingpolicyformat = $data->bookingpolicy['format'];
             $data->bookingpolicy = $data->bookingpolicy['text'];
+
+            // Convert custom form fields to JSON.
+            $fields = [];
+            if (!empty($data->customformfield_type) && is_array($data->customformfield_type)) {
+                foreach ($data->customformfield_type as $i => $type) {
+                    if (!empty($type)) {
+                        $field = [
+                            'type' => $type,
+                            'label' => $data->customformfield_label[$i] ?? '',
+                            'value' => $data->customformfield_value[$i] ?? '',
+                            'options' => $data->customformfield_options[$i] ?? '',
+                            'required' => !empty($data->customformfield_required[$i]),
+                        ];
+                        $fields[] = $field;
+                    }
+                }
+            }
+            $data->customformfields = !empty($fields) ? json_encode($fields) : null;
+
+            // Remove individual fields from data object.
+            unset($data->customformfield_type);
+            unset($data->customformfield_label);
+            unset($data->customformfield_value);
+            unset($data->customformfield_options);
+            unset($data->customformfield_required);
+            unset($data->customformfield_repeats);
+            unset($data->customformfield_add);
+            unset($data->customformfield_delete);
         }
 
         return $data;

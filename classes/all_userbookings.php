@@ -229,11 +229,161 @@ class all_userbookings extends \table_sql {
     }
 
     /**
+     * Render custom form data column.
+     *
+     * @param \stdClass $values
+     * @return string
+     */
+    protected function col_customformdata($values) {
+        global $DB;
+
+        if (empty($values->json)) {
+            return '';
+        }
+
+        $jsondata = json_decode($values->json, true);
+        if (empty($jsondata['condition_customform'])) {
+            return '';
+        }
+
+        $customdata = $jsondata['condition_customform'];
+
+        // Get field labels from booking instance.
+        $fieldlabels = [];
+        if (!empty($this->bookingdata->booking->settings->id)) {
+            $booking = $DB->get_record('booking', ['id' => $this->bookingdata->booking->settings->id], 'customformfields');
+            if (!empty($booking->customformfields)) {
+                $fields = json_decode($booking->customformfields, true);
+                if (!empty($fields)) {
+                    $counter = 1;
+                    foreach ($fields as $field) {
+                        $fieldname = 'customform_' . $field['type'] . '_' . $counter;
+                        $fieldlabels[$fieldname] = $field['label'] ?? '';
+                        $counter++;
+                    }
+                }
+            }
+        }
+
+        // For downloads (CSV/Excel) - format with labels.
+        if ($this->is_downloading()) {
+            $output = [];
+            foreach ($customdata as $key => $value) {
+                if (strpos($key, 'customform_') === 0 && $key !== 'id') {
+                    if (is_array($value)) {
+                        continue;
+                    }
+                    $parts = explode('_', $key);
+                    $fieldtype = $parts[1] ?? '';
+                    if ($fieldtype === 'static') {
+                        continue;
+                    }
+
+                    $label = $fieldlabels[$key] ?? $key;
+                    if ($fieldtype === 'advcheckbox') {
+                        $value = $value ? get_string('yes') : get_string('no');
+                    } else if ($fieldtype === 'date' && is_numeric($value)) {
+                        $value = userdate($value, get_string('strftimedate', 'langconfig'));
+                    }
+                    $output[] = $label . ': ' . $value;
+                }
+            }
+            return implode(' | ', $output);
+        }
+
+        // HTML display.
+        $output = '<div class="customform-data small">';
+        foreach ($customdata as $key => $value) {
+            if (strpos($key, 'customform_') === 0 && $key !== 'id') {
+                // Get field type from key.
+                $parts = explode('_', $key);
+                $fieldtype = $parts[1] ?? '';
+
+                if ($fieldtype === 'static') {
+                    continue; // Don't display static fields.
+                }
+
+                if (is_array($value)) {
+                    continue;
+                }
+
+                $label = $fieldlabels[$key] ?? $key;
+
+                if ($fieldtype === 'advcheckbox') {
+                    $value = $value ? '&#x2713;' : '&#x2717;';
+                } else if ($fieldtype === 'date' && is_numeric($value)) {
+                    $value = userdate($value, get_string('strftimedate', 'langconfig'));
+                }
+
+                $output .= '<div><strong>' . s($label) . ':</strong> ' . s($value) . '</div>';
+            }
+        }
+        $output .= '</div>';
+
+        return $output;
+    }
+
+    /**
      * This function is called for each data row to allow processing of columns which do not have a *_cols function.
      *
      * @return string return processed value. Return null if no change has been made.
      */
     public function other_cols($colname, $value) {
+        global $DB;
+
+        // Handle customform_field_* columns - check BEFORE "cust" because "customform_field_" starts with "cust".
+        if (strpos($colname, 'customform_field_') === 0) {
+            if (empty($value->json)) {
+                return '';
+            }
+
+            $jsondata = json_decode($value->json, true);
+            if (empty($jsondata['condition_customform'])) {
+                return '';
+            }
+
+            $customdata = $jsondata['condition_customform'];
+
+            // Get field definition from booking instance.
+            $fieldindex = (int)str_replace('customform_field_', '', $colname);
+            $fielddef = null;
+
+            if (!empty($this->bookingdata->booking->settings->id)) {
+                $booking = $DB->get_record('booking',
+                    ['id' => $this->bookingdata->booking->settings->id],
+                    'customformfields');
+                if (!empty($booking->customformfields)) {
+                    $fields = json_decode($booking->customformfields, true);
+                    if (!empty($fields) && isset($fields[$fieldindex])) {
+                        $fielddef = $fields[$fieldindex];
+                    }
+                }
+            }
+
+            if (empty($fielddef)) {
+                return '';
+            }
+
+            // Find the actual counter position for this field in the form.
+            // Counter in JSON starts at 1 and counts ALL fields (including static).
+            $formcounter = $fieldindex + 1;
+            $targetfieldname = 'customform_' . $fielddef['type'] . '_' . $formcounter;
+
+            // Try direct match.
+            if (isset($customdata[$targetfieldname])) {
+                $val = $customdata[$targetfieldname];
+                if ($fielddef['type'] === 'advcheckbox') {
+                    return $val ? get_string('yes') : get_string('no');
+                } else if ($fielddef['type'] === 'date' && is_numeric($val)) {
+                    return userdate($val, get_string('strftimedate', 'langconfig'));
+                }
+                return $val;
+            }
+
+            return '';
+        }
+
+        // Handle custom user profile fields (must be checked AFTER customform_field_*).
         if (substr($colname, 0, 4) === "cust") {
             $tmp = explode('|', $value->{$colname});
 

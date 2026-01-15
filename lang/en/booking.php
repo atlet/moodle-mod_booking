@@ -2172,8 +2172,22 @@ $string['checkbox'] = "Checkbox";
 $string['displaytext'] = "Display text";
 $string['textarea'] = "Textarea";
 $string['shorttext'] = "Shorttext";
+$string['emailfield'] = "Email";
+$string['phonefield'] = "Phone";
+$string['datefield'] = "Date";
 $string['formtype'] = "Type of form";
 $string['bo_cond_customform_label'] = "Label";
+$string['bo_cond_customform_value'] = "Value/Text";
+$string['bo_cond_customform_value_help'] = "For static text fields, enter the text to display. For other field types, this can be left empty.";
+$string['fieldoptions'] = "Options (one per line)";
+$string['fieldrequired'] = "Required field";
+$string['customformfield'] = "Custom form field";
+$string['customformdata'] = "Form data";
+$string['addfield'] = "Add field";
+$string['customformfields'] = "Custom form fields";
+$string['customformfields_help'] = "Define custom form fields that users must fill out when booking. These fields will be shown to all booking options within this booking instance.";
+$string['customformfieldtype'] = "Field type";
+$string['select'] = "Dropdown";
 
 // Teacher_performed_units_report.php.
 $string['error:wrongteacherid'] = 'Error: No user could be found for the provided "teacherid".';
