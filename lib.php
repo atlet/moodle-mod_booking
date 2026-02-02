@@ -3283,6 +3283,17 @@ function booking_tool_certificate_fields() {
         true,
         '02:00'
     );
+
+    // Booking title placeholders (1-10).
+    for ($i = 1; $i <= 10; $i++) {
+        $handler->ensure_field_exists(
+            'booking-title-' . $i,
+            'text',
+            get_string('booking', 'mod_booking') . ': ' . get_string('bookingtitle' . $i, 'mod_booking'),
+            true,
+            get_string('bookingtitle' . $i, 'mod_booking')
+        );
+    }
 }
 /*
  * Helper function to replace special characters within a string.
